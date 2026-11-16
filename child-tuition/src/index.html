@@ -1,0 +1,1071 @@
+<!doctype html>
+<html lang="ko">
+<head><meta name="robots" content="noindex, nofollow">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>자녀학비보조 관리</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1d2330; --muted:#677084; --line:#dfe3ea;
+  --accent:#1f5fbf; --accent-soft:#e8f0fc; --ok:#1e7a46; --ok-soft:#e5f4ea;
+  --warn:#a35a00; --warn-soft:#fff3e0; --bad:#b3261e; --bad-soft:#fdeceb; --input:#fffdf3;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 "Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding:12px 20px;display:flex;gap:16px;align-items:center;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+header h1{font-size:17px;margin:0}
+header .q{display:flex;gap:8px;align-items:center}
+nav{display:flex;gap:4px;flex-wrap:wrap;padding:8px 20px;background:var(--panel);border-bottom:1px solid var(--line)}
+nav button{border:0;background:none;padding:8px 12px;border-radius:6px;cursor:pointer;color:var(--muted);font:inherit}
+nav button.on{background:var(--accent-soft);color:var(--accent);font-weight:bold}
+main{padding:20px;max-width:1500px;margin:0 auto}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:16px}
+.card h2{font-size:15px;margin:0 0 12px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:3px}
+input,select,textarea{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--input);color:var(--ink)}
+input[type=checkbox]{width:16px;height:16px}
+textarea{width:100%;min-height:260px;font-family:inherit;background:#fff}
+button.b{font:inherit;border:1px solid var(--line);background:#fff;border-radius:6px;padding:7px 12px;cursor:pointer}
+button.p{background:var(--accent);border-color:var(--accent);color:#fff}
+button.d{color:var(--bad)}
+button.b:disabled{opacity:.5;cursor:default}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:#f0f2f6;font-weight:bold;position:sticky;top:0}
+td.n,th.n{text-align:right;white-space:nowrap}
+td.nw{white-space:nowrap}
+.scroll{overflow:auto;max-height:65vh}
+.tag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:12px;margin:1px 2px 1px 0;white-space:nowrap}
+.t-bad{background:var(--bad-soft);color:var(--bad)}
+.t-warn{background:var(--warn-soft);color:var(--warn)}
+.t-ok{background:var(--ok-soft);color:var(--ok)}
+.t-info{background:var(--accent-soft);color:var(--accent)}
+.muted{color:var(--muted)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.stat b{display:block;font-size:22px}
+.steps{display:flex;gap:8px;flex-wrap:wrap}
+.step{flex:1 1 140px;border:1px solid var(--line);border-radius:8px;padding:10px;background:#fff}
+.step.done{border-color:var(--ok);background:var(--ok-soft)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.notice{padding:10px 12px;border-radius:8px;background:var(--warn-soft);color:var(--warn);margin-bottom:12px}
+.hidden{display:none}
+.han{font-size:12px;color:var(--accent);min-height:16px}
+tr.excluded td{color:#999;text-decoration:line-through}
+tr.excluded td.keep{text-decoration:none}
+dialog{border:1px solid var(--line);border-radius:12px;padding:0;max-width:820px;width:95%}
+dialog .in{padding:18px 20px}
+dialog h3{margin:0 0 12px}
+.form{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.form .wide{grid-column:1/-1}
+.chk{flex-direction:row;align-items:center;gap:6px;color:var(--ink);font-size:13px}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:8px 12px}
+legend{font-size:12px;color:var(--muted)}
+.pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:12px;font-weight:bold;white-space:nowrap}
+.t-ex{background:#eceef2;color:#677084}
+nav .sep{width:1px;background:var(--line);margin:4px 8px}
+nav button.sub{font-size:13px}
+.strip{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.strip div{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-size:12px;color:var(--muted)}
+.strip b{display:block;font-size:17px;color:var(--ink)}
+tr.click{cursor:pointer} tr.click:hover td{background:#f4f8ff}
+.flt{display:flex;gap:4px;flex-wrap:wrap}
+.flt button{font:inherit;font-size:12px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:3px 10px;cursor:pointer}
+.flt button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.icard{background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:8px;padding:12px 14px;margin-bottom:10px}
+.icard.bad{border-left-color:var(--bad)}
+.icard .hd{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;margin-bottom:6px}
+.icard ul{margin:4px 0 8px 18px;padding:0}
+.icard li{margin:2px 0}
+.li-bad{color:var(--bad)} .li-warn{color:var(--warn)} .li-info{color:var(--muted)}
+dialog.wide{max-width:1100px}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:800px){.dgrid{grid-template-columns:1fr}}
+.dbox{border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.dbox h4{margin:0 0 6px;font-size:13px;color:var(--accent)}
+.kv{display:grid;grid-template-columns:110px 1fr;gap:2px 8px;font-size:13px}
+.kv span:nth-child(odd){color:var(--muted)}
+.big{font-size:20px;font-weight:bold}
+tr.sub td{background:#f7f8fb;font-weight:bold}
+#toast{position:fixed;bottom:20px;right:20px;background:#1d2330;color:#fff;padding:10px 14px;border-radius:8px;opacity:0;transition:.2s;pointer-events:none}
+#toast.on{opacity:.95}
+</style>
+</head>
+<body>
+<header>
+  <h1>교직원 자녀학비보조 관리</h1>
+  <div class="q">
+    <select id="qsel" aria-label="분기 선택"></select>
+    <button class="b" id="newq">새 분기</button>
+    <span id="qstate" class="tag"></span>
+  </div>
+  <span class="muted" id="saved"></span>
+</header>
+<nav id="tabs"></nav>
+<main id="view"></main>
+<dialog id="dlg"><div class="in" id="dlgin"></div></dialog>
+<div id="toast"></div>
+
+<script>/*XLSX_LIB*/</script>
+<script>
+'use strict';
+// ===== 규정 기준 (교직원 자녀 학비보조에 관한 규정, 2024.12.26.)
+const RULE = {
+  hsLimit: 500000, hsYears3: 3,
+  uLimit: 5000000, uMin: 3, u3: 10, boMin: 2, choMin: 3, bo3: 5, childSem: 8,
+};
+const BOJIK = ['총장', '부총장', '대학원장', '학장', '처장'];
+const ORGS_DEFAULT = ['강남차병원', '구미차병원', '분당차병원', '일산차병원', '차의과학대학교'];
+const BANKS = ["KB국민은행", "우리은행", "SC제일은행", "신한은행", "우체국", "IBK기업은행", "외환은행", "하나은행", "서울은행", "농협은행", "농협(단위)", "수협", "축협", "산업은행", "대구은행", "부산은행", "광주은행", "제주은행", "전북은행", "경남은행", "MG새마을금고", "신협", "장기신용은행", "한국씨티은행", "외국은행", "산림조합중앙회", "웰컴저축은행", "카카오뱅크", "K뱅크", "토스뱅크", "한국교직원공제회", "현대카드", "하나카드", "우리카드", "신한카드", "유안타증권", "대신증권", "제이피모간체이스은행", "무통장"];
+const BANK_ALIAS = {'iM뱅크': '대구은행', 'iM뱅크(구 대구은행)': '대구은행', '국민은행': 'KB국민은행', '기업은행': 'IBK기업은행',
+  'NH농협은행': '농협은행', '농협': '농협은행', '씨티은행': '한국씨티은행', '새마을금고': 'MG새마을금고', '케이뱅크': 'K뱅크'};
+const STATUS = ['재직', '휴직', '정직', '퇴직', '임상교수 전환', '기타 제외'];
+const KEY = 'child-tuition-v1';
+
+// ===== 저장소
+let DB;
+function blank() {
+  return {ver: 1, staff: {}, children: {}, quarters: {}, cur: null,
+    settings: {orgs: ORGS_DEFAULT.slice(), bankAlias: Object.assign({}, BANK_ALIAS), budget: {}}};
+}
+function load() {
+  try { DB = JSON.parse(localStorage.getItem(KEY)) || blank(); } catch (e) { DB = blank(); }
+  if (!DB.settings) DB.settings = blank().settings;
+}
+let dirty = false;
+function save() {
+  DB.savedAt = new Date().toISOString();
+  try { localStorage.setItem(KEY, JSON.stringify(DB)); dirty = true;
+    document.getElementById('saved').textContent = '자동 저장됨 ' + DB.savedAt.slice(11, 16) + ' · 백업 파일은 설정 탭에서';
+  } catch (e) { alertBox('브라우저 저장에 실패했습니다. 설정 탭에서 백업 파일을 내려받으세요.'); }
+}
+
+// ===== 유틸
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const won = n => (n === '' || n == null || isNaN(n)) ? '' : Number(n).toLocaleString('ko-KR');
+const num = v => { if (v === '' || v == null) return null; const x = Number(String(v).replace(/[^0-9.-]/g, '')); return isNaN(x) ? null : x; };
+function hanAmt(n) {
+  n = Number(n); if (!n || isNaN(n) || n < 0) return '';
+  const d = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'], u = ['', '십', '백', '천'], b = ['', '만', '억', '조'];
+  let out = '', i = 0;
+  while (n > 0) { const part = n % 10000; n = Math.floor(n / 10000);
+    if (part) { let t = ''; String(part).padStart(4, '0').split('').forEach((c, k) => { if (c !== '0') t += d[+c] + u[3 - k]; }); out = t + b[i] + out; }
+    i++; }
+  return out + '원';
+}
+const EXCL_RE = /학생회|급식|기숙|생활관|교재|앨범|보험|동문|수학여행|체험|방과후|간식|교복|실습|행사|우유|후원|발전기금|단체복|졸업/;
+function eligibleItem(kind, name) {
+  name = String(name || '');
+  if (EXCL_RE.test(name)) return false;
+  return kind === '고등학생' ? /수업료|운영|육성|입학금|등록금/.test(name) : /수업료|등록금|입학금|기성회/.test(name);
+}
+function parseItems(kind, text) {
+  return String(text || '').split(/[;\n]/).map(x => x.trim()).filter(Boolean).map(x => {
+    const m = x.match(/^(.*?)[:：]\s*([0-9,]+)\s*(\((제외|인정)\))?$/); if (!m) return null;
+    const name = m[1].trim(), amt = num(m[2]);
+    return {name, amt, ok: m[4] ? m[4] === '인정' : eligibleItem(kind, name)};
+  }).filter(Boolean);
+}
+const itemSum = (items, ok) => (items || []).filter(i => ok == null || !!i.ok === ok).reduce((s, i) => s + (num(i.amt) || 0), 0);
+function acctOf(a) {
+  const s = DB.staff[a.sab] || {};
+  return a.acctType === '별도' ? {bank: a.bank || '', acct: a.acct || '', type: '신청서 기재'} : {bank: s.payBank || '', acct: s.payAcct || '', type: '급여계좌'};
+}
+const uid = () => Math.random().toString(36).slice(2, 10);
+function toast(m) { const t = $('#toast'); t.textContent = m; t.classList.add('on'); setTimeout(() => t.classList.remove('on'), 2200); }
+function alertBox(m) { openDlg(`<h3>알림</h3><p>${esc(m)}</p><div class="row"><button class="b p" onclick="closeDlg()">확인</button></div>`); }
+function ymd(v) {
+  if (!v) return '';
+  if (v instanceof Date) { const d = new Date(v.getTime() - v.getTimezoneOffset() * 60000); return d.toISOString().slice(0, 10); }
+  const s = String(v).trim(); const m = s.match(/(\d{4})[-./](\d{1,2})[-./](\d{1,2})/);
+  return m ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : '';
+}
+function months(from, to) {
+  if (!from || !to) return null;
+  const a = from.split('-').map(Number), b = to.split('-').map(Number);
+  let m = (b[0] - a[0]) * 12 + (b[1] - a[1]); if (b[2] < a[2]) m--; return m;
+}
+const ym = m => m == null ? '' : `${Math.floor(m / 12)}년${m % 12}개월`;
+const childKey = (sab, name) => sab + '|' + String(name).trim();
+const bankStd = b => { b = String(b || '').trim(); return DB.settings.bankAlias[b] || b; };
+const qBase = (y, q) => `${y}-${String([3, 6, 9, 12][q - 1]).padStart(2, '0')}-01`;
+const Q = () => DB.quarters[DB.cur];
+const qLabel = q => q ? `${q.year}년 ${q.q}분기` : '';
+function confirmPlace(s) {
+  if (s.kind === '직원') return '총무팀';
+  return /병원|차움/.test(s.org || '') ? '의전원' : '교무팀';
+}
+
+// ===== 누적학기
+function priorSem(key, qid) {
+  const c = DB.children[key]; if (!c) return 0;
+  const cur = DB.quarters[qid];
+  let n = c.base || 0;
+  for (const q of Object.values(DB.quarters)) {
+    if (q.id === qid || !q.closed) continue;
+    if (cur && (q.year * 10 + q.q) > (cur.year * 10 + cur.q)) continue;
+    if (c.baseQ && (q.year * 10 + q.q) < c.baseQ) continue;
+    for (const a of q.apps) if (childKey(a.sab, a.child) === key && a.kind === '대학생' && a.judge === '지급') n++;
+  }
+  return n;
+}
+function staffPriorSem(sab, qid) {
+  let n = 0; for (const k in DB.children) if (DB.children[k].sab === sab) n += priorSem(k, qid); return n;
+}
+function lastAccount(sab, qid) {
+  const cur = DB.quarters[qid]; let best = null;
+  for (const q of Object.values(DB.quarters)) {
+    if (q.id === qid || !q.closed || (q.year * 10 + q.q) > (cur.year * 10 + cur.q)) continue;
+    for (const a of q.apps) if (a.sab === sab && a.judge === '지급' && (!best || q.year * 10 + q.q > best.k)) { const ac = acctOf(a); best = {k: q.year * 10 + q.q, acct: ac.acct, bank: ac.bank}; }
+  }
+  return best;
+}
+
+// ===== 규정 점검
+function evaluate(q) {
+  const res = new Map();
+  const live = q.apps.filter(a => a.judge !== '제외');
+  const cnt = {}; const dup = {};
+  for (const a of live) { const k = a.sab + '|' + a.kind; cnt[k] = (cnt[k] || 0) + 1; }
+  for (const a of q.apps) { const k = childKey(a.sab, a.child) + '|' + a.kind; dup[k] = (dup[k] || 0) + 1; }
+  for (const a of q.apps) {
+    const s = DB.staff[a.sab] || {};
+    const issues = []; const add = (lv, m) => issues.push({lv, m});
+    const conf = s.confDate || '';
+    const m = months(conf, q.base);
+    let maxKids = null, limit = a.kind === '고등학생' ? RULE.hsLimit : RULE.uLimit;
+    if (!conf) add('warn', '임용일 미확인');
+    else {
+      if (s.applyDate && s.applyDate !== conf) add('info', '신청 임용일 상이(확인일 적용)');
+      const bo = BOJIK.includes(s.bojik);
+      if (a.kind === '고등학생') maxKids = m < RULE.hsYears3 * 12 ? 1 : 3;
+      else if (bo) { const min = s.bojik === '처장' ? RULE.choMin : RULE.boMin; maxKids = m < min * 12 ? 0 : (m < RULE.bo3 * 12 ? 1 : 3); }
+      else maxKids = m < RULE.uMin * 12 ? 0 : (m < RULE.u3 * 12 ? 1 : 3);
+      if (maxKids === 0) add('bad', `재직기간 미달(${ym(m)})`);
+      else if (cnt[a.sab + '|' + a.kind] > maxKids && a.judge !== '제외') add('bad', `자녀수 초과(한도 ${maxKids}명)`);
+    }
+    if (String(a.sab).startsWith('TEMP-')) add('bad', '교번 미확인');
+    if (s.status && s.status !== '재직') add('bad', `신분: ${s.status}`);
+    if (s.kind === '교원' && s.fulltime === false) add('bad', '전임교원 아님');
+    if (dup[childKey(a.sab, a.child) + '|' + a.kind] > 1) add('bad', '같은 자녀 중복 신청');
+    if (a.kind === '대학생' && q.q % 2 === 0) add('warn', '대학 학자금은 1·3분기(3월·9월) 지급');
+    if (a.kind === '대학생' && a.grad) add('bad', '학부과정 아님');
+    if (a.kind === '대학생') {
+      const pc = priorSem(childKey(a.sab, a.child), q.id), ps = staffPriorSem(a.sab, q.id);
+      // 제5조(2024.12.26 개정): 총 학기 범위 안에서 대상 자녀·수 조정 가능 → 자녀별 8학기는 참고 표시만, 한도는 신청인 총 학기로 판단
+      if (pc + 1 > RULE.childSem) add('info', `자녀 ${pc + 1}학기째(1인당 ${RULE.childSem}학기 초과, 총 학기 안에서 조정)`);
+      if (maxKids != null && maxKids > 0) { const cap = maxKids >= 3 ? 24 : 8; if (ps + 1 > cap) add('bad', `총학기 초과(기존 ${ps}/${cap})`); }
+    }
+    if (!a.docs?.form) add('bad', '신청서 없음');
+    if (!a.docs?.family) add('bad', '가족관계증명서·등본 없음');
+    if (!a.docs?.receipt) add('bad', '납입영수증 없음');
+    else if (a.docs.receiptType === '불가서류') add('bad', '영수증 불가 서류(고지서·통장사본 등)');
+    if (a.docs?.receipt && a.docs.receiptType === '사본') add('warn', '영수증 원본 아님');
+    if (a.docs && a.docs.form && !a.docs.pledge) add('warn', '신청서 확인란(제5항) 서명 미확인');
+    if (a.foreign) add('info', '국외학교: 학부과정·학자금 항목 확인');
+    if (q.deadline && a.received && a.received > q.deadline) add('bad', `신청기한 경과(${a.received})`);
+    // 금액
+    const paid = num(a.receiptAmt), other = num(a.otherAid) || 0, req = num(a.amount);
+    let base = paid != null ? paid - other : req;
+    if (paid == null) add('warn', '영수증 금액 미입력');
+    let pay = base == null ? 0 : Math.min(base, limit);
+    if (req != null && pay > req) pay = req;
+    if (req != null && paid != null && req !== paid) add('warn', `신청서 금액(${won(req)})과 영수증 금액(${won(paid)}) 다름`);
+    else if (req != null && base != null && req > base) add('warn', `신청액이 실납부액보다 큼(${won(base)})`);
+    if (a.judge === '지급' && s.confAt && a.judgedAt && s.confAt > a.judgedAt) add('warn', '판정 후 임용일 정정됨: 다시 확인');
+    if (base != null && base > limit) add('info', `한도 적용(${won(limit)})`);
+    const ex = (a.items || []).filter(i => !i.ok && num(i.amt));
+    if (ex.length) add('info', `영수증 중 ${won(itemSum(a.items, false))}원 제외(${ex.map(i => i.name).join(', ')})`);
+    if ((a.items || []).some(i => !i.name)) add('warn', '영수증 항목명 빈칸');
+    if (a.needCheck) add('warn', `자동 입력값 확인 필요: ${a.needCheck}`);
+    if (other > 0) add('info', `타기관 지원 ${won(other)} 차감`);
+    if (paid === 0 && (a.items || []).some(i => num(i.amt))) add('bad', '영수증에 인정 항목(수업료·등록금·입학금) 없음');
+    else if (base != null && base <= 0) add('bad', '실납부액 0원(장학금 등 전액 감면)');
+    // 계좌
+    const AC = acctOf(a); const acct = String(AC.acct || '');
+    if (!acct) add('bad', a.acctType === '별도' ? '계좌번호 없음' : '급여계좌 미등록(명부에서 등록)');
+    else if (!/^[0-9-]{8,20}$/.test(acct)) add('bad', '계좌번호 형식 오류');
+    const bk = bankStd(AC.bank);
+    if (!bk) { if (acct) add('bad', '은행 없음'); } else if (BANKS.length && !BANKS.includes(bk)) add('warn', `은행명 코드표에 없음(${bk})`);
+    const la = lastAccount(a.sab, q.id);
+    if (la && acct && la.acct.replace(/-/g, '') !== acct.replace(/-/g, '')) add('warn', `지난 지급 계좌와 다름(${la.bank} ${la.acct})`);
+    res.set(a.id, {issues, months: m, maxKids, pay: a.judge === '지급' ? pay : 0, payable: pay, req, paid, other, base, limit,
+      bad: issues.some(i => i.lv === 'bad'), warn: issues.some(i => i.lv === 'warn')});
+  }
+  return res;
+}
+// 신청금액과 실 지급금액이 다른 이유
+function gapNote(a, x) {
+  const n = [];
+  if (a.judge === '제외') return '지급 제외' + (a.reason ? `(${a.reason})` : '');
+  if (x.req != null && x.req === x.payable) return '';
+  const ex = (a.items || []).filter(i => !i.ok && num(i.amt));
+  if (ex.length) n.push(`${ex.map(i => i.name).join('·')} ${won(itemSum(a.items, false))}원 제외`);
+  if (x.req != null && x.paid != null && x.req !== x.paid && !ex.length) n.push(`영수증 인정액 ${won(x.paid)}원`);
+  if (x.other > 0) n.push(`장학금·타기관 지원 ${won(x.other)}원 차감`);
+  if (x.base != null && x.base <= 0) n.push('실납입 0원(장학금 등)');
+  else if (x.base != null && x.base > x.limit && (x.req == null || x.req > x.limit)) n.push(`한도 ${won(x.limit)}원 적용`);
+  if (x.req != null && x.base != null && x.req < Math.min(x.base, x.limit)) n.push('신청금액까지만 지급');
+  return n.join(', ');
+}
+const gapCell = (a, x) => { const g = x.req != null ? x.req - x.payable : null; return g ? `<span class="muted">${g > 0 ? '−' : '+'}${won(Math.abs(g))}</span>` : ''; };
+const tags = r => r.issues.length ? r.issues.map(i => `<span class="tag t-${i.lv}">${esc(i.m)}</span>`).join('') : '<span class="tag t-ok">이상 없음</span>';
+
+// ===== 화면
+const TABS = [['all', '전체 신청내역'], ['need', '검토 필요'], ['org', '기관별 신청내역'], ['|'], ['confirm', '재직 확인'], ['review', '판정표'], ['out', '기안·업로드'], ['home', '진행·마감'], ['staff', '명부'], ['set', '설정·백업']];
+let tab = 'all';
+function render() {
+  const sel = $('#qsel'); const qs = Object.values(DB.quarters).sort((a, b) => (b.year * 10 + b.q) - (a.year * 10 + a.q));
+  sel.innerHTML = qs.map(q => `<option value="${q.id}" ${q.id === DB.cur ? 'selected' : ''}>${qLabel(q)}</option>`).join('') || '<option>분기 없음</option>';
+  const q = Q(); const st = $('#qstate');
+  st.textContent = q ? (q.closed ? '마감' : '진행 중') : ''; st.className = 'tag ' + (q ? (q.closed ? 't-ok' : 't-info') : '');
+  $('#tabs').innerHTML = TABS.map(([k, v], i) => k === '|' ? '<span class="sep"></span>' : `<button class="${k === tab ? 'on' : ''} ${i > 3 ? 'sub' : ''}" data-t="${k}">${k === 'need' && q ? `${v} <span class="tag t-bad">${needList(q, evaluate(q)).length}</span>` : v}</button>`).join('');
+  const v = $('#view');
+  if (!q && !['staff', 'set'].includes(tab)) { v.innerHTML = `<div class="card"><h2>시작하기</h2><p>먼저 분기를 만드세요. 지난 분기 지원내역 엑셀이 있으면 분기를 만든 뒤 <b>신청 접수 → 엑셀에서 가져오기</b>로 불러올 수 있습니다.</p><button class="b p" onclick="newQuarter()">새 분기 만들기</button></div>`; return; }
+  ({all: vAll, need: vNeed, org: vOrg, home: vHome, apps: vAll, confirm: vConfirm, review: vReview, out: vOut, staff: vStaff, set: vSet})[tab](v, q);
+}
+$('#tabs').onclick = e => { const t = e.target.closest('[data-t]')?.dataset.t; if (t) { tab = t; render(); } };
+$('#qsel').onchange = e => { DB.cur = e.target.value; save(); render(); };
+$('#newq').onclick = () => newQuarter();
+
+function newQuarter() {
+  const now = new Date(); const y = now.getFullYear(); const qn = Math.floor(now.getMonth() / 3) + 1;
+  openDlg(`<h3>새 분기</h3><div class="form">
+    <label>연도<input id="ny" type="number" value="${y}"></label>
+    <label>분기<select id="nq">${[1, 2, 3, 4].map(i => `<option ${i === qn ? 'selected' : ''}>${i}</option>`).join('')}</select></label>
+    <label>신청 마감일<input id="nd" type="date"></label></div>
+    <p class="muted">기준일은 분기별로 03-01, 06-01, 09-01, 12-01로 자동 설정됩니다.</p>
+    <div class="row"><button class="b p" id="nok">만들기</button><button class="b" onclick="closeDlg()">취소</button></div>`);
+  $('#nok').onclick = () => {
+    const yy = +$('#ny').value, qq = +$('#nq').value, id = `${yy}-${qq}`;
+    if (DB.quarters[id]) { DB.cur = id; closeDlg(); save(); render(); return; }
+    DB.quarters[id] = {id, year: yy, q: qq, base: qBase(yy, qq), deadline: $('#nd').value || '', apps: [], closed: false, budget: {}};
+    DB.cur = id; closeDlg(); save(); render();
+  };
+}
+
+// ----- 현황
+function vHome(v, q) {
+  const r = evaluate(q); const apps = q.apps;
+  const pay = apps.filter(a => a.judge === '지급'); const total = pay.reduce((s, a) => s + r.get(a.id).pay, 0);
+  const reqTot = pay.reduce((s, a) => s + (num(a.amount) || 0), 0);
+  const unconf = new Set(apps.filter(a => !(DB.staff[a.sab] || {}).confDate).map(a => a.sab)).size;
+  const bad = apps.filter(a => r.get(a.id).bad && a.judge !== '제외').length;
+  const undecided = apps.filter(a => !a.judge || a.judge === '보류').length;
+  const steps = [
+    ['신청 접수', apps.length > 0, `${apps.length}건`],
+    ['재직 확인', apps.length > 0 && unconf === 0, unconf ? `미확인 ${unconf}명` : '완료'],
+    ['검토·판정', apps.length > 0 && undecided === 0 && bad === 0, undecided ? `미판정 ${undecided}건` : (bad ? `오류 ${bad}건 남음` : '완료')],
+    ['기안·업로드', !!q.exported, q.exported ? '내보냄' : '대기'],
+    ['분기 마감', q.closed, q.closed ? '마감됨' : '대기'],
+  ];
+  v.innerHTML = `<div class="stats">
+    <div class="stat">신청<b>${apps.length}건</b></div>
+    <div class="stat">지급 확정<b>${pay.length}건</b></div>
+    <div class="stat">신청금액(지급 확정분)<b>${won(reqTot)}원</b></div>
+    <div class="stat">실 지급금액<b>${won(total)}원</b></div>
+    <div class="stat">오류 남음<b style="color:var(--bad)">${bad}건</b></div>
+    <div class="stat">기준일<b>${q.base}</b></div></div><br>
+    <div class="card"><h2>${qLabel(q)} 진행 단계</h2><div class="steps">${steps.map(([n, d, s], i) => `<div class="step ${d ? 'done' : ''}"><b>${i + 1}. ${n}</b><br><span class="muted">${s}</span></div>`).join('')}</div></div>
+    <div class="card"><h2>분기 마감</h2><p class="muted">마감하면 "지급"으로 판정된 대학생 자녀의 누적학기가 1씩 올라가고, 다음 분기의 계좌 비교 기준이 됩니다. 마감 후에는 이 분기를 수정할 수 없습니다(해제 가능).</p>
+    ${q.closed ? `<button class="b" onclick="setClosed(false)">마감 해제</button>` : `<button class="b p" onclick="setClosed(true)" ${undecided || bad ? 'disabled' : ''}>분기 마감</button> ${undecided || bad ? '<span class="muted">미판정·오류가 남아 있으면 마감할 수 없습니다. 오류는 제외하거나 예외 사유를 적고 "지급(예외)"로 판정하세요.</span>' : ''}`}</div>`;
+}
+function setClosed(c) { Q().closed = c; save(); render(); toast(c ? '분기를 마감했습니다' : '마감을 해제했습니다'); }
+function guard() { if (Q().closed) { alertBox('마감된 분기입니다. 현황 탭에서 마감을 해제한 뒤 수정하세요.'); return false; } return true; }
+
+// ----- 공통: 상태·요약
+function stateOf(a, x) {
+  if (a.judge === '제외') return ['제외', 't-ex'];
+  if (a.judge === '지급') return [a.exception ? '지급(예외)' : '지급', 't-ok'];
+  if (a.judge === '보류') return ['보류', 't-warn'];
+  if (x.bad) return ['오류', 't-bad'];
+  if (x.warn) return ['확인 필요', 't-warn'];
+  return ['검토 대기', 't-info'];
+}
+const pill = (a, x) => { const [t, c] = stateOf(a, x); return `<span class="pill ${c}">${t}</span>`; };
+const issueCount = x => { const b = x.issues.filter(i => i.lv === 'bad').length, w = x.issues.filter(i => i.lv === 'warn').length;
+  return [b ? `<span class="tag t-bad">오류 ${b}</span>` : '', w ? `<span class="tag t-warn">확인 ${w}</span>` : ''].join('') || '<span class="muted">-</span>'; };
+function strip(apps, r) {
+  const live = apps.filter(a => a.judge !== '제외');
+  const req = live.reduce((s, a) => s + (num(a.amount) || 0), 0), pay = live.reduce((s, a) => s + r.get(a.id).payable, 0);
+  const bad = live.filter(a => a.judge !== '지급' && r.get(a.id).bad).length, warn = live.filter(a => a.judge !== '지급' && !r.get(a.id).bad && r.get(a.id).warn).length;
+  const done = apps.filter(a => a.judge && a.judge !== '보류').length;
+  return `<div class="strip"><div>신청<b>${apps.length}건</b></div><div>신청금액 합계<b>${won(req)}원</b></div><div>실 지급(예정) 합계<b>${won(pay)}원</b></div>
+    <div>오류<b style="color:var(--bad)">${bad}건</b></div><div>확인 필요<b style="color:var(--warn)">${warn}건</b></div><div>판정 완료<b>${done}/${apps.length}</b></div></div>`;
+}
+function setJudge(a, val, x) {
+  if (!guard()) return false;
+  if (val === '지급' && x.bad) { alertBox('지급 불가 사유(빨강)가 있습니다. 예외로 지급하려면 "지급(예외)"를 고르고 사유를 적으세요.'); return false; }
+  if ((val === '제외' || val === '지급(예외)') && !String(a.reason || '').trim()) { alertBox(`"${val}"는 사유를 먼저 적어 주세요.`); return false; }
+  if (val === '지급(예외)') { a.judge = '지급'; a.exception = true; } else { a.judge = val; a.exception = false; }
+  a.judgedAt = new Date().toISOString(); save(); return true;
+}
+const splitNote = t => String(t || '').split(/\s\/\s/).map(x => x.trim()).filter(Boolean);
+// 여러 명에게 한꺼번에 생기는 준비 사항(재직 확인·명부로 해결)
+const COMMON = [['임용일 미확인', /^임용일 미확인$/, '재직 확인 탭에서 의전원·교무팀 회신을 불러오면 해결'], ['급여계좌 미등록', /^급여계좌 미등록/, '명부 탭에서 급여계좌 엑셀을 불러오면 해결'], ['교번 미확인', /^교번 미확인$/, '신청서에 병원 사번만 있는 경우: 인사담당 확인 후 내용 수정에서 교번 입력']];
+const isCommon = m => COMMON.some(([, re]) => re.test(m));
+function issueList(x, levels, skipCommon) {
+  const out = [];
+  for (const i of x.issues) { if (!levels.includes(i.lv) || (skipCommon && isCommon(i.m))) continue;
+    if (i.m.startsWith('자동 입력값 확인 필요: ')) splitNote(i.m.slice(13)).forEach(m => out.push(`<li class="li-${i.lv}">${esc(m)}</li>`));
+    else out.push(`<li class="li-${i.lv}">${esc(i.m)}</li>`); }
+  return out.join('');
+}
+
+// ----- 전체 신청내역(접수)
+let fKind = '', fState = '';
+function vAll(v, q) {
+  const r = evaluate(q);
+  const rows = q.apps.filter(a => { const s = DB.staff[a.sab] || {}; const st = stateOf(a, r.get(a.id))[0];
+    return (!filt || [a.sab, a.child, a.school, s.name, s.org].join(' ').includes(filt)) && (!fKind || a.kind === fKind) && (!fState || st.startsWith(fState)); });
+  const fb = (cur, val, label, key) => `<button class="${cur === val ? 'on' : ''}" data-${key}="${val}">${label}</button>`;
+  v.innerHTML = `${strip(q.apps, r)}<div class="card"><div class="row">
+    <button class="b p" onclick="editApp()">+ 신청 입력</button>
+    <label>엑셀 가져오기 (스캔 추출 파일·지원내역)<input type="file" id="impApps" accept=".xlsx,.xls"></label>
+    <label>검색<input id="flt" value="${esc(filt)}" placeholder="성명·자녀·학교·사번"></label>
+    <div class="flt">${fb(fKind, '', '전체', 'k')}${fb(fKind, '고등학생', '고등학생', 'k')}${fb(fKind, '대학생', '대학생', 'k')}</div>
+    <div class="flt">${fb(fState, '', '모든 상태', 's')}${['오류', '확인 필요', '검토 대기', '지급', '보류', '제외'].map(t => fb(fState, t, t, 's')).join('')}</div>
+    <button class="b" id="autoj2">오류·확인 없는 건 일괄 "지급"</button>
+    <button class="b" onclick="exportImportTemplate()">빈 추출 양식</button></div>
+    <p class="muted" style="margin:8px 0 0">줄을 누르면 한 사람의 신청 내용을 모두 볼 수 있습니다. ${rows.length}건 표시</p></div>
+    <div class="card scroll"><table><thead><tr><th>no.</th><th>상태</th><th>소속</th><th>신청인</th><th>자녀</th><th>학교</th><th class="n">신청금액</th><th class="n">실 지급(예정)</th><th>확인할 점</th></tr></thead><tbody>
+    ${rows.map((a, i) => { const s = DB.staff[a.sab] || {}; const x = r.get(a.id); return `<tr class="click ${a.judge === '제외' ? 'excluded' : ''}" data-open="${a.id}">
+      <td>${i + 1}</td><td class="keep">${pill(a, x)}</td><td>${esc(s.org)}</td><td><b>${esc(s.name)}</b></td>
+      <td>${esc(a.child)} <span class="muted">${a.kind === '고등학생' ? '고' : '대'}</span></td><td>${esc(a.school)}${a.foreign ? ' <span class="tag t-info">국외</span>' : ''}</td>
+      <td class="n">${won(a.amount)}</td><td class="n"><b>${won(x.payable)}</b></td><td class="keep">${issueCount(x)}</td></tr>`; }).join('')}
+    </tbody></table></div>`;
+  $('#flt').oninput = e => { filt = e.target.value; const p = e.target.selectionStart; render(); const f = $('#flt'); f.focus(); f.setSelectionRange(p, p); };
+  $('#impApps').onchange = e => importApps(e.target.files[0]);
+  v.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { fKind = b.dataset.k; render(); });
+  v.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { fState = b.dataset.s; render(); });
+  v.querySelectorAll('[data-open]').forEach(tr => tr.onclick = () => showApp(tr.dataset.open));
+  $('#autoj2').onclick = () => { if (!guard()) return; let n = 0; for (const a of q.apps) { const x = r.get(a.id); if (!a.judge && !x.bad && !x.warn) { a.judge = '지급'; a.judgedAt = new Date().toISOString(); n++; } } save(); render(); toast(`${n}건을 지급으로 판정했습니다`); };
+}
+
+// ----- 검토 필요
+const needList = (q, r) => q.apps.filter(a => a.judge !== '제외' && a.judge !== '지급' && (a.judge === '보류' || r.get(a.id).bad || r.get(a.id).warn));
+function vNeed(v, q) {
+  const r = evaluate(q); const list = needList(q, r);
+  const bad = list.filter(a => r.get(a.id).bad), warn = list.filter(a => !r.get(a.id).bad);
+  const card = a => { const s = DB.staff[a.sab] || {}; const x = r.get(a.id); return `<div class="icard ${x.bad ? 'bad' : ''}">
+    <div class="hd">${pill(a, x)}<b>${esc(s.name)}</b><span class="muted">${esc(s.org)} · ${esc(a.kind)}</span><span>자녀 <b>${esc(a.child)}</b> · ${esc(a.school)}</span>
+      <span style="margin-left:auto">신청 ${won(a.amount)}원 → <b>실 지급 ${won(x.payable)}원</b></span></div>
+    <ul>${issueList(x, ['bad', 'warn'], true) || '<li class="li-info">개별 확인 사항 없음</li>'}</ul>
+    ${x.issues.filter(i => isCommon(i.m)).length ? `<div style="margin:-4px 0 8px">${x.issues.filter(i => isCommon(i.m)).map(i => `<span class="tag t-ex">${esc(COMMON.find(([, re]) => re.test(i.m))[0])}</span>`).join('')}</div>` : ''}
+    <div class="row"><button class="b" data-open="${a.id}">자세히 보기</button>
+      <label>사유(제외·예외 시)<input data-reason="${a.id}" value="${esc(a.reason)}" size="30"></label>
+      ${['지급', '지급(예외)', '보류', '제외'].map(j => `<button class="b ${j === '제외' ? 'd' : ''}" data-j="${j}" data-id="${a.id}">${j}</button>`).join('')}</div></div>`; };
+  const com = COMMON.map(([n, re, how]) => [n, how, list.filter(a => r.get(a.id).issues.some(i => re.test(i.m)))]).filter(c => c[2].length);
+  v.innerHTML = `${strip(q.apps, r)}
+    ${com.length ? `<div class="card"><h2>한꺼번에 해결할 것</h2><p class="muted" style="margin-top:-6px">아래 항목은 사람마다 따로 볼 필요 없이 한 번에 처리됩니다. 처리하면 개별 카드의 회색 표시가 사라집니다.</p>
+      <table><tbody>${com.map(([n, how, l]) => `<tr><td><b>${n}</b></td><td class="n">${new Set(l.map(a => a.sab)).size}명</td><td>${how}</td></tr>`).join('')}</tbody></table></div>` : ''}
+    ${list.length ? '' : '<div class="card"><h2>검토할 건이 없습니다</h2><p class="muted">오류·확인 필요 표시가 있는 건이 모두 판정되었습니다.</p></div>'}
+    ${bad.length ? `<div class="card"><h2 style="color:var(--bad)">지급 불가 사유가 있는 건 (${bad.length})</h2><p class="muted">서류를 확인해 고치거나, 지급하려면 사유를 적고 "지급(예외)"를 누르세요.</p>${bad.map(card).join('')}</div>` : ''}
+    ${warn.length ? `<div class="card"><h2 style="color:var(--warn)">확인이 필요한 건 (${warn.length})</h2><p class="muted">원본 서류와 대조한 뒤 문제가 없으면 "지급"을 누르세요.</p>${warn.map(card).join('')}</div>` : ''}`;
+  v.querySelectorAll('[data-open]').forEach(b => b.onclick = () => showApp(b.dataset.open));
+  v.querySelectorAll('[data-reason]').forEach(inp => inp.onchange = () => { const a = q.apps.find(x => x.id === inp.dataset.reason); a.reason = inp.value; save(); });
+  v.querySelectorAll('[data-j]').forEach(b => b.onclick = () => { const a = q.apps.find(x => x.id === b.dataset.id); const inp = v.querySelector(`[data-reason="${a.id}"]`); a.reason = inp.value;
+    if (setJudge(a, b.dataset.j, r.get(a.id))) { render(); toast(`${(DB.staff[a.sab] || {}).name} ${a.child}: ${b.dataset.j}`); } });
+}
+
+// ----- 기관별 신청내역
+let fOrg = '';
+function vOrg(v, q) {
+  const r = evaluate(q); const live = q.apps.filter(a => a.judge !== '제외');
+  const orgs = DB.settings.orgs.filter(o => q.apps.some(a => (DB.staff[a.sab] || {}).org === o));
+  for (const a of q.apps) { const o = (DB.staff[a.sab] || {}).org || '기타'; if (!orgs.includes(o)) orgs.push(o); }
+  if (!orgs.includes(fOrg)) fOrg = orgs[0] || '';
+  const agg = (list, k) => { const l = list.filter(a => !k || a.kind === k); return [l.length, l.reduce((s, a) => s + r.get(a.id).payable, 0)]; };
+  const ov = orgs.map(o => { const l = live.filter(a => ((DB.staff[a.sab] || {}).org || '기타') === o); return [o, agg(l, '고등학생'), agg(l, '대학생'), agg(l)]; });
+  const T = [agg(live, '고등학생'), agg(live, '대학생'), agg(live)];
+  const mine = q.apps.filter(a => ((DB.staff[a.sab] || {}).org || '기타') === fOrg).sort((a, b) => (a.kind === b.kind ? 0 : a.kind === '고등학생' ? -1 : 1) || String((DB.staff[a.sab] || {}).name).localeCompare(String((DB.staff[b.sab] || {}).name)));
+  const sec = k => { const l = mine.filter(a => a.kind === k); if (!l.length) return ''; const [n, p] = agg(l.filter(a => a.judge !== '제외'));
+    return l.map((a, i) => { const s = DB.staff[a.sab] || {}; const x = r.get(a.id); const ac = acctOf(a); return `<tr class="click ${a.judge === '제외' ? 'excluded' : ''}" data-open="${a.id}">
+      <td>${i + 1}</td><td class="keep">${pill(a, x)}</td><td>${esc(s.dept)}</td><td><b>${esc(s.name)}</b><br><span class="muted">${esc(a.sab)}</span></td><td class="nw">${x.months != null ? ym(x.months) : '<span class="muted">미확인</span>'}</td>
+      <td>${esc(a.child)}</td><td>${esc(a.school)} ${a.grade ? esc(a.grade) + '학년' : ''}</td><td class="n">${won(a.amount)}</td><td class="n"><b>${won(x.payable)}</b></td>
+      <td>${esc(bankStd(ac.bank))}<br><span class="muted">${esc(ac.acct)}</span></td><td class="nw">${a.kind === '대학생' ? staffPriorSem(a.sab, q.id) + '회' : '-'}</td></tr>`; }).join('')
+      + `<tr class="sub"><td colspan="7">${k} 소계 ${n}명</td><td></td><td class="n">${won(p)}</td><td colspan="2"></td></tr>`; };
+  v.innerHTML = `<div class="card"><h2>${qLabel(q)} 기관별 합계 <span class="muted" style="font-weight:normal;font-size:12px">(제외 건 빼고, 실 지급 예정 기준)</span></h2>
+    <table><thead><tr><th>기관</th><th class="n">고등학생</th><th class="n">금액</th><th class="n">대학생</th><th class="n">금액</th><th class="n">합계</th><th class="n">금액</th></tr></thead><tbody>
+    ${ov.map(([o, h, u, t]) => `<tr class="click" data-org="${esc(o)}"><td><b>${esc(o)}</b></td><td class="n">${h[0]}</td><td class="n">${won(h[1])}</td><td class="n">${u[0]}</td><td class="n">${won(u[1])}</td><td class="n">${t[0]}</td><td class="n"><b>${won(t[1])}</b></td></tr>`).join('')}
+    <tr class="sub"><td>합계</td><td class="n">${T[0][0]}</td><td class="n">${won(T[0][1])}</td><td class="n">${T[1][0]}</td><td class="n">${won(T[1][1])}</td><td class="n">${T[2][0]}</td><td class="n">${won(T[2][1])}</td></tr></tbody></table></div>
+    <div class="card"><div class="flt" style="margin-bottom:10px">${orgs.map(o => `<button class="${o === fOrg ? 'on' : ''}" data-org="${esc(o)}">${esc(o)} ${q.apps.filter(a => ((DB.staff[a.sab] || {}).org || '기타') === o).length}</button>`).join('')}</div>
+    <div class="scroll"><table><thead><tr><th>no.</th><th>상태</th><th>부서</th><th>신청인</th><th>근속</th><th>자녀</th><th>학교·학년</th><th class="n">신청금액</th><th class="n">실 지급(예정)</th><th>지급 계좌</th><th>대학 누적</th></tr></thead><tbody>
+    ${sec('고등학생')}${sec('대학생')}</tbody></table></div></div>`;
+  v.querySelectorAll('[data-org]').forEach(b => b.onclick = () => { fOrg = b.dataset.org; render(); });
+  v.querySelectorAll('[data-open]').forEach(tr => tr.onclick = () => showApp(tr.dataset.open));
+}
+
+// ----- 한 명 상세
+function showApp(id) {
+  const q = Q(); const a = q.apps.find(x => x.id === id); if (!a) return;
+  const r = evaluate(q); const x = r.get(a.id); const s = DB.staff[a.sab] || {}; const d = a.docs || {}; const ac = acctOf(a);
+  const kv = pairs => `<div class="kv">${pairs.map(([k, v]) => `<span>${k}</span><span>${v === '' || v == null ? '<span class="muted">-</span>' : v}</span>`).join('')}</div>`;
+  const kids = Object.entries(DB.children).filter(([, c]) => c.sab === a.sab);
+  const cap = x.maxKids == null ? null : (x.maxKids >= 3 ? 24 : (x.maxKids > 0 ? 8 : 0));
+  const items = (a.items || []).length ? `<table><tbody>${a.items.map(i => `<tr><td>${esc(i.name)}</td><td class="n">${won(i.amt)}</td><td>${i.ok ? '<span class="tag t-ok">인정</span>' : '<span class="tag t-ex">제외</span>'}</td></tr>`).join('')}</tbody></table>` : '<span class="muted">영수증 항목 없음</span>';
+  const doc = (ok, n) => `<span class="tag ${ok ? 't-ok' : 't-bad'}">${n} ${ok ? 'O' : 'X'}</span>`;
+  const iss = issueList(x, ['bad', 'warn']), info = issueList(x, ['info']);
+  const dlg = $('#dlg'); dlg.classList.add('wide'); dlg.addEventListener('close', () => dlg.classList.remove('wide'), {once: true});
+  openDlg(`<div class="row" style="justify-content:space-between;align-items:center"><h3 style="margin:0">${esc(s.name)} <span class="muted" style="font-weight:normal">${esc(s.org)} ${esc(s.dept)}</span> ${pill(a, x)}</h3>
+      <div class="row"><button class="b" id="d_edit">내용 수정</button><button class="b" onclick="closeDlg()">닫기</button></div></div><br>
+    <div class="dgrid">
+      <div class="dbox"><h4>신청인</h4>${kv([['교번/사번', esc(a.sab) + ((s.hospNos || []).length ? ` <span class="muted">(병원 ${esc(s.hospNos.join(', '))})</span>` : '')], ['직급', esc(s.rank)], ['교원/직원', esc(s.kind)], ['보직', esc(s.bojik)],
+        ['확인 임용일', s.confDate ? `${esc(s.confDate)} <span class="muted">${esc(s.confBy || '')}</span>` : '<span class="tag t-warn">미확인</span>'], ['신청서 입사일', esc(s.applyDate)], ['근속(기준일)', x.months != null ? `${ym(x.months)} <span class="muted">(${q.base})</span>` : ''],
+        ['지원 가능 자녀', x.maxKids == null ? '' : x.maxKids + '명']])}</div>
+      <div class="dbox"><h4>자녀·학교</h4>${kv([['자녀', `<b>${esc(a.child)}</b>`], ['구분', esc(a.kind)], ['학교', esc(a.school) + (a.foreign ? ' <span class="tag t-info">국외</span>' : '')], ['학년', esc(a.grade)], ['접수일', esc(a.received)]])}
+        ${a.kind === '대학생' ? `<br><h4>대학 누적 (이번 분기 전)</h4>${kv([['신청인 합계', `<b>${staffPriorSem(a.sab, q.id)}회</b>${cap ? ` / 총 ${cap}학기` : ''}`], ['자녀별', kids.map(([k, c]) => `${esc(c.name)} ${priorSem(k, q.id)}회`).join(', ')]])}` : ''}</div>
+      <div class="dbox"><h4>금액</h4><div class="row" style="gap:24px"><div><span class="muted">신청금액</span><div class="big">${won(a.amount) || '-'}</div></div><div><span class="muted">실 지급(예정)</span><div class="big" style="color:var(--accent)">${won(x.payable)}</div></div></div>
+        <p class="muted" style="margin:6px 0">${esc(gapNote(a, x)) || '신청금액대로 지급'}</p>${items}
+        ${x.other ? `<p>장학금·타기관 지원 차감: ${won(x.other)}원</p>` : ''}<p class="muted">한도 ${won(x.limit)}원</p></div>
+      <div class="dbox"><h4>서류·계좌</h4><div>${doc(d.form, '신청서')}${doc(d.pledge, '확인란')}${doc(d.family, '가족관계')}${doc(d.receipt, '영수증')} <span class="muted">${esc(d.receiptType || '')}</span></div><br>
+        ${kv([['지급 계좌', `${esc(bankStd(ac.bank))} ${esc(ac.acct)}`], ['계좌 구분', ac.type]])}</div>
+    </div><br>
+    <div class="dbox"><h4>확인할 점</h4>${iss ? `<ul style="margin:0 0 0 18px;padding:0">${iss}</ul>` : '<span class="tag t-ok">오류·확인 사항 없음</span>'}
+      ${info ? `<details style="margin-top:6px"><summary class="muted">참고 사항 보기</summary><ul style="margin:4px 0 0 18px;padding:0">${info}</ul></details>` : ''}</div><br>
+    <div class="row"><label>사유(제외·예외 시)<input id="d_reason" value="${esc(a.reason)}" size="40"></label>
+      ${['지급', '지급(예외)', '보류', '제외'].map(j => `<button class="b ${j === '지급' ? 'p' : ''} ${j === '제외' ? 'd' : ''}" data-dj="${j}">${j}</button>`).join('')}</div>`);
+  $('#d_edit').onclick = () => { closeDlg(); editApp(a.id); };
+  document.querySelectorAll('[data-dj]').forEach(b => b.onclick = () => { a.reason = $('#d_reason').value; if (setJudge(a, b.dataset.dj, x)) { closeDlg(); render(); toast(`${s.name} ${a.child}: ${b.dataset.dj}`); } });
+}
+
+// ----- 신청 접수
+let filt = '';
+function vApps(v, q) {
+  const r = evaluate(q);
+  const rows = q.apps.filter(a => !filt || [a.sab, a.child, a.school, (DB.staff[a.sab] || {}).name, (DB.staff[a.sab] || {}).org].join(' ').includes(filt));
+  v.innerHTML = `<div class="card"><div class="row">
+    <button class="b p" onclick="editApp()">+ 신청 입력</button>
+    <label>엑셀에서 가져오기 (지원내역 양식·스캔 추출 양식)<input type="file" id="impApps" accept=".xlsx,.xls"></label>
+    <button class="b" onclick="exportImportTemplate()">스캔 추출 양식 내려받기</button>
+    <label>검색<input id="flt" value="${esc(filt)}" placeholder="성명·사번·학교"></label>
+    <span class="muted">${q.apps.length}건 · 노란 칸은 입력값, 점검은 저장 즉시 표시됩니다</span></div></div>
+    <div class="card scroll"><table><thead><tr><th>no.</th><th>구분</th><th>소속</th><th>성명(사번)</th><th>자녀</th><th>학교·학년</th><th class="n">신청금액</th><th class="n">실 지급(예정)금액</th><th>서류</th><th>점검</th><th></th></tr></thead><tbody>
+    ${rows.map((a, i) => { const s = DB.staff[a.sab] || {}; const d = a.docs || {}; return `<tr class="${a.judge === '제외' ? 'excluded' : ''}">
+      <td>${i + 1}</td><td>${esc(a.kind)}</td><td>${esc(s.org)}</td><td>${esc(s.name)}<br><span class="muted">${esc(a.sab)}</span></td>
+      <td>${esc(a.child)}</td><td>${esc(a.school)} ${a.grade ? esc(a.grade) + '학년' : ''}${a.foreign ? ' <span class="tag t-info">국외</span>' : ''}</td>
+      <td class="n">${won(a.amount)}</td><td class="n"><b>${won(r.get(a.id).payable)}</b><br>${gapCell(a, r.get(a.id))}</td>
+      <td>${['form:신청서', 'family:가족', 'receipt:영수증'].map(x => { const [k, n] = x.split(':'); return `<span class="tag ${d[k] ? 't-ok' : 't-bad'}">${n}</span>`; }).join('')}</td>
+      <td class="keep">${tags(r.get(a.id))}</td>
+      <td class="keep"><button class="b" onclick="editApp('${a.id}')">수정</button></td></tr>`; }).join('')}
+    </tbody></table></div>`;
+  $('#flt').oninput = e => { filt = e.target.value; const p = e.target.selectionStart; render(); const f = $('#flt'); f.focus(); f.setSelectionRange(p, p); };
+  $('#impApps').onchange = e => importApps(e.target.files[0]);
+}
+function editApp(id) {
+  if (!guard()) return;
+  const q = Q(); const a = id ? q.apps.find(x => x.id === id) : {id: uid(), kind: '대학생', docs: {}, judge: '', received: new Date().toISOString().slice(0, 10)};
+  const s = DB.staff[a.sab] || {}; const d = a.docs || {};
+  const staffOpts = Object.values(DB.staff).map(x => `<option value="${esc(x.sab)}">${esc(x.name)} · ${esc(x.org)}</option>`).join('');
+  openDlg(`<h3>${id ? '신청 수정' : '신청 입력'}</h3>
+  <fieldset><legend>1. 신청인 (사번을 입력하면 명부에서 불러옵니다)</legend><div class="form">
+    <label>교번/사번<input id="f_sab" list="stafflist" value="${esc(a.sab)}"><datalist id="stafflist">${staffOpts}</datalist></label>
+    <label>성명<input id="f_name" value="${esc(s.name)}"></label>
+    <label>소속기관<input id="f_org" list="orglist" value="${esc(s.org)}"><datalist id="orglist">${DB.settings.orgs.map(o => `<option>${esc(o)}</option>`).join('')}</datalist></label>
+    <label>부서<input id="f_dept" value="${esc(s.dept)}"></label>
+    <label>직급<input id="f_rank" value="${esc(s.rank)}"></label>
+    <label>교원/직원<select id="f_kind2">${['교원', '직원'].map(k => `<option ${s.kind === k ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
+    <label>보직구분<select id="f_bojik"><option></option>${BOJIK.map(k => `<option ${s.bojik === k ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
+    <label>신청서 입사일자<input id="f_apply" type="date" value="${esc(s.applyDate)}"></label>
+    <label>병원 사번(신청서 기재)<input id="f_hosp" value="${esc((s.hospNos || []).join(', '))}" placeholder="교번과 다를 때만"></label>
+    <div class="wide muted" id="f_staffinfo"></div></div></fieldset><br>
+  <fieldset><legend>2. 자녀·학교</legend><div class="form">
+    <label>구분<select id="f_kind">${['고등학생', '대학생'].map(k => `<option ${a.kind === k ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
+    <label>자녀성명<input id="f_child" value="${esc(a.child)}"></label>
+    <label>학교명<input id="f_school" value="${esc(a.school)}"></label>
+    <label>학년<input id="f_grade" value="${esc(a.grade)}"></label>
+    <label class="chk"><input type="checkbox" id="f_foreign" ${a.foreign ? 'checked' : ''}>국외학교</label>
+    <label class="chk"><input type="checkbox" id="f_grad" ${a.grad ? 'checked' : ''}>대학원 등 학부 외</label>
+    <div class="wide muted" id="f_childinfo"></div></div></fieldset><br>
+  <fieldset><legend>3. 서류 확인</legend><div class="form">
+    <label class="chk"><input type="checkbox" id="d_form" ${d.form ? 'checked' : ''}>신청서 [별표1]</label>
+    <label class="chk"><input type="checkbox" id="d_pledge" ${d.pledge ? 'checked' : ''}>신청서 제5항 확인·날인</label>
+    <label class="chk"><input type="checkbox" id="d_family" ${d.family ? 'checked' : ''}>가족관계증명서·등본</label>
+    <label class="chk"><input type="checkbox" id="d_receipt" ${d.receipt ? 'checked' : ''}>납입영수증</label>
+    <label>영수증 형태<select id="d_rtype">${['원본', '납입확인증 원본', '사본', '불가서류'].map(k => `<option ${d.receiptType === k ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
+    <label>접수일<input id="f_recv" type="date" value="${esc(a.received)}"></label></div></fieldset><br>
+  <fieldset><legend>4. 영수증 항목 (수업료·등록금·입학금 등 인정 항목만 지급)</legend>
+    <table id="items"><thead><tr><th>항목명</th><th>금액(원)</th><th>인정</th><th></th></tr></thead><tbody></tbody></table>
+    <div class="row" style="margin-top:6px"><button class="b" id="additem" type="button">+ 항목</button><span class="muted">학생회비·급식비·기숙사비·교재비 등은 자동으로 "인정" 해제됩니다. 필요하면 직접 바꾸세요.</span></div>
+    <div class="form" style="margin-top:10px">
+    <label>영수증 합계<input id="f_rtot" readonly><span class="han"></span></label>
+    <label>인정 금액(지급 기준)<input id="f_ramt" readonly><span class="han"></span></label>
+    <label>인정 금액 다시 입력<input id="f_ramt2" class="amt" value="${id && a.receiptAmt != null ? esc(a.receiptAmt) : ''}" placeholder="영수증 보고 다시 계산해 입력"><span class="han"></span></label>
+    <label>신청서 금액(원)<input id="f_amt" class="amt" value="${esc(a.amount)}"><span class="han"></span></label>
+    <label>타기관 지원·장학금(원)<input id="f_other" class="amt" value="${esc(a.otherAid)}"><span class="han"></span></label>
+    <div class="wide" id="f_amtwarn"></div></div></fieldset><br>
+  <fieldset><legend>5. 입금 계좌</legend><div class="form">
+    <label class="chk"><input type="radio" name="acctType" value="급여" ${a.acctType !== '별도' ? 'checked' : ''}>급여계좌 (신청서에 계좌 기재 없음)</label>
+    <label class="chk"><input type="radio" name="acctType" value="별도" ${a.acctType === '별도' ? 'checked' : ''}>신청서 4-1항 기재 계좌</label>
+    <div class="wide" id="payacct"></div>
+    <label class="sep">은행<input id="f_bank" list="banklist" value="${esc(a.bank)}"><datalist id="banklist">${BANKS.map(b => `<option>${esc(b)}</option>`).join('')}</datalist></label>
+    <label class="sep">계좌번호<input id="f_acct" value="${esc(a.acct)}"></label>
+    <div class="wide muted" id="f_acctinfo"></div></div></fieldset>
+  <br><div class="row"><button class="b p" id="f_ok">저장</button><button class="b" onclick="closeDlg()">취소</button>${id ? `<button class="b d" id="f_del">삭제</button>` : ''}</div>`);
+  const info = () => {
+    const sab = $('#f_sab').value.trim(); const st = DB.staff[sab];
+    if (st) {
+      $('#f_staffinfo').innerHTML = `명부: ${esc(st.name)} · ${esc(st.org)} · 확인 임용일 <b>${esc(st.confDate || '미확인')}</b>${st.confDate ? ` (${ym(months(st.confDate, Q().base))})` : ''} · 상태 ${esc(st.status || '재직')}`;
+      $('#f_acctinfo').textContent = (() => { const la = lastAccount(sab, Q().id); return la ? `지난 지급 계좌: ${la.bank} ${la.acct}` : ''; })();
+    } else $('#f_staffinfo').textContent = sab ? '명부에 없는 사번입니다. 저장하면 새로 등록됩니다.' : '';
+    const ck = childKey(sab, $('#f_child').value); const c = DB.children[ck];
+    $('#f_childinfo').textContent = c ? `이 자녀 기존 대학 지급학기: ${priorSem(ck, Q().id)}학기 · 교직원 전체 ${staffPriorSem(sab, Q().id)}학기` : '';
+  };
+  $('#f_sab').addEventListener('change', () => {
+    const st = DB.staff[$('#f_sab').value.trim()];
+    if (st) { $('#f_name').value = st.name || ''; $('#f_org').value = st.org || ''; $('#f_dept').value = st.dept || ''; $('#f_rank').value = st.rank || ''; $('#f_kind2').value = st.kind || '교원'; $('#f_bojik').value = st.bojik || ''; $('#f_apply').value = st.applyDate || ''; }
+    info();
+  });
+  $('#f_child').addEventListener('input', info); info();
+  let items = (a.items && a.items.length ? a.items : (a.receiptAmt != null ? [{name: '학자금', amt: a.receiptAmt, ok: true}] : [{name: '수업료', amt: null, ok: true}])).map(x => ({...x}));
+  const drawItems = () => {
+    $('#items tbody').innerHTML = items.map((it, i) => `<tr><td><input data-i="${i}" data-k="name" value="${esc(it.name)}" list="itemlist" size="14"></td>
+      <td><input data-i="${i}" data-k="amt" class="amt" value="${esc(it.amt ?? '')}" size="12"><span class="han"></span></td>
+      <td><input type="checkbox" data-i="${i}" data-k="ok" ${it.ok ? 'checked' : ''}></td><td><button class="b" type="button" data-del="${i}">삭제</button></td></tr>`).join('')
+      + `<datalist id="itemlist">${['수업료', '등록금', '입학금', '기성회비', '운영회비', '학생회비', '급식비', '기숙사비', '교재비'].map(x => `<option>${x}</option>`).join('')}</datalist>`;
+    $('#items tbody').querySelectorAll('input').forEach(el => el.addEventListener(el.type === 'checkbox' ? 'change' : 'input', () => {
+      const it = items[+el.dataset.i];
+      if (el.dataset.k === 'ok') it.ok = el.checked;
+      else if (el.dataset.k === 'amt') it.amt = num(el.value);
+      else { it.name = el.value; it.ok = eligibleItem($('#f_kind').value, el.value); el.closest('tr').querySelector('[data-k=ok]').checked = it.ok; }
+      amtInfo();
+    }));
+    $('#items tbody').querySelectorAll('[data-del]').forEach(el => el.onclick = () => { items.splice(+el.dataset.del, 1); drawItems(); amtInfo(); });
+  };
+  $('#additem').onclick = () => { items.push({name: '', amt: null, ok: false}); drawItems(); amtInfo(); };
+  const acctUI = () => {
+    const t = document.querySelector('input[name=acctType]:checked').value; const st = DB.staff[$('#f_sab').value.trim()] || {};
+    document.querySelectorAll('#dlgin .sep').forEach(el => el.style.display = t === '별도' ? '' : 'none');
+    $('#payacct').innerHTML = t === '급여' ? (st.payAcct ? `명부 급여계좌: <b>${esc(st.payBank)} ${esc(st.payAcct)}</b>` : '<span class="tag t-bad">명부에 급여계좌가 없습니다. 교직원·자녀 명부 탭에서 급여계좌 엑셀을 불러오거나 직접 등록하세요.</span>') : '';
+  };
+  document.querySelectorAll('input[name=acctType]').forEach(el => el.onchange = acctUI);
+  $('#f_sab').addEventListener('change', acctUI);
+  drawItems(); acctUI();
+  const amtInfo = () => {
+    document.querySelectorAll('#dlgin .amt').forEach(el => { const v = num(el.value); el.nextElementSibling.textContent = v ? `${won(v)} · ${hanAmt(v)}` : ''; });
+    const tot = itemSum(items), okSum = itemSum(items, true);
+    $('#f_rtot').value = won(tot); $('#f_ramt').value = won(okSum);
+    $('#f_rtot').nextElementSibling.textContent = tot ? hanAmt(tot) : ''; $('#f_ramt').nextElementSibling.textContent = okSum ? hanAmt(okSum) : '';
+    const a1 = num($('#f_amt').value), r1 = okSum || null, r2 = num($('#f_ramt2').value);
+    const m = [];
+    if (r1 != null && r2 != null && r1 !== r2) m.push('인정 금액과 다시 입력한 값이 다릅니다');
+    if (a1 != null && r1 != null && a1 !== r1) m.push(`신청서 금액과 인정 금액이 다릅니다(차이 ${won(Math.abs(a1 - r1))}원)`);
+    $('#f_amtwarn').innerHTML = m.map(x => `<span class="tag t-bad">${x}</span>`).join('');
+  };
+  document.querySelectorAll('#dlgin .amt').forEach(el => el.addEventListener('input', amtInfo)); amtInfo();
+  $('#f_ok').onclick = () => {
+    const sab = $('#f_sab').value.trim(); if (!sab || !$('#f_child').value.trim()) { alertBox('사번과 자녀성명은 꼭 입력하세요.'); return; }
+    const r1 = itemSum(items, true) || null, r2 = num($('#f_ramt2').value);
+    if (r1 != null && r1 !== r2) { alertBox('인정 금액과 다시 입력한 값이 다릅니다. 영수증 항목을 다시 확인해 주세요.'); return; }
+    if (sab.startsWith('TEMP-') && !confirmInline('교번이 아직 임시값입니다. 그대로 저장할까요?')) return;
+    const oldSab = a.sab; const st = DB.staff[sab] || (DB.staff[sab] = {sab, status: '재직'});
+    if (oldSab && oldSab !== sab && DB.staff[oldSab]) {
+      const o = DB.staff[oldSab];
+      for (const k of ['confDate', 'confBy', 'confNote', 'confHist', 'payBank', 'payAcct', 'paySrc']) if (o[k] && !st[k]) st[k] = o[k];
+      for (const [k, c] of Object.entries(DB.children)) if (c.sab === oldSab) { const nk = childKey(sab, c.name); if (!DB.children[nk]) DB.children[nk] = {...c, sab}; delete DB.children[k]; }
+      if (oldSab.startsWith('TEMP-') && !Object.values(DB.quarters).some(q => q.apps.some(x => x !== a && x.sab === oldSab))) delete DB.staff[oldSab];
+    }
+    st.hospNos = $('#f_hosp').value.split(',').map(x => x.trim()).filter(Boolean);
+    Object.assign(st, {name: $('#f_name').value.trim(), org: $('#f_org').value.trim(), dept: $('#f_dept').value.trim(), rank: $('#f_rank').value.trim(),
+      kind: $('#f_kind2').value, bojik: $('#f_bojik').value, applyDate: $('#f_apply').value});
+    Object.assign(a, {sab, kind: $('#f_kind').value, child: $('#f_child').value.trim(), school: $('#f_school').value.trim(), grade: $('#f_grade').value.trim(),
+      foreign: $('#f_foreign').checked, grad: $('#f_grad').checked, received: $('#f_recv').value,
+      amount: num($('#f_amt').value), items: items.filter(i => i.name || i.amt), receiptAmt: items.some(i => num(i.amt)) ? itemSum(items, true) : null, receiptTotal: itemSum(items) || null,
+      otherAid: num($('#f_other').value), needCheck: (a.needCheck || '').split(' / ').filter(x => !/교번/.test(x) || sab.startsWith('TEMP-')).join(' / '),
+      acctType: document.querySelector('input[name=acctType]:checked').value, bank: $('#f_bank').value.trim(), acct: $('#f_acct').value.trim(),
+      docs: {form: $('#d_form').checked, pledge: $('#d_pledge').checked, family: $('#d_family').checked, receipt: $('#d_receipt').checked, receiptType: $('#d_rtype').value}});
+    const ck = childKey(sab, a.child); if (!DB.children[ck]) DB.children[ck] = {sab, name: a.child, base: 0};
+    if (!id) Q().apps.push(a);
+    closeDlg(); save(); render(); toast('저장했습니다');
+  };
+  if (id) $('#f_del').onclick = () => { if (confirmInline('이 신청을 삭제할까요?')) { Q().apps = Q().apps.filter(x => x.id !== id); closeDlg(); save(); render(); } };
+}
+function confirmInline(m) { return window.confirm(m); }
+
+function exportImportTemplate() {
+  const head = ['no.', '구분', '소속', '부서', '직급', '교번/사번', '신청서 사번', '성명', '교원/직원', '보직구분', '임용일자', '자녀성명', '학교명', '학년', '신청금액', '영수증항목', '계좌구분', '은행', '계좌번호',
+    '신청서', '신청서확인란', '가족관계증명서', '납입영수증', '영수증형태', '국외', '접수일', '누적 신청횟수', '비고', '확인필요', '타기관지원'];
+  const ex = [1, '대학생', '분당차병원', '내과', '교수', '', '110000', '홍길동', '교원', '', '2015-03-01', '홍자녀', '○○대학교', 2, 3000000, '수업료:2,950,000; 학생회비:50,000(제외)', '급여', '', '',
+    'O', 'O', 'O', 'O', '원본', '', '2026-09-05', 3, '홍첫째 3회', '계좌번호 손글씨 불명확', 0];
+  const ws = XLSX.utils.aoa_to_sheet([['자녀학비보조 스캔 추출 양식 (예시 행은 지우고 사용)'], [], head, ex]);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '신청내역'); XLSX.writeFile(wb, '자녀학비보조_스캔추출_양식.xlsx');
+}
+
+const isGyobun = x => /^[PU]\d{3,}$/i.test(String(x).trim());
+function resolveSab(raw, name, org) {
+  raw = String(raw || '').trim(); name = String(name || '').trim();
+  if (isGyobun(raw)) return {sab: raw.toUpperCase(), note: ''};
+  if (raw) for (const s of Object.values(DB.staff)) if ((s.hospNos || []).includes(raw)) return {sab: s.sab, note: ''};
+  const cand = Object.values(DB.staff).filter(s => s.name === name && !s.sab.startsWith('TEMP-') && (!org || !s.org || s.org === org));
+  if (cand.length === 1) {
+    const s = cand[0]; if (raw) { s.hospNos = [...new Set([...(s.hospNos || []), raw])]; }
+    return {sab: s.sab, note: raw ? `신청서 사번 ${raw} → 명부 교번 ${s.sab}(이름·기관으로 연결, 맞는지 확인)` : ''};
+  }
+  return {sab: 'TEMP-' + (raw || name), note: `교번 미확인(신청서 사번 ${raw || '없음'}): 인사담당 또는 시스템에서 확인 후 신청 수정에서 교번 입력`, hosp: raw};
+}
+
+// ----- 엑셀 가져오기 (기존 지원내역 양식)
+function readBook(file) {
+  return file.arrayBuffer().then(buf => {
+    try { return XLSX.read(buf, {cellDates: true}); }
+    catch (e) { throw new Error('파일을 열 수 없습니다. 암호가 걸린 파일이면 엑셀에서 암호를 해제한 뒤 다시 저장해 주세요.'); }
+  });
+}
+function sheetRows(wb) {
+  for (const n of wb.SheetNames) {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[n], {header: 1, raw: true, defval: ''});
+    const hi = rows.findIndex(r => r.some(c => String(c).replace(/\s/g, '').includes('교번/사번')));
+    if (hi >= 0) return {head: rows[hi].map(h => String(h).replace(/\s/g, '')), rows: rows.slice(hi + 1)};
+  }
+  throw new Error('"교번/사번" 열이 있는 시트를 찾지 못했습니다.');
+}
+const col = (head, ...names) => { for (const n of names) { let i = head.indexOf(n); if (i < 0) i = head.findIndex(h => h.startsWith(n)); if (i >= 0) return i; } return -1; };
+async function importApps(file) {
+  if (!file || !guard()) return;
+  try {
+    const {head, rows} = sheetRows(await readBook(file)); const q = Q();
+    const c = k => col(head, ...k);
+    const I = {kind: c(['구분']), org: c(['소속']), dept: c(['부서']), rank: c(['직급']), sab: c(['교번/사번', '교번']), formSab: c(['신청서사번']), name: c(['성명']), kind2: c(['교원/직원']),
+      bojik: c(['보직구분']), apply: c(['임용일자']), child: c(['자녀성명']), school: c(['학교명']), grade: c(['학년']), amt: c(['한화', '신청금액', '금액']),
+      bank: c(['은행']), acct: c(['계좌번호']), rec: c(['납입영수증']), fam: c(['가족관계증명서']), cum: c(['누적신청횟수', '누적']), note: c(['비고']),
+      items: c(['영수증항목']), acctType: c(['계좌구분']), form: c(['신청서']), pledge: c(['신청서확인란']), recv: c(['접수일']), foreign: c(['국외']), check: c(['확인필요']), rtype: c(['영수증형태']), other: c(['타기관지원', '장학금'])};
+    const has = k => I[k] >= 0; const yesv = v => /^(O|Y|예|있음|TRUE)$/i.test(String(v).trim());
+    let n = 0;
+    for (const r of rows) {
+      const kind = String(r[I.kind] || '').trim();
+      const rawSab = String((I.formSab >= 0 && r[I.formSab]) || r[I.sab] || '').trim();
+      if ((!rawSab && !String(r[I.name] || '').trim()) || !/^(고등학생|대학생)$/.test(kind) || !String(r[I.child] || '').trim()) continue;
+      const given = I.sab >= 0 && isGyobun(r[I.sab]) ? String(r[I.sab]).trim().toUpperCase() : '';
+      const rs = given ? {sab: given, note: ''} : resolveSab(rawSab, r[I.name], String(r[I.org] || '').trim());
+      const sab = rs.sab;
+      const st = DB.staff[sab] || (DB.staff[sab] = {sab, status: '재직'});
+      if (given && rawSab && !isGyobun(rawSab)) st.hospNos = [...new Set([...(st.hospNos || []), rawSab])];
+      if (rs.hosp) st.hospNos = [rs.hosp];
+      Object.assign(st, {name: String(r[I.name]).trim(), org: String(r[I.org]).trim(), dept: String(r[I.dept]).trim(), rank: String(r[I.rank]).trim(),
+        kind: String(r[I.kind2]).trim() || '교원', bojik: BOJIK.includes(String(r[I.bojik]).trim()) ? String(r[I.bojik]).trim() : (st.bojik || ''),
+        applyDate: ymd(r[I.apply]) || st.applyDate || ''});
+      if (st.kind === '직원' && !st.confDate && st.applyDate) setConf(st, st.applyDate, '가져오기(신청 임용일, 총무팀 확인 필요)', '');
+      if (st.org && !DB.settings.orgs.includes(st.org)) DB.settings.orgs.push(st.org);
+      const child = String(r[I.child]).trim(); const ck = childKey(sab, child);
+      const note = String(r[I.note] || ''); const cum = num(r[I.cum]);
+      // 비고가 "대학생 N회(자녀 a회, …), 고등학생 M회(…)" 형식이면 대학생 괄호 안만 누적학기로 씀
+      const um = note.match(/대학생\s*\d+회\s*\(([^)]*)\)/);
+      const noteU = um ? um[1] : (/고등학생\s*\d+회\s*\(/.test(note) ? '' : note);
+      for (const mm of noteU.matchAll(/([가-힣A-Za-z]{2,})\s*(\d+)회/g)) {
+        const sk = childKey(sab, mm[1]); if (mm[1] !== child && !DB.children[sk]) DB.children[sk] = {sab, name: mm[1], base: +mm[2], baseQ: q.year * 10 + q.q, note: '비고에서 생성'};
+      }
+      if (!DB.children[ck]) {
+        let base = 0;
+        if (kind === '대학생') { const m = noteU.match(new RegExp(child.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*(\\d+)회')); base = m ? +m[1] : (/\d+회/.test(noteU) ? 0 : (cum || 0)); }
+        DB.children[ck] = {sab, name: child, base, baseQ: q.year * 10 + q.q, note};
+      }
+      const yes = v => String(v).trim().toUpperCase() === 'O';
+      const school = String(r[I.school]).trim();
+      const items = has('items') && String(r[I.items]).trim() ? parseItems(kind, r[I.items]) : [{name: '학자금(가져오기)', amt: num(r[I.amt]), ok: true}];
+      const bankV = String(r[I.bank] || '').trim(), acctV = String(r[I.acct] || '').trim();
+      let acctType = has('acctType') ? (/별도|기재|4-1/.test(String(r[I.acctType])) ? '별도' : '급여') : '급여';
+      if (!has('acctType') && acctV) { if (!st.payAcct) { st.payBank = bankV; st.payAcct = acctV; st.paySrc = '지원내역 가져오기'; } else if (st.payAcct.replace(/-/g, '') !== acctV.replace(/-/g, '')) acctType = '별도'; }
+      q.apps.push({id: uid(), sab, kind, child, school, grade: String(r[I.grade] ?? ''), foreign: has('foreign') ? yesv(r[I.foreign]) : /[A-Za-z]/.test(school),
+        amount: num(r[I.amt]), items, receiptAmt: items.some(i => num(i.amt)) ? itemSum(items, true) : null, receiptTotal: itemSum(items) || null, otherAid: has('other') ? num(r[I.other]) : null,
+        acctType, bank: acctType === '별도' ? bankV : '', acct: acctType === '별도' ? acctV : '', needCheck: [rs.note, has('check') ? String(r[I.check] || '').trim() : ''].filter(Boolean).join(' / '),
+        docs: {form: has('form') ? yesv(r[I.form]) : true, pledge: has('pledge') ? yesv(r[I.pledge]) : true, family: yes(r[I.fam]), receipt: yes(r[I.rec]), receiptType: has('rtype') && String(r[I.rtype]).trim() ? String(r[I.rtype]).trim() : '원본'},
+        judge: /불가|제외/.test(String(r[0])) ? '제외' : '', reason: /불가|제외/.test(String(r[0])) ? `${String(r[0]).trim()}: ${String(r[I.bojik] || '').trim()}` : '', received: has('recv') ? ymd(r[I.recv]) : ''});
+      n++;
+    }
+    save(); render(); alertBox(`${n}건을 가져왔습니다. ${has('items') ? '영수증 항목과 확인필요 메모를 함께 불러왔습니다. 검토·판정 탭에서 주황 표시를 원본과 대조해 주세요.' : '서류는 엑셀의 O/X 값으로, 영수증 금액은 신청액으로 채웠으니 원본과 대조해 주세요.'}`);
+  } catch (e) { alertBox(e.message); }
+}
+
+// ----- 재직 확인
+function vConfirm(v, q) {
+  const sabs = [...new Set(q.apps.map(a => a.sab))]; const by = {의전원: [], 교무팀: [], 총무팀: []};
+  for (const s of sabs) { const st = DB.staff[s] || {sab: s}; by[confirmPlace(st)].push(st); }
+  v.innerHTML = `<div class="notice">신청서 입사일자는 병원 최초 임용일일 수 있습니다. 재직기간은 아래 "확인 임용일"(학교 전임·정규직 임용일)로만 계산합니다. 한 번 확인한 날짜는 명부에 저장되어 다음 분기에도 쓰입니다.</div>
+  <div class="card"><div class="row">
+    <button class="b p" onclick="exportConfirm('의전원')">의전원 확인 요청 엑셀</button>
+    <button class="b p" onclick="exportConfirm('교무팀')">교무팀 확인 요청 엑셀</button>
+    <label>회신 엑셀 가져오기 (암호 해제 후)<input type="file" id="impConf" accept=".xlsx,.xls"></label>
+    <label class="chk"><input type="checkbox" id="onlyNew" ${q.confOnlyNew ? 'checked' : ''}>요청 엑셀에 미확인자만 넣기</label></div>
+    ${(q.confImports || []).length ? `<br><table><thead><tr><th>불러온 회신 파일</th><th>파일 수정일</th><th>불러온 시각</th><th class="n">반영</th><th class="n">정정</th></tr></thead><tbody>${q.confImports.slice().reverse().map(x => `<tr><td>${esc(x.file)}</td><td>${esc(x.mod)}</td><td>${esc(x.at.slice(0, 16).replace('T', ' '))}</td><td class="n">${x.n}</td><td class="n">${x.changed}</td></tr>`).join('')}</tbody></table>` : ''}</div>
+  ${Object.entries(by).map(([k, list]) => `<div class="card"><h2>${k} 확인 (${list.length}명, 미확인 ${list.filter(s => !s.confDate).length}명)</h2><div class="scroll"><table>
+    <thead><tr><th>사번</th><th>성명</th><th>소속·부서</th><th>신청 임용일</th><th>확인 임용일</th><th>근속(기준일)</th><th>상태</th><th>확인 비고</th><th>변경 이력</th></tr></thead><tbody>
+    ${list.map(s => `<tr><td>${esc(s.sab)}</td><td>${esc(s.name)}</td><td>${esc(s.org)} ${esc(s.dept)}</td><td>${esc(s.applyDate)}</td>
+      <td><input type="date" value="${esc(s.confDate)}" data-sab="${esc(s.sab)}" data-f="confDate"></td>
+      <td>${s.confDate ? ym(months(s.confDate, q.base)) : '<span class="tag t-warn">미확인</span>'}${s.confDate && s.applyDate && s.confDate !== s.applyDate ? ' <span class="tag t-info">신청일과 다름</span>' : ''}</td>
+      <td><select data-sab="${esc(s.sab)}" data-f="status">${STATUS.map(x => `<option ${(s.status || '재직') === x ? 'selected' : ''}>${x}</option>`).join('')}</select></td>
+      <td><input value="${esc(s.confNote)}" data-sab="${esc(s.sab)}" data-f="confNote" size="18"></td>
+      <td>${(s.confHist || []).length ? `<a href="#" data-hist="${esc(s.sab)}">${s.confHist.length}건</a><br><span class="muted">${esc(s.confHist[s.confHist.length - 1].src)}</span>` : ''}</td></tr>`).join('')}
+    </tbody></table></div></div>`).join('')}`;
+  v.querySelectorAll('[data-sab]').forEach(el => el.onchange = () => { const s = DB.staff[el.dataset.sab];
+    if (el.dataset.f === 'confDate') setConf(s, el.value, '직접 입력', s.confNote); else s[el.dataset.f] = el.value; save(); render(); });
+  v.querySelectorAll('[data-hist]').forEach(el => el.onclick = e => { e.preventDefault(); const s = DB.staff[el.dataset.hist];
+    openDlg(`<h3>${esc(s.name)} 임용일 변경 이력</h3><table><thead><tr><th>일시</th><th>출처</th><th>이전</th><th>이후</th><th>비고</th></tr></thead><tbody>${(s.confHist || []).slice().reverse().map(h => `<tr><td>${esc(h.at.slice(0, 16).replace('T', ' '))}</td><td>${esc(h.src)}</td><td>${esc(h.from || '-')}</td><td>${esc(h.to || '-')}</td><td>${esc(h.note || '')}</td></tr>`).join('')}</tbody></table><br><button class="b" onclick="closeDlg()">닫기</button>`); });
+  $('#impConf').onchange = e => importConfirm(e.target.files[0]);
+  $('#onlyNew').onchange = e => { q.confOnlyNew = e.target.checked; save(); };
+}
+function exportConfirm(place) {
+  const q = Q(); const seen = new Set(); const out = [];
+  for (const a of q.apps) {
+    const s = DB.staff[a.sab] || {}; if (confirmPlace(s) !== place) continue;
+    if (q.confOnlyNew && s.confDate) continue;
+    out.push([out.length + 1, a.kind, s.org, s.dept, s.rank, a.sab, s.name, s.kind, s.bojik || '', s.applyDate || '', q.base, ym(months(s.applyDate, q.base)), seen.has(a.sab) ? '중복' : '', '', '']);
+    seen.add(a.sab);
+  }
+  const aoa = [[`${q.year}학년도 자녀학비 보조금 신청(${q.year}년 ${q.q}분기) - ${place} 확인 요청`], [],
+    ['no.', '구분', '소속', '부서', '직급', '교번/사번', '성명', '교원/직원', '보직구분', '임용일자(신청서)', '기준일', '근속년수(신청서)', '비고', '전임최초임용일', '확인 비고(휴직·정직·전환 등)'], ...out];
+  const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [4, 8, 12, 18, 8, 10, 8, 8, 8, 12, 11, 10, 6, 14, 22].map(w => ({wch: w}));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, `${place}_확인 요청`);
+  XLSX.writeFile(wb, `${q.year}학년도 ${q.q}분기 자녀학비 보조_${place} 확인 요청.xlsx`);
+}
+function setConf(s, d, src, note) {
+  const from = s.confDate || '';
+  if (from === (d || '') && (note || '') === (s.confNote || '')) return false;
+  (s.confHist || (s.confHist = [])).push({at: new Date().toISOString(), src, from, to: d || '', note: note || ''});
+  s.confDate = d || ''; s.confBy = confirmPlace(s); s.confNote = note || '';
+  if (from !== (d || '')) s.confAt = new Date().toISOString();
+  return true;
+}
+async function importConfirm(file) {
+  if (!file) return;
+  try {
+    const q = Q(); const {head, rows} = sheetRows(await readBook(file));
+    const iS = col(head, '교번/사번'), iN = head.indexOf('비고'), iN2 = col(head, '확인비고');
+    let iC = col(head, '전임최초임용일'); const fallback = iC < 0;
+    if (fallback) iC = col(head, '임용일자');
+    if (iC < 0) throw new Error('"전임최초임용일" 또는 "임용일자" 열이 없습니다. 회신 파일이 맞는지 확인해 주세요.');
+    const plan = [], miss = [], seen = new Set();
+    for (const r of rows) {
+      const sab = String(r[iS] || '').trim(); if (!sab || seen.has(sab)) continue; seen.add(sab);
+      const s = DB.staff[sab]; if (!s) { miss.push(sab); continue; }
+      const d = ymd(r[iC]);
+      const note = [iN >= 0 ? r[iN] : '', iN2 >= 0 ? r[iN2] : ''].map(x => String(x || '').trim()).filter(x => x && x !== '중복').join(' / ');
+      const noteFinal = note || (!d ? '회신에 전임 임용일 없음' : '');
+      let status = s.status || '재직';
+      if (/임상/.test(note)) status = '임상교수 전환'; else if (/휴직/.test(note)) status = '휴직';
+      else if (/정직/.test(note)) status = '정직'; else if (/퇴직|사직/.test(note)) status = '퇴직';
+      const kind = !s.confDate && d ? '신규' : ((s.confDate || '') !== d ? '정정'
+        : (status !== (s.status || '재직') || noteFinal !== (s.confNote || '') ? '비고·상태' : '같음'));
+      plan.push({s, d, note: noteFinal, status, kind});
+    }
+    const place = plan.length ? confirmPlace(plan[0].s) : '';
+    const logs = (q.confImports || []).filter(x => x.place === place);
+    const prev = logs.find(x => x.file === file.name);
+    const mod = file.lastModified ? new Date(file.lastModified).toLocaleString('ko-KR') : '';
+    const older = logs.some(x => x.modRaw && file.lastModified && x.modRaw > file.lastModified);
+    const ch = plan.filter(p => p.kind !== '같음');
+    const cls = {신규: 't-ok', 정정: 't-bad', '비고·상태': 't-warn'};
+    openDlg(`<h3>회신 반영 미리보기 (${esc(place)})</h3>
+      <p><b>${esc(file.name)}</b> · 파일 수정 ${esc(mod)} · ${plan.length}명 중 바뀌는 사람 <b>${ch.length}명</b></p>
+      ${prev ? `<div class="notice">같은 이름의 파일을 ${esc(prev.at.slice(0, 16).replace('T', ' '))}에 이미 불러왔습니다. 정정본이라면 아래 "정정" 줄이 맞는지 확인하세요.</div>` : ''}
+      ${older ? `<div class="notice">이전에 불러온 ${esc(place)} 회신보다 수정일이 오래된 파일입니다. 최신 정정본이 맞는지 확인하세요.</div>` : ''}
+      ${fallback ? `<div class="notice">이 파일에는 "전임최초임용일" 열이 없어 "임용일자" 열을 확인 값으로 읽었습니다. 회신처가 그 열을 직접 고쳐 보낸 파일인지 확인하세요. 프로그램에서 만든 확인 요청 엑셀로 요청하면 이 문제가 생기지 않습니다.</div>` : ''}
+      ${miss.length ? `<p class="muted">명부에 없는 사번 ${miss.length}개(무시): ${esc(miss.join(', '))}</p>` : ''}
+      <div class="scroll" style="max-height:45vh"><table><thead><tr><th>구분</th><th>사번</th><th>성명</th><th>현재 확인 임용일</th><th>회신 값</th><th>상태·비고</th></tr></thead><tbody>
+      ${ch.map(p => `<tr><td><span class="tag ${cls[p.kind]}">${p.kind}</span></td><td>${esc(p.s.sab)}</td><td>${esc(p.s.name)}</td><td>${esc(p.s.confDate || '-')}</td><td><b>${esc(p.d || '-')}</b></td><td>${esc(p.status)} ${esc(p.note)}</td></tr>`).join('') || '<tr><td colspan="6">바뀌는 내용이 없습니다.</td></tr>'}
+      </tbody></table></div><br>
+      <div class="row"><button class="b p" id="cfok" ${ch.length ? '' : 'disabled'}>${ch.length}명 반영</button><button class="b" onclick="closeDlg()">취소</button></div>`);
+    $('#cfok').onclick = () => {
+      let changed = 0;
+      for (const p of ch) { if (p.kind === '정정') changed++; setConf(p.s, p.d, file.name, p.note); p.s.status = p.status; }
+      (q.confImports || (q.confImports = [])).push({file: file.name, mod, modRaw: file.lastModified || 0, at: new Date().toISOString(), n: ch.length, changed, place});
+      closeDlg(); save(); render(); toast(`${ch.length}명 반영 (정정 ${changed}명)`);
+    };
+  } catch (e) { alertBox(e.message); }
+}
+
+// ----- 검토·판정
+let onlyIssue = false;
+function vReview(v, q) {
+  const r = evaluate(q);
+  const list = q.apps.filter(a => !onlyIssue || r.get(a.id).issues.length);
+  v.innerHTML = `<div class="card"><div class="row">
+    <label class="chk"><input type="checkbox" id="oi" ${onlyIssue ? 'checked' : ''}>점검 항목 있는 건만 보기</label>
+    <button class="b" id="autoj">오류 없는 건 일괄 "지급"</button>
+    <span class="muted">빨강 = 지급 불가 사유, 주황 = 확인 필요, 파랑 = 참고. 빨강이 있는데 지급하려면 "지급(예외)"와 사유를 적으세요.</span></div></div>
+  <div class="card scroll"><table><thead><tr><th>no.</th><th style="min-width:90px">성명·소속</th><th style="min-width:90px">자녀·학교</th><th>근속</th><th class="n">신청금액</th><th class="n">실 지급금액</th><th style="min-width:160px">차이 사유</th><th>점검</th><th>판정</th><th>제외·예외 사유</th></tr></thead><tbody>
+  ${list.map((a, i) => { const s = DB.staff[a.sab] || {}; const x = r.get(a.id); return `<tr class="${a.judge === '제외' ? 'excluded' : ''}">
+    <td>${i + 1}</td><td>${esc(s.name)} <span class="muted">${esc(a.sab)}</span><br><span class="muted">${esc(s.org)} · ${esc(a.kind)}</span></td>
+    <td>${esc(a.child)}<br><span class="muted">${esc(a.school)}</span></td><td class="nw">${ym(x.months)}</td>
+    <td class="n">${won(a.amount)}</td><td class="n"><b>${won(x.payable)}</b><br>${gapCell(a, x)}</td><td>${esc(gapNote(a, x))}</td><td class="keep">${tags(x)}</td>
+    <td class="keep"><select data-id="${a.id}" data-f="judge"><option></option>${['지급', '지급(예외)', '보류', '제외'].map(j => `<option ${(a.judge === j && !(j === '지급' && a.exception)) || (j === '지급(예외)' && a.judge === '지급' && a.exception) ? 'selected' : ''}>${j}</option>`).join('')}</select></td>
+    <td class="keep"><input data-id="${a.id}" data-f="reason" value="${esc(a.reason)}" size="22"></td></tr>`; }).join('')}
+  </tbody></table></div>`;
+  $('#oi').onchange = e => { onlyIssue = e.target.checked; render(); };
+  $('#autoj').onclick = () => { if (!guard()) return; let n = 0; for (const a of q.apps) { const x = r.get(a.id); if (!a.judge && !x.bad) { a.judge = '지급'; a.judgedAt = new Date().toISOString(); n++; } } save(); render(); toast(`${n}건을 지급으로 판정했습니다`); };
+  v.querySelectorAll('[data-id]').forEach(el => el.onchange = () => {
+    if (!guard()) { render(); return; }
+    const a = q.apps.find(x => x.id === el.dataset.id);
+    if (el.dataset.f === 'judge') {
+      const val = el.value; const x = r.get(a.id);
+      if (val === '지급' && x.bad) { alertBox('지급 불가 사유(빨강)가 있습니다. 예외로 지급하려면 "지급(예외)"를 고르고 사유를 적으세요.'); render(); return; }
+      if (val === '지급(예외)') { a.judge = '지급'; a.exception = true; } else { a.judge = val; a.exception = false; }
+      a.judgedAt = new Date().toISOString();
+      if ((val === '제외' || val === '지급(예외)') && !a.reason) setTimeout(() => { const inp = document.querySelector(`input[data-id="${a.id}"]`); inp && inp.focus(); }, 50);
+    } else a.reason = el.value;
+    save(); if (el.dataset.f === 'judge') render();
+  });
+}
+
+// ----- 기안·업로드
+function summary(q, r) {
+  const orgs = DB.settings.orgs.slice(); const m = {};
+  for (const a of q.apps) { if (a.judge !== '지급') continue; const o = (DB.staff[a.sab] || {}).org || '기타'; if (!orgs.includes(o)) orgs.push(o);
+    m[o] = m[o] || {hs: [0, 0], u: [0, 0]}; const t = a.kind === '고등학생' ? m[o].hs : m[o].u; t[0]++; t[1] += r.get(a.id).pay; t[2] = (t[2] || 0) + (num(a.amount) || 0); }
+  const rows = orgs.map(o => ({o, hs: (m[o] || {}).hs || [0, 0], u: (m[o] || {}).u || [0, 0]}));
+  const tot = rows.reduce((s, x) => ({hs: [s.hs[0] + x.hs[0], s.hs[1] + x.hs[1]], u: [s.u[0] + x.u[0], s.u[1] + x.u[1]]}), {hs: [0, 0], u: [0, 0]});
+  const req = q.apps.filter(a => a.judge === '지급').reduce((s, a) => s + (num(a.amount) || 0), 0);
+  return {rows, tot, req};
+}
+function memoText(q, sm) {
+  const t = sm.tot.hs[1] + sm.tot.u[1]; const bo = q.apps.some(a => a.judge === '지급' && BOJIK.includes((DB.staff[a.sab] || {}).bojik));
+  const L = [`제목: ${q.year}학년도 교직원 자녀학비 보조금 지급 건(${q.year}년 ${q.q}분기)`, '',
+    '1. 관련 근거: 교직원 자녀 학비보조에 관한 규정 제4조 및 제5조',
+    `2. 위 규정과 관련하여 ${q.year}년도 ${q.q}분기 교직원 자녀학비 보조금을 아래와 같이 지급하고자 합니다.`,
+    '  가. 지급 기준',
+    '    1) 고등학교: 분기별 50만원 한도(실 납부금액), 재직 3년 미만: 자녀 1명, 3년 이상: 자녀 3명',
+    '    2) 대학교: 학기당 500만원 한도(실 납부금액), 재직 3년 이상: 자녀 1명(8학기), 10년 이상: 자녀 3명(1인당 8학기)'];
+  if (bo) L.push('    3) 보직자(대학교): 재직 2년 이상(처장 3년 이상): 자녀 1명, 5년 이상: 자녀 3명(1인당 8학기)');
+  L.push(`  나. ${q.year}년도 ${q.q}분기 지급 내용`);
+  L.push('      기관명 | 고등학교 인원(명) | 금액(원) | 대학교 인원(명) | 금액(원) | 합계 인원(명) | 금액(원)');
+  for (const x of sm.rows) L.push(`      ${x.o} | ${x.hs[0]} | ${won(x.hs[1])} | ${x.u[0]} | ${won(x.u[1])} | ${x.hs[0] + x.u[0]} | ${won(x.hs[1] + x.u[1])}`);
+  L.push(`      합계 | ${sm.tot.hs[0]} | ${won(sm.tot.hs[1])} | ${sm.tot.u[0]} | ${won(sm.tot.u[1])} | ${sm.tot.hs[0] + sm.tot.u[0]} | ${won(t)}`);
+  L.push(`  다. 소요예산액: ${won(t)}원`, '', `붙임  ${q.year}학년도 자녀학비 보조금 신청내역(${q.year}년도 ${q.q}분기) 1부.  끝.`);
+  return L.join('\n');
+}
+function vOut(v, q) {
+  const r = evaluate(q); const sm = summary(q, r); const t = sm.tot.hs[1] + sm.tot.u[1]; const b = q.budget || (q.budget = {});
+  const rest = (num(b.alloc) != null && num(b.used) != null) ? num(b.alloc) - (num(b.used) + t) : '';
+  const und = q.apps.filter(a => !a.judge || a.judge === '보류').length;
+  v.innerHTML = `${und ? `<div class="notice">미판정·보류 ${und}건이 있습니다. 아래 자료는 "지급" 판정 건만 반영합니다.</div>` : ''}
+  <div class="grid2"><div class="card"><h2>기관별 지급 집계</h2><table><thead><tr><th rowspan="2">기관명</th><th colspan="2">고등학교</th><th colspan="2">대학교</th><th colspan="2">합계</th></tr>
+    <tr><th class="n">인원</th><th class="n">금액</th><th class="n">인원</th><th class="n">금액</th><th class="n">인원</th><th class="n">금액</th></tr></thead><tbody>
+    ${sm.rows.map(x => `<tr><td>${esc(x.o)}</td><td class="n">${x.hs[0]}</td><td class="n">${won(x.hs[1])}</td><td class="n">${x.u[0]}</td><td class="n">${won(x.u[1])}</td><td class="n">${x.hs[0] + x.u[0]}</td><td class="n">${won(x.hs[1] + x.u[1])}</td></tr>`).join('')}
+    <tr><th>합계</th><th class="n">${sm.tot.hs[0]}</th><th class="n">${won(sm.tot.hs[1])}</th><th class="n">${sm.tot.u[0]}</th><th class="n">${won(sm.tot.u[1])}</th><th class="n">${sm.tot.hs[0] + sm.tot.u[0]}</th><th class="n">${won(t)}</th></tr></tbody></table>
+    <p>신청금액 합계 <b>${won(sm.req)}원</b> → 실 지급금액 합계 <b>${won(t)}원</b>${sm.req - t ? ` <span class="muted">(차액 ${won(sm.req - t)}원: 한도 적용·제외 항목·차감 등, 건별 사유는 검토·판정 탭과 신청내역 엑셀에 표시)</span>` : ''}</p>
+    <h2 style="margin-top:16px">회계</h2><div class="row">
+    <label>배정예산(A)<input id="b_alloc" value="${esc(b.alloc)}"></label><label>기집행액(B)<input id="b_used" value="${esc(b.used)}"></label>
+    <label>금회(C)<input value="${won(t)}" readonly></label><label>잔액 D=A-(B+C)<input value="${won(rest)}" readonly></label></div>
+    <p class="muted">등록금회계 · 복리후생비-일반 · 총무팀</p></div>
+  <div class="card"><h2>기안문 초안</h2><textarea id="memo">${esc(memoText(q, sm))}</textarea><br><br><button class="b" id="cp">복사</button></div></div>
+  <div class="card"><h2>내려받기</h2><div class="row">
+    <button class="b p" onclick="exportList()">붙임: 신청내역 엑셀</button>
+    <button class="b p" onclick="exportCash()">출납정보 업로드 엑셀</button>
+    <button class="b p" onclick="exportPay()">개인지급등록 업로드 엑셀</button></div>
+    <p class="muted">업로드 엑셀은 시스템 양식과 같은 열 순서입니다. 은행명은 코드표 표기로 바뀌어 들어갑니다(예: iM뱅크 → 대구은행, 설정 탭에서 변경).</p></div>`;
+  $('#cp').onclick = () => { $('#memo').select(); document.execCommand('copy'); toast('복사했습니다'); };
+  ['alloc', 'used'].forEach(k => $('#b_' + k).onchange = e => { b[k] = num(e.target.value); save(); render(); });
+}
+function payRows() { const q = Q(); const r = evaluate(q); return {q, r, list: q.apps.filter(a => a.judge === '지급')}; }
+function exportList() {
+  const {q, r} = payRows(); const head = ['no.', '구분', '소속', '부서', '직급', '교번/사번', '성명', '교원/직원', '보직구분', '임용일자', '기준일', '근속년수', '자녀성명', '학교명', '학년', '신청금액', '영수증 인정금액', '실 지급금액', '차액(신청-실지급)', '차이 사유', '은행', '계좌번호', '납입영수증', '가족관계증명서', '누적 신청횟수(~전분기)', '판정', '비고'];
+  const rows = q.apps.map((a, i) => { const s = DB.staff[a.sab] || {}; const x = r.get(a.id);
+    return [i + 1, a.kind, s.org, s.dept, s.rank, a.sab, s.name, s.kind, s.bojik || '', s.confDate || '', q.base, ym(x.months), a.child, a.school, a.grade, num(a.amount) ?? '', x.paid ?? '', a.judge === '지급' ? x.pay : 0, x.req != null ? x.req - (a.judge === '지급' ? x.pay : 0) : '', gapNote(a, x),
+      bankStd(acctOf(a).bank), acctOf(a).acct, a.docs?.receipt ? 'O' : 'X', a.docs?.family ? 'O' : 'X', a.kind === '대학생' ? staffPriorSem(a.sab, q.id) : '-', a.judge + (a.exception ? '(예외)' : ''), a.reason || '']; });
+  const pl = q.apps.filter(a => a.judge === '지급');
+  const foot = ['', '', '', '', '', '', '합계', '', '', '', '', '', '', '', '', pl.reduce((s, a) => s + (num(a.amount) || 0), 0), '', pl.reduce((s, a) => s + r.get(a.id).pay, 0), '', '지급 판정 건 기준'];
+  const ws = XLSX.utils.aoa_to_sheet([[`${q.year}학년도 자녀학비 보조금 신청(${q.year}년 ${q.q}분기)`], [], head, ...rows, foot]);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, `${q.year}-${q.q}분기`);
+  XLSX.writeFile(wb, `${q.year}학년도 ${q.q}분기 자녀학비 보조금 지원내역.xlsx`); markExported();
+}
+function textCells(ws, cols) { const rg = XLSX.utils.decode_range(ws['!ref']); for (let R = 1; R <= rg.e.r; R++) for (const C of cols) { const c = ws[XLSX.utils.encode_cell({r: R, c: C})]; if (c) { c.t = 's'; c.v = String(c.v); c.z = '@'; } } }
+function exportCash() {
+  const {q, r, list} = payRows();
+  const aoa = [['출납구분', '출납금액', '출금대상구분', '거래처사업자번호', '외부인주민등록번호', '사번\n(5자리)', '학번\n(9자리)', '출금대상자', '출금대상계좌번호', '출금대상은행', '출금대상예금주명', '계좌표시내용'],
+    ...list.map(a => { const s = DB.staff[a.sab] || {}; const ac = acctOf(a); return ['출금', r.get(a.id).pay, '교직원', '', '', a.sab, '', s.name, ac.acct, bankStd(ac.bank), s.name, '']; })];
+  const ws = XLSX.utils.aoa_to_sheet(aoa); textCells(ws, [5, 8]);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'sheet1');
+  XLSX.writeFile(wb, `${q.year}년 ${q.q}분기_출납정보_업로드.xlsx`); markExported();
+}
+function exportPay() {
+  const {q, r, list} = payRows();
+  const head = ['소득구분', '소득자구분', '거래처사업자번호', '외부인주민등록번호', '사번', '학번', '군번', '거주구분', '지급금액', '실지급액', '소득세', '지방소득세', '국민연금개인부담금', '고용보험개인부담금', '건강보험개인부담금', '소득일자', '국세청업종코드', '일당금액', '근무일수', '근속연수', '소득내용', '은행', '계좌번호', '예금주명'];
+  const aoa = [head, ...list.map(a => { const p = r.get(a.id).pay; const row = Array(24).fill(''); Object.assign(row, {0: '근로소득', 1: '교직원', 4: a.sab, 7: '거주', 8: p, 9: p}); return row; })];
+  const ws = XLSX.utils.aoa_to_sheet(aoa); textCells(ws, [4]);
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '급여외소득업로드양식');
+  XLSX.writeFile(wb, `${q.year}년도 ${q.q}분기_개인지급등록 업로드.xlsx`); markExported();
+}
+function markExported() { const q = Q(); if (!q.exported) { q.exported = new Date().toISOString(); save(); } }
+
+// ----- 명부
+let sfilt = '';
+function vStaff(v) {
+  const list = Object.values(DB.staff).filter(s => !sfilt || [s.sab, s.name, s.org, s.dept].join(' ').includes(sfilt)).sort((a, b) => (a.org || '').localeCompare(b.org || '') || (a.name || '').localeCompare(b.name || ''));
+  const kids = sab => Object.entries(DB.children).filter(([, c]) => c.sab === sab);
+  const qid = DB.cur;
+  v.innerHTML = `<div class="card"><div class="row"><label>검색<input id="sf" value="${esc(sfilt)}"></label><label>급여계좌 엑셀 불러오기 (사번·은행·계좌번호 열)<input type="file" id="impPay" accept=".xlsx,.xls"></label>
+  <span class="muted">${Object.keys(DB.staff).length}명 · 자녀 ${Object.keys(DB.children).length}명 · 누적학기는 마감된 분기 기준</span></div></div>
+  <div class="card scroll"><table><thead><tr><th>사번</th><th>성명</th><th>소속·부서</th><th>교원/직원</th><th>보직</th><th>확인 임용일</th><th>확인처</th><th>상태</th><th>급여계좌</th><th>자녀(대학 누적학기)</th></tr></thead><tbody>
+  ${list.map(s => `<tr><td>${esc(s.sab)}${(s.hospNos || []).length ? `<br><span class="muted">병원 ${esc(s.hospNos.join(', '))}</span>` : ''}</td><td>${esc(s.name)}</td><td>${esc(s.org)} ${esc(s.dept)}</td><td>${esc(s.kind)}</td><td>${esc(s.bojik)}</td>
+    <td>${esc(s.confDate || '미확인')}</td><td>${esc(s.confBy || '')}</td><td>${esc(s.status || '재직')}</td>
+    <td>${s.payAcct ? `${esc(s.payBank)} ${esc(s.payAcct)}<br><span class="muted">${esc(s.paySrc || '')}</span>` : '<span class="tag t-warn">미등록</span>'} <a href="#" data-pay="${esc(s.sab)}">수정</a></td>
+    <td>${kids(s.sab).map(([k, c]) => `<span class="tag t-info">${esc(c.name)} ${qid ? priorSem(k, qid) : c.base}학기 <a href="#" data-k="${esc(k)}">수정</a></span>`).join('')}</td></tr>`).join('')}
+  </tbody></table></div>`;
+  $('#sf').oninput = e => { sfilt = e.target.value; const p = e.target.selectionStart; render(); const f = $('#sf'); f.focus(); f.setSelectionRange(p, p); };
+  $('#impPay').onchange = e => importPayroll(e.target.files[0]);
+  v.querySelectorAll('[data-pay]').forEach(el => el.onclick = e => { e.preventDefault(); const s = DB.staff[el.dataset.pay];
+    openDlg(`<h3>${esc(s.name)} 급여계좌</h3><div class="row"><label>은행<input id="pb" list="bl2" value="${esc(s.payBank)}"><datalist id="bl2">${BANKS.map(b => `<option>${esc(b)}</option>`).join('')}</datalist></label><label>계좌번호<input id="pa" value="${esc(s.payAcct)}"></label>
+      <button class="b p" id="pok">저장</button><button class="b" onclick="closeDlg()">취소</button></div>`);
+    $('#pok').onclick = () => { s.payBank = $('#pb').value.trim(); s.payAcct = $('#pa').value.trim(); s.paySrc = '직접 입력 ' + new Date().toISOString().slice(0, 10); closeDlg(); save(); render(); }; });
+  v.querySelectorAll('[data-k]').forEach(el => el.onclick = e => { e.preventDefault(); const c = DB.children[el.dataset.k];
+    openDlg(`<h3>${esc(c.name)} 누적학기 보정</h3><p class="muted">프로그램 사용 전에 받은 대학 학자금 학기 수(시작값)입니다. 마감된 분기의 지급분은 자동으로 더해집니다.</p>
+      <div class="row"><label>시작 학기 수<input id="cb" type="number" value="${c.base || 0}"></label><button class="b p" id="cbok">저장</button><button class="b" onclick="closeDlg()">취소</button></div>`);
+    $('#cbok').onclick = () => { c.base = +$('#cb').value || 0; closeDlg(); save(); render(); }; });
+}
+
+async function importPayroll(file) {
+  if (!file) return;
+  try {
+    const wb = await readBook(file); let head, rows;
+    for (const n of wb.SheetNames) { const rr = XLSX.utils.sheet_to_json(wb.Sheets[n], {header: 1, raw: true, defval: ''});
+      const hi = rr.findIndex(r => r.some(c => /사번/.test(String(c))) && r.some(c => /계좌/.test(String(c)))); if (hi >= 0) { head = rr[hi].map(h => String(h).replace(/\s/g, '')); rows = rr.slice(hi + 1); break; } }
+    if (!head) throw new Error('"사번"과 "계좌" 열이 있는 시트를 찾지 못했습니다.');
+    const iS = head.findIndex(h => /사번/.test(h)), iB = head.findIndex(h => /은행/.test(h)), iA = head.findIndex(h => /계좌/.test(h) && !/은행/.test(h));
+    let n = 0, ch = 0;
+    for (const r of rows) { const s = DB.staff[String(r[iS] || '').trim()]; const acct = String(r[iA] || '').trim(); if (!s || !acct) continue;
+      if (s.payAcct && s.payAcct.replace(/-/g, '') !== acct.replace(/-/g, '')) ch++;
+      s.payBank = String(r[iB] || '').trim(); s.payAcct = acct; s.paySrc = file.name; n++; }
+    save(); render(); alertBox(`명부에 있는 ${n}명의 급여계좌를 반영했습니다.${ch ? ` 기존과 달라진 사람 ${ch}명.` : ''}`);
+  } catch (e) { alertBox(e.message); }
+}
+
+// ----- 설정·백업
+function vSet(v) {
+  v.innerHTML = `<div class="grid2"><div class="card"><h2>백업</h2>
+    <p>데이터는 이 PC의 브라우저에만 저장됩니다. 브라우저 기록을 지우거나 PC를 바꾸면 사라지므로, <b>작업이 끝날 때마다 백업 파일을 내려받아</b> 공유드라이브 등에 보관하세요.</p>
+    <div class="row"><button class="b p" onclick="backup()">백업 파일 내려받기</button><label>백업 파일 불러오기<input type="file" id="rest" accept=".json"></label></div>
+    <p class="muted">마지막 저장: ${esc(DB.savedAt || '-')}</p></div>
+  <div class="card"><h2>은행명 변환</h2><p class="muted">신청서 표기 = 업로드 표기, 한 줄에 하나</p>
+    <textarea id="alias" style="min-height:160px">${esc(Object.entries(DB.settings.bankAlias).map(([a, b]) => a + ' = ' + b).join('\n'))}</textarea><br><br><button class="b" id="alok">저장</button></div>
+  <div class="card"><h2>기관 목록 (기안 집계표 순서)</h2><textarea id="orgs" style="min-height:120px">${esc(DB.settings.orgs.join('\n'))}</textarea><br><br><button class="b" id="orok">저장</button></div>
+  <div class="card"><h2>분기 관리</h2>${Q() ? `<div class="row"><label>신청 마감일<input type="date" id="dl" value="${esc(Q().deadline)}"></label><button class="b d" id="delq">현재 분기 삭제</button></div>` : '분기 없음'}
+    <br><button class="b d" id="wipe">전체 초기화</button></div></div>`;
+  $('#rest').onchange = e => restore(e.target.files[0]);
+  $('#alok').onclick = () => { const m = {}; $('#alias').value.split('\n').forEach(l => { const [a, b] = l.split('=').map(x => (x || '').trim()); if (a && b) m[a] = b; }); DB.settings.bankAlias = m; save(); toast('저장했습니다'); };
+  $('#orok').onclick = () => { DB.settings.orgs = $('#orgs').value.split('\n').map(x => x.trim()).filter(Boolean); save(); toast('저장했습니다'); };
+  if (Q()) { $('#dl').onchange = e => { Q().deadline = e.target.value; save(); };
+    $('#delq').onclick = () => { if (confirmInline(`${qLabel(Q())}를 삭제할까요? 되돌릴 수 없습니다.`)) { delete DB.quarters[DB.cur]; DB.cur = Object.keys(DB.quarters)[0] || null; save(); render(); } }; }
+  $('#wipe').onclick = () => { if (confirmInline('모든 데이터를 지울까요? 먼저 백업 파일을 내려받으세요.')) { DB = blank(); save(); render(); } };
+}
+function backup() {
+  const blob = new Blob([JSON.stringify(DB, null, 1)], {type: 'application/json'}); const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `자녀학비보조_백업_${new Date().toISOString().slice(0, 10)}.json`; a.click(); dirty = false;
+}
+async function restore(file) {
+  if (!file) return;
+  try { const d = JSON.parse(await file.text()); if (!d.staff || !d.quarters) throw 0; if (!confirmInline('현재 데이터를 백업 파일 내용으로 바꿀까요?')) return; DB = d; save(); render(); toast('불러왔습니다'); }
+  catch (e) { alertBox('백업 파일 형식이 아닙니다.'); }
+}
+
+// ===== 대화상자
+function openDlg(html) { $('#dlgin').innerHTML = html; const d = $('#dlg'); if (!d.open) d.showModal(); }
+function closeDlg() { $('#dlg').close(); }
+window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+
+load(); render();
+if (DB.savedAt) document.getElementById('saved').textContent = '마지막 저장 ' + DB.savedAt.slice(0, 16).replace('T', ' ');
+</script>
+</body>
+</html>

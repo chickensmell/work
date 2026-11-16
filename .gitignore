@@ -2,3 +2,14 @@
 !manifest.webmanifest
 backup*
 .DS_Store
+# 자녀학비보조: 실제 자료(이름·계좌)는 절대 올리지 않음, 시험용 가짜 자료만 예외
+*.xlsx
+*.xls
+*.csv
+*.pdf
+*.hwp
+*백업*
+!child-tuition/samples/*.xlsx
+!child-tuition/samples/expected.json
+dist/
+node_modules/
