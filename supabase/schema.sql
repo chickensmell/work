@@ -19,6 +19,10 @@ create table if not exists public.tasks (
   done_at     timestamptz
 );
 
+-- 로그인한 사용자에게 이 표 사용 권한 부여 (Automatically expose new tables 를 끈 경우 필요)
+grant select, insert, update, delete on public.tasks to authenticated;
+revoke all on public.tasks from anon;
+
 -- 본인 데이터만 읽고 쓸 수 있게 하는 행 단위 보안(RLS)
 alter table public.tasks enable row level security;
 
