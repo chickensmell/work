@@ -5,7 +5,7 @@ const root = path.join(__dirname, '..'); const S = f => path.join(root, 'samples
 (async () => {
   const b = await chromium.launch(); const pg = await b.newPage();
   const errs = []; pg.on('pageerror', e => errs.push(e.message)); pg.on('dialog', d => d.accept());
-  await pg.goto('file://' + path.join(root, 'index.html'));
+  await pg.goto('file://' + path.join(root, 'dist', '자녀학비보조 관리 프로그램.html'));
   await pg.click('#newq'); await pg.fill('#ny', '2026'); await pg.selectOption('#nq', '3'); await pg.fill('#nd', '2026-09-11'); await pg.click('#nok');
   await pg.setInputFiles('#impApps', S('sample_scan.xlsx')); await pg.waitForSelector('#dlg[open]'); await pg.evaluate(() => closeDlg());
   for (const t of ['confirm']) { await pg.click(`nav button[data-t=${t}]`); }

@@ -28,14 +28,19 @@
 
 ## 자녀학비보조 관리 수정 순서
 원본은 이 저장소 하나로 통일했다(2026-11-16). 비공개 저장소 `child-tuition`은 더 이상 고치지 않는다.
-1. `child-tuition/src/index.html`을 고친다. `child-tuition/index.html`은 빌드 결과이므로 직접 고치지 않는다.
-2. `python child-tuition/build.py`로 배포본을 만들고 `node child-tuition/tests/smoke.test.js`를 돌린다.
+1. `child-tuition/src/index.html`을 고친다.
+2. `python child-tuition/build.py`로 `child-tuition/dist/자녀학비보조 관리 프로그램.html`을 만들고 시험을 돌린다.
+   - `node child-tuition/tests/smoke.test.js` (브라우저 저장 모드), `node child-tuition/tests/db.test.js` (앱 저장소 모드)
    - 새 규칙은 `child-tuition/samples/sample_scan.xlsx`와 `expected.json`에 시나리오를 추가한다.
-3. 기능·규정·화면·파일 양식은 `docs/자녀학비보조-요구사항.md`를 따른다. 요청·변경·결정은 **15. 변경 이력** 표 맨 아래에 한 줄씩 추가한다(공통 규칙 1~3).
-4. 커밋하고 `child-tuition` 브랜치에 푸시한다.
+3. Artifact 도구로 같은 주소에 다시 게시한다: `url` = https://claude.ai/artifact/CtYsPVEAFMizuiEnLcYQHm, `file_path` = `child-tuition/dist/자녀학비보조 관리 프로그램.html`. `capabilities`는 생략해서 기존 설정(db 본인만 읽기·쓰기, downloads)을 유지한다.
+4. 기능·규정·화면·파일 양식은 `docs/자녀학비보조-요구사항.md`를 따른다. 요청·변경·결정은 **15. 변경 이력** 표 맨 아래에 한 줄씩 추가한다(공통 규칙 1~3).
+5. 커밋하고 `child-tuition` 브랜치에 푸시한다.
 
 ### 자녀학비보조 지킬 것
-- 오프라인 단일 HTML이다. 외부 서버·CDN·데이터베이스로 자료를 보내는 코드를 넣지 않는다(교직원 개인정보·계좌). 자료는 PC 브라우저(localStorage `child-tuition-v1`)와 JSON 백업 파일에만 둔다.
+- Claude 앱(Artifact) 안의 단일 HTML이다. 자료는 Claude 앱 저장소(db, 본인만 읽기·쓰기)와 JSON 백업 파일에만 둔다. 그 밖의 외부 서버·CDN·데이터베이스로 자료를 보내는 코드를 넣지 않는다(교직원 개인정보·계좌).
+  - 저장 구조: `meta/main`, `staff/교번`, `children/교번|자녀`, `quarters/분기`, `apps/분기_신청id` (문서 id는 영문·숫자 외 글자를 `~16진수.`로 바꿈, 본문 `j`에 JSON 문자열). 구조를 바꾸면 기존 자료 변환 방법을 함께 정한다.
+  - 파일로 직접 열면(앱 밖) 예전처럼 브라우저(localStorage `child-tuition-v1`)에만 저장한다.
+- 앱 안에서는 `confirm()`·`alert()`와 직접 내려받기가 막혀 있다. 확인은 `ask()`, 파일은 `offerFile()`/`saveWb()`를 쓴다.
 - 시험 자료는 가짜 이름·가짜 계좌만 쓴다. 실제 신청서·지원내역·회신·계좌 파일은 커밋하지 않는다(이 저장소는 공개).
 - 판단 원칙: 재직기간은 학교 전임·정규직 임용일 기준(병원 최초 임용일 아님), 누적 학기는 신청인 기준, 대학 한도는 신청인 총 학기(1명 8, 3명 24).
 
