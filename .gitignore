@@ -13,3 +13,7 @@ backup*
 !child-tuition/samples/expected.json
 dist/
 node_modules/
+# 부서운영비: 실제 증빙 압축 파일은 올리지 않음
+*.zip
+*.alz
+*.egg
