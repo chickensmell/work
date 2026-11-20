@@ -17,3 +17,4 @@ node_modules/
 *.zip
 *.alz
 *.egg
+dept-budget/tests/.tmp/

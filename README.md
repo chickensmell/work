@@ -11,5 +11,10 @@
 ## 자녀학비보조 관리
 - `child-tuition/index.html`
 
+## 부서운영비 정산
+- 앱: Claude 앱(claude.ai) 안에서 실행 — https://claude.ai/artifact/6fbA1r7BM7Ed68Qd42xmZo (본인만 열림)
+- 화면 코드: `dept-budget/index.html`, 시험: `dept-budget/tests/`
+- 요구사항·변경 이력: [docs/부서운영비-요구사항.md](docs/부서운영비-요구사항.md)
+
 ## 주의
 업무 데이터, 직원 이름, 내보내기 파일(.json)은 커밋하지 마세요.
