@@ -217,13 +217,15 @@ V.pay = () => {
   const c = CHANGES[1];
   const back = `안녕하십니까, 총무처 총무팀입니다.\n\n${P.year}년 ${P.m1}-${P.m2}월 부서운영비와 관련하여\n면직자 발생에 따른 ${c.months} 부서운영비 ${c.amt / 10000}만원을 환수 요청하고자 안내 드립니다.\n\n  -대상자: ${c.who}\n  -환수 금액: ${won(c.amt)}원\n  -입금 계좌: {설정의 수납 계좌}\n\n위 계좌로 입금 후 송금확인증을 본 메일로 회신해주시기 바랍니다.\n문의사항이 있으신 경우, 내선번호로 연락 부탁 드립니다.\n\n업무 협조에 감사합니다.`;
   return `
-${memo('지급', ['한 화면에 위에서 아래로 일하는 순서대로 둡니다: 명단 → 결의서 → 안내 메일 → 기간 중 입퇴사.', '구역마다 오른쪽에 상태가 보이고, 끝난 구역은 접어 둡니다.', '명단 표 전체, 출납명세서 목록처럼 긴 것은 "펼치기" 안에 넣었습니다.', '입퇴사는 자주 없으므로 맨 아래에 접어 두고, 변동이 없으면 "이번 회차 변동 없음" 한 줄과 [변동 추가] 버튼만 보입니다. 시안에는 예시로 변동을 넣어 두었습니다.'])}
+${memo('지급', ['한 화면에 위에서 아래로 일하는 순서대로 둡니다: 명단 → 결의서 → 안내 메일 → 기간 중 입퇴사.', '구역마다 오른쪽에 상태가 보이고, 끝난 구역은 접어 둡니다.', '명단은 순번별 11월·12월 인원과 금액, 합계를 바로 보이게 했습니다. 출납명세서 목록처럼 긴 것만 "펼치기" 안에 둡니다.', '입퇴사는 자주 없으므로 맨 아래에 접어 두고, 변동이 없으면 "이번 회차 변동 없음" 한 줄과 [변동 추가] 버튼만 보입니다. 시안에는 예시로 변동을 넣어 두었습니다.'])}
 ${sec('s-roster', '명단 확인', `${tag('bad', '확인 2')}${tag('warn', '바뀜 1')}`, `
   <div class="row"><span class="muted">2026년 11-12월 지급 명단 · ${U.length}건 · 11월 ${n1 + s1}명 · 12월 ${n2 + s2}명 · ${won(total)}원</span><button class="b sm" type="button">명단 다시 올리기</button><button class="b sm" type="button">출납명세서 붙여넣기</button></div>
   <ul class="check">${rosterIssues.map(([k, t]) => `<li>${mk(k)}<span>${esc(t)}</span></li>`).join('')}</ul>
-  <details class="more"><summary>명단 전체 보기 (${U.length}건)</summary><div class="scroll" style="margin-top:8px"><table>
-    <thead><tr><th>순번</th><th>부서</th><th class="n">11월</th><th class="n">12월</th><th class="n">입금액</th><th>예금주</th><th>은행</th></tr></thead>
-    <tbody>${U.map(u => `<tr><td>${u.no}</td><td>${esc(u.dept)}</td><td class="n">${u.m[0][0]}${u.m[0][1] ? '+단기' + u.m[0][1] : ''}</td><td class="n">${u.m[1][0]}${u.m[1][1] ? '+단기' + u.m[1][1] : ''}</td><td class="n">${won(base(u))}</td><td>${esc(u.holder)}</td><td>${esc(u.bank)}</td></tr>`).join('')}</tbody></table></div></details>`, true)}
+  <div class="scroll"><table>
+    <thead><tr><th rowspan="2">순번</th><th rowspan="2">부서</th><th colspan="2" class="c">11월</th><th colspan="2" class="c">12월</th><th rowspan="2" class="n">합계 금액</th><th rowspan="2">예금주</th><th rowspan="2">확인</th></tr>
+    <tr><th class="n">인원</th><th class="n">금액</th><th class="n">인원</th><th class="n">금액</th></tr></thead>
+    <tbody>${U.map(u => { const ma = i => u.m[i][0] * P.gen + u.m[i][1] * P.short, pp = i => `${u.m[i][0] + u.m[i][1]}${u.m[i][1] ? ` <span class="muted">(반일제 ${u.m[i][1]})</span>` : ''}`; const k = !u.inList || u.pay3 ? 'n' : u.prev !== u.holder ? 'w' : 'y'; return `<tr><td>${u.no}</td><td>${esc(u.dept)}</td><td class="n">${pp(0)}</td><td class="n">${won(ma(0))}</td><td class="n">${pp(1)}</td><td class="n">${won(ma(1))}</td><td class="n"><b>${won(base(u))}</b></td><td>${esc(u.holder)}</td><td>${mk(k)}</td></tr>`; }).join('')}
+    <tr class="sum"><td colspan="2">합계</td><td class="n">${n1 + s1}</td><td class="n">${won(n1 * P.gen + s1 * P.short)}</td><td class="n">${n2 + s2}</td><td class="n">${won(n2 * P.gen + s2 * P.short)}</td><td class="n">${won(total)}</td><td colspan="2"></td></tr></tbody></table></div>`, true)}
 ${sec('s-resol', '지급 결의서', tag('ok', '11-04 상신'), `
   <div class="kv">
     <span>결의명·제목</span><span><span id="c-title">${esc(title)}</span> ${copyBtn('c-title')}</span>
