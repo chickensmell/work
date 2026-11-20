@@ -1,0 +1,437 @@
+<title>부서운영비 화면 시안</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: 위 머리글(회차·설정) + 단계 표시줄(메뉴 겸 상태) + 단계별 본문. 시안 메모는 각 화면 맨 위 상자. 자녀학비보조 시안과 같은 색 체계 */
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1d2330; --muted:#677084; --line:#dfe3ea; --head:#f0f2f6; --sunk:#eceef2;
+  --accent:#1f5fbf; --accent-soft:#e8f0fc; --on-accent:#ffffff;
+  --ok:#1e7a46; --ok-soft:#e5f4ea; --warn:#a35a00; --warn-soft:#fff3e0; --bad:#b3261e; --bad-soft:#fdeceb;
+  --memo:#5b3fa8; --memo-soft:#f1edfb; --input:#fffdf3;
+  --gut-l:max(20px, env(safe-area-inset-left, 0px)); --gut-r:max(20px, env(safe-area-inset-right, 0px));
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171d; --panel:#1c2028; --ink:#e4e8ef; --muted:#9aa3b5; --line:#323947; --head:#252a34; --sunk:#2a2f39;
+  --accent:#7aa7ec; --accent-soft:#1f2c42; --on-accent:#0f1520;
+  --ok:#6cc896; --ok-soft:#173025; --warn:#e8a65a; --warn-soft:#3a2a16; --bad:#f08a80; --bad-soft:#3d1d1b;
+  --memo:#b9a4f0; --memo-soft:#2a2340; --input:#22262f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171d; --panel:#1c2028; --ink:#e4e8ef; --muted:#9aa3b5; --line:#323947; --head:#252a34; --sunk:#2a2f39;
+  --accent:#7aa7ec; --accent-soft:#1f2c42; --on-accent:#0f1520;
+  --ok:#6cc896; --ok-soft:#173025; --warn:#e8a65a; --warn-soft:#3a2a16; --bad:#f08a80; --bad-soft:#3d1d1b;
+  --memo:#b9a4f0; --memo-soft:#2a2340; --input:#22262f; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.55 "Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--panel)}
+.proto{background:var(--memo);color:var(--panel);font-size:12.5px;padding:6px var(--gut-r) 6px var(--gut-l);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.proto label{display:flex;gap:6px;align-items:center;cursor:pointer}
+header{background:var(--panel);border-bottom:1px solid var(--line);padding-block:10px;padding-left:var(--gut-l);padding-right:var(--gut-r);display:flex;gap:14px;align-items:center;flex-wrap:wrap;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+header h1{font-size:16px;margin:0;letter-spacing:-.2px}
+.qbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,input,textarea{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--input);color:var(--ink)}
+.side{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.side button{font:inherit;border:1px solid transparent;background:none;color:var(--muted);padding:6px 10px;border-radius:6px;cursor:pointer}
+.side button[aria-pressed="true"]{background:var(--sunk);color:var(--ink);font-weight:bold}
+.saved{font-size:12px;color:var(--muted)}
+.stepper{background:var(--panel);border-bottom:1px solid var(--line);padding-block:10px;padding-left:var(--gut-l);padding-right:var(--gut-r);display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px}
+.stepper button{font:inherit;text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:8px 10px;cursor:pointer;display:flex;flex-direction:column;gap:2px;position:relative}
+.stepper button:hover{border-color:var(--accent)}
+.stepper button[aria-current="step"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--accent-soft)}
+.stepper .no{font-size:11px;color:var(--muted);letter-spacing:.3px}
+.stepper .nm{font-weight:bold}
+.stepper .st{font-size:12px}
+.s-done .st{color:var(--ok)} .s-doing .st{color:var(--accent)} .s-warn .st{color:var(--warn)} .s-bad .st{color:var(--bad)} .s-wait .st{color:var(--muted)}
+.stepper .dot{position:absolute;top:9px;right:9px;width:8px;height:8px;border-radius:50%}
+.s-done .dot{background:var(--ok)} .s-doing .dot{background:var(--accent)} .s-warn .dot{background:var(--warn)} .s-bad .dot{background:var(--bad)} .s-wait .dot{background:var(--line)}
+.phase{grid-column:1/-1;display:flex;gap:16px;font-size:11.5px;color:var(--muted);flex-wrap:wrap}
+main{max-width:1440px;margin:0 auto;padding-block:18px 40px;padding-left:var(--gut-l);padding-right:var(--gut-r);display:flex;flex-direction:column;gap:14px}
+.memo{border:1px dashed var(--memo);background:var(--memo-soft);color:var(--ink);border-radius:10px;padding:10px 14px;font-size:13px}
+.memo b.t{color:var(--memo);display:block;margin-bottom:4px}
+.memo ul{margin:0;padding-left:18px} .memo li{margin:2px 0}
+body.nomemo .memo{display:none}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.card h2 .sub{font-size:12px;color:var(--muted);font-weight:normal}
+.card h2 .r{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(420px,1fr));gap:14px}
+.b{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:7px 12px;cursor:pointer}
+.b.p{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.b.sm{padding:3px 9px;font-size:12px}
+.b:focus-visible,.stepper button:focus-visible,.side button:focus-visible,.chips button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--muted)}
+.tile b{display:block;font-size:19px;color:var(--ink);font-variant-numeric:tabular-nums}
+.tile.alert b{color:var(--bad)}
+.todo{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.todo li{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;flex-wrap:wrap}
+.todo li .what{flex:1 1 260px;min-width:0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:var(--head);white-space:nowrap}
+td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.c,th.c{text-align:center}
+tr.click{cursor:pointer} tr.click:hover td{background:var(--accent-soft)}
+tr.sel td{background:var(--accent-soft)}
+tr.sum td{background:var(--head);font-weight:bold}
+.tag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:12px;margin:1px 2px 1px 0;white-space:nowrap}
+.t-bad{background:var(--bad-soft);color:var(--bad)} .t-warn{background:var(--warn-soft);color:var(--warn)}
+.t-ok{background:var(--ok-soft);color:var(--ok)} .t-info{background:var(--accent-soft);color:var(--accent)}
+.t-wait{background:var(--sunk);color:var(--muted)}
+.chips{display:flex;gap:4px;flex-wrap:wrap}
+.chips button{font:inherit;font-size:12px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:14px;padding:3px 10px;cursor:pointer}
+.chips button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.muted{color:var(--muted)}
+.neg{color:var(--bad)}
+.notice{padding:9px 12px;border-radius:8px;background:var(--warn-soft);color:var(--warn)}
+.notice.bad{background:var(--bad-soft);color:var(--bad)}
+.notice.ok{background:var(--ok-soft);color:var(--ok)}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:6px 12px;font-size:13px;align-items:baseline}
+.kv>span:nth-child(odd){color:var(--muted)}
+.copybox{border:1px solid var(--line);border-radius:8px;background:var(--sunk);padding:10px 12px;white-space:pre-wrap;font-size:13px;line-height:1.7;min-width:0}
+.field{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+.field input,.field select{color:var(--ink);font-size:14px}
+.drop{border:2px dashed var(--line);border-radius:10px;padding:18px;text-align:center;color:var(--muted)}
+.check{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.check li{display:flex;gap:10px;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:8px;flex-wrap:wrap}
+.mk{width:22px;height:22px;border-radius:50%;display:inline-grid;place-items:center;font-size:12px;font-weight:bold;flex:none}
+.mk.y{background:var(--ok-soft);color:var(--ok)} .mk.n{background:var(--bad-soft);color:var(--bad)} .mk.w{background:var(--warn-soft);color:var(--warn)}
+.icard{border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.icard.bad{border-left-color:var(--bad)} .icard.ok{border-left-color:var(--ok)}
+.icard .hd{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.icard .hd .amt{margin-left:auto;font-variant-numeric:tabular-nums}
+.cards{display:flex;flex-direction:column;gap:8px}
+.timeline{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:6px;margin:0;padding:0;list-style:none}
+.timeline li{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12.5px;display:flex;flex-direction:column;gap:2px}
+.timeline li b{font-size:13px}
+.timeline li.done{border-color:var(--ok);background:var(--ok-soft)}
+.timeline li.now{border-color:var(--bad);background:var(--bad-soft)}
+.timeline .d{font-variant-numeric:tabular-nums;color:var(--muted)}
+@media (prefers-reduced-motion: no-preference){.stepper button{transition:border-color .15s}}
+</style>
+
+<div class="proto">
+  <b>화면 시안</b><span>가짜 자료 · 버튼은 동작하지 않음(단계 이동·선택만 됨) · 오늘을 2026-12-24(정산 마감 다음 날)로 가정</span>
+  <label><input type="checkbox" id="memoToggle" checked> 시안 메모 보기</label>
+</div>
+<header>
+  <h1>부서운영비 정산</h1>
+  <div class="qbox">
+    <label for="cycle" class="muted">회차</label>
+    <select id="cycle"><option>2026년 11-12월</option><option>2026년 9-10월 (마감)</option></select>
+    <span class="tag t-bad">정산 마감 D+1 · 미제출 2</span>
+  </div>
+  <div class="side">
+    <button type="button" data-go="set" id="sideSet">설정</button>
+    <span class="saved">앱 저장소에 저장됨 · 12:04</span>
+  </div>
+</header>
+<nav class="stepper" id="stepper" aria-label="단계"></nav>
+<main id="main"></main>
+
+<script>
+'use strict';
+// ===== 가짜 자료 (시험용 이름·부서 묶음, 실제 자료 아님)
+// m: [[11월 일반, 11월 단기], [12월 일반, 12월 단기]]
+const U = [
+  {no:1, dept:'총무팀', with:['재무팀','시설관리팀'], holder:'김가상', prev:'김가상', bank:'우리은행', inList:true, m:[[12,0],[12,0]], add:0, back:0, used:745300, sub:'12-22', note:'총무팀·재무팀·시설관리팀', is:[]},
+  {no:2, dept:'학사지원팀', holder:'이시험', prev:'이시험', bank:'신한은행', inList:true, m:[[6,0],[6,0]], add:0, back:0, used:372000, sub:'12-19', is:[['bad','지출증빙 발행 표시가 사진에 없음 (영수증 3)','보완']]},
+  {no:3, dept:'연구지원팀', holder:'박예시', prev:'박예시', bank:'우리은행', inList:true, m:[[6,0],[6,0]], add:0, back:0, used:380360, sub:'12-23', listed:363360, is:[['warn','상단 정산금액 363,360 ≠ 항목 합 380,360 (접수 목록 사용액 고침)','수정']]},
+  {no:4, dept:'학생상담센터', holder:'최더미', prev:'최더미', bank:'KB국민은행', inList:true, m:[[4,2],[4,2]], add:0, back:0, used:318500, sub:'12-18', pay3:330000, is:[['bad','식별번호가 학교 번호가 아님 (영수증 2)','보완']]},
+  {no:5, dept:'입학팀', holder:'정샘플', prev:'정샘플', bank:'하나은행', inList:true, m:[[5,0],[5,0]], add:0, back:60000, used:268000, sub:'12-20', is:[['warn','용도 확인: 꽃 구입 (영수증 4)','확인']]},
+  {no:6, dept:'교무팀', holder:'한가짜', prev:'한가짜', bank:'신한은행', inList:true, m:[[4,0],[4,0]], add:30000, back:0, used:281200, sub:'12-22', is:[['bad','정산 기간 밖 영수증: 2026-10-28 승인 (영수증 1)','보완']]},
+  {no:7, dept:'기획팀', holder:'오테스', prev:'오테스', bank:'우리은행', inList:true, m:[[5,0],[5,0]], add:0, back:0, used:290000, sub:'12-23', is:[['bad','사용액 미달 10,000원 (총사용액은 지급액 이상이어야 함)','보완'],['warn','승인번호 중복: 홍보팀 영수증 2와 같음','확인']]},
+  {no:8, dept:'홍보팀', holder:'윤모의', prev:'장이전', bank:'IBK기업은행', inList:true, m:[[3,0],[3,0]], add:0, back:0, used:186400, sub:'12-21', is:[['warn','승인번호 중복: 기획팀 영수증 5와 같음','확인']]},
+  {no:9, dept:'도서관', holder:'장해외', prev:'노정상', bank:'농협은행', inList:false, m:[[4,0],[4,0]], add:0, back:0, used:null, sub:null, is:[]},
+  {no:10, dept:'국제교류팀', holder:'강신입', prev:'강신입', bank:'우리은행', inList:true, m:[[3,0],[3,0]], add:0, back:30000, used:null, sub:null, is:[]},
+  {no:11, dept:'산학협력팀', holder:'문두명', prev:'문두명', bank:'부산은행', inList:true, m:[[7,0],[6,0]], add:0, back:0, used:401900, sub:'12-17', is:[['warn','판독 불가 1건: 사진 흐림 (영수증 6) → 홈택스 매입 내역 대조 권장','확인']]},
+  {no:12, dept:'학생지원팀', holder:'서누락', prev:'서누락', bank:'신한은행', inList:true, m:[[6,1],[6,1]], add:0, back:0, used:402700, sub:'12-19', is:[]},
+];
+const CHANGES = [
+  {dept:'입학팀', who:'백제외 사원', kind:'퇴사', date:'2026-11-03', rule:'홀수달 초 퇴사 (15일 이전)', res:'11·12월 환수 60,000원', state:['warn','환수 메일 회신 대기'], mail:true, months:'11-12월', amt:60000, reason:'면직자 발생'},
+  {dept:'국제교류팀', who:'윤사직 주임', kind:'퇴사', date:'2026-12-10', rule:'짝수달 15일 이전 퇴사', res:'12월 환수 30,000원', state:['bad','환수 메일 아직 안 보냄'], mail:true, months:'12월', amt:30000, reason:'면직자 발생'},
+  {dept:'교무팀', who:'정입사 사원', kind:'입사', date:'2026-12-02', rule:'15일 전 입사 → 그달부터 지급', res:'12월 추가 지급 30,000원', state:['warn','추가 지급 처리 중'], add:true},
+  {dept:'기획팀', who:'노보름 사원', kind:'입사', date:'2026-11-15', rule:'15일 당일 입사', res:'담당자 판단: 지급 (11월부터)', state:['info','담당자 판단 · 명단 반영됨'], judge:true},
+  {dept:'홍보팀', who:'장이전 대리', kind:'퇴사(부서 담당자)', date:'2026-10-31', rule:'담당자(예금주) 변경', res:'예금주 장이전 → 윤모의', state:['ok','명단 반영 확인']},
+  {dept:'산학협력팀', who:'최전보 사원', kind:'전보', date:'2026-11-28', rule:'12월 대상에서 빠짐', res:'12월 지급 안 함', state:['ok','명단 반영 확인']},
+];
+const P = {gen:30000, short:15000, m1:11, m2:12, year:2026, due:'2026-12-23', paid:'2026-11-06'};
+const won = n => Number(n).toLocaleString('ko-KR');
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const base = u => (u.m[0][0] + u.m[1][0]) * P.gen + (u.m[0][1] + u.m[1][1]) * P.short;
+const fin = u => base(u) + u.add - u.back;
+const ppl = u => Math.max(u.m[0][0] + u.m[0][1], u.m[1][0] + u.m[1][1]);
+const monthCount = (i, k) => U.reduce((s, u) => s + u.m[i][k], 0);
+const total = U.reduce((s, u) => s + base(u), 0);
+const deptName = u => u.with ? `${u.dept} 외 ${u.with.length}` : u.dept;
+function hanAmt(n) {
+  const d = ['','일','이','삼','사','오','육','칠','팔','구'], un = ['천','백','십',''], big = ['','만','억','조'];
+  let s = '', g = 0;
+  while (n > 0) {
+    const part = String(n % 10000).padStart(4, '0');
+    let p = '';
+    for (let i = 0; i < 4; i++) if (+part[i]) p += d[+part[i]] + un[i];
+    if (p) s = p + big[g] + s;
+    n = Math.floor(n / 10000); g++;
+  }
+  return s;
+}
+const wd = iso => '일월화수목금토'[new Date(iso + 'T00:00:00').getDay()];
+const krDate = iso => { const [y, m, d] = iso.split('-').map(Number); return `${y}년 ${m}월 ${d}일(${wd(iso)})`; };
+const subOk = U.filter(u => u.sub), subNo = U.filter(u => !u.sub);
+const issues = U.flatMap(u => u.is.map(i => ({u, lv:i[0], msg:i[1], act:i[2]})));
+const needFix = issues.filter(i => i.act === '보완');
+
+// ===== 단계
+const STEPS = [
+  {k:'home', no:'0', nm:'현황', st:'미제출 2 · 보완 4', c:'s-bad', ph:''},
+  {k:'roster', no:'1', nm:'명단 확인', st:'예금주 확인 2건', c:'s-warn', ph:'지급'},
+  {k:'resol', no:'2', nm:'지급 결의', st:'11-04 상신 · 완료', c:'s-done', ph:'지급'},
+  {k:'notice', no:'3', nm:'입금·안내 메일', st:'11-06 발송', c:'s-done', ph:'지급'},
+  {k:'change', no:'4', nm:'입퇴사·환수', st:'환수 메일 1 · 추가 지급 1', c:'s-warn', ph:'기간 중'},
+  {k:'intake', no:'5', nm:'정산 접수', st:`제출 ${subOk.length}/${U.length} · 미제출 ${subNo.length}`, c:'s-bad', ph:'정산'},
+  {k:'review', no:'6', nm:'증빙 검토', st:`보완 ${needFix.length} · 확인 ${issues.length - needFix.length}`, c:'s-bad', ph:'정산'},
+  {k:'result', no:'7', nm:'정산 결과', st:'제출·보완 끝나면', c:'s-wait', ph:'정산'},
+];
+let cur = 'home';
+const memo = (title, items) => `<div class="memo"><b class="t">시안 메모 · ${title}</b><ul>${items.map(x => `<li>${x}</li>`).join('')}</ul></div>`;
+const go = (k, label) => `<button class="b sm" type="button" data-go="${k}">${label || (STEPS.find(s => s.k === k)?.nm + '(으)로')}</button>`;
+const copyBtn = id => `<button class="b sm" type="button" data-copy="${id}">복사</button>`;
+const tagsOf = u => u.is.length ? u.is.map(([l, m]) => `<span class="tag t-${l}">${esc(m)}</span>`).join('') : '<span class="tag t-ok">이상 없음</span>';
+
+const V = {};
+V.home = () => `
+${memo('0 현황', ['회차를 열면 맨 먼저 보이는 화면입니다. 회차 = 두 달 단위(예: 11-12월). 한 회차 안에 지급(1~3)과 정산(5~7)이 함께 있습니다.', '정산 결의가 끝나야 다음 회차 지급 결의를 올릴 수 있으므로, 맨 위에 "다음 지급까지 일정"을 둡니다.', '오늘(가정 12-24)은 마감 다음 날입니다. 미제출 부서가 있으면 빨간색으로 표시합니다.'])}
+<div class="card">
+  <h2>다음 지급까지 일정 <span class="sub">11-12월 정산 → 2027년 1-2월 지급</span></h2>
+  <ol class="timeline">
+    <li class="done"><b>정산 마감</b><span class="d">${krDate(P.due)}</span><span>제출 ${subOk.length}/${U.length}</span></li>
+    <li class="now"><b>미제출·보완 정리</b><span class="d">12-24 ~ 12-26</span><span>미제출 ${subNo.length} · 보완 ${needFix.length}</span></li>
+    <li><b>정산 지출결의</b><span class="d">12월 말 전</span><span>7 정산 결과</span></li>
+    <li><b>1-2월 명단 정리</b><span class="d">인사담당 변동 확인</span><span>다음 회차 1</span></li>
+    <li><b>비예산 결의(지급)</b><span class="d">12-25 ~ 12-31</span><span>다음 회차 2</span></li>
+    <li><b>입금·안내 메일</b><span class="d">1월 초</span><span>다음 회차 3</span></li>
+  </ol>
+</div>
+<div class="tiles">
+  <div class="tile">지급 단위(입금 건)<b>${U.length}건</b></div>
+  <div class="tile">정기 지급액<b>${won(total)}원</b></div>
+  <div class="tile">추가 지급 / 환수<b>+${won(U.reduce((s,u)=>s+u.add,0))} / −${won(U.reduce((s,u)=>s+u.back,0))}</b></div>
+  <div class="tile alert">정산 미제출<b>${subNo.length}건</b></div>
+  <div class="tile alert">보완 필요<b>${needFix.length}건</b></div>
+</div>
+<div class="card">
+  <h2>다음 할 일</h2>
+  <ul class="todo">
+    <li><span class="tag t-bad">미제출</span><span class="what">${subNo.map(u => u.dept).join(', ')} 정산서 미제출 (마감 ${P.due.slice(5)} 지남)</span>${go('intake')}</li>
+    <li><span class="tag t-bad">보완</span><span class="what">보완 필요 ${needFix.length}건: ${[...new Set(needFix.map(i => i.u.dept))].join(', ')}</span>${go('review')}</li>
+    <li><span class="tag t-bad">환수</span><span class="what">국제교류팀 12월 환수 30,000원 메일 아직 안 보냄</span>${go('change')}</li>
+    <li><span class="tag t-warn">예금주</span><span class="what">도서관 예금주가 도서관 명단에 없음</span>${go('roster')}</li>
+    <li><span class="tag t-warn">추가 지급</span><span class="what">교무팀 12월 입사자 추가 지급 30,000원 처리 중</span>${go('change')}</li>
+  </ul>
+</div>`;
+
+V.roster = () => `
+${memo('1 명단 확인', ['담당자가 정리한 지급 명단(엑셀·Numbers에서 내보낸 xlsx)을 올립니다. 실제 부서·이름이 들어간 명단이며 앱 저장소(본인만)에만 저장합니다.', '예금주 확인 3가지: ① 예금주가 그 순번 명단 안에 있는지 ② 지난 회차와 예금주·계좌가 바뀌었는지 ③ 출납명세서(결재시스템에 넣은 값)와 명단이 같은지.', '③은 결재시스템 출납명세서를 복사해 붙여넣으면 비교합니다(붙여넣기 형식은 실제 화면을 보고 맞춤).', '달별 인원·금액은 명단의 11월·12월 칸을 그대로 셉니다. 사람별로 그달 칸이 비어 있으면 그달 대상이 아닙니다.'])}
+<div class="card">
+  <h2>지급 명단 <span class="sub">2026년 11-12월 · 올린 날 2026-11-03 · ${U.length}건 · ${U.reduce((s,u)=>s+ppl(u),0)}명</span><span class="r"><button class="b sm" type="button">명단 다시 올리기</button><button class="b sm" type="button">출납명세서 붙여넣기</button></span></h2>
+  <div class="chips" style="margin-bottom:8px"><button type="button" aria-pressed="true">전체</button><button type="button" aria-pressed="false">확인 필요만</button></div>
+  <div class="scroll"><table>
+    <thead><tr><th>순번</th><th>부서</th><th class="n">11월 인원</th><th class="n">12월 인원</th><th class="n">입금액</th><th>예금주</th><th>은행</th><th class="c">① 명단 안</th><th class="c">② 지난 회차</th><th class="c">③ 출납명세서</th></tr></thead>
+    <tbody>${U.map(u => {
+      const c1 = u.inList ? '<span class="mk y">✓</span>' : '<span class="mk n">✕</span>';
+      const c2 = u.prev === u.holder ? '<span class="mk y">✓</span>' : `<span class="mk w">!</span> <span class="muted">${esc(u.prev)} → ${esc(u.holder)}</span>`;
+      const c3 = u.pay3 ? `<span class="mk n">✕</span> <span class="muted">${won(u.pay3)}</span>` : '<span class="mk y">✓</span>';
+      return `<tr><td>${u.no}</td><td>${esc(u.note || u.dept)}</td><td class="n">${u.m[0][0]}${u.m[0][1] ? ` + 단기 ${u.m[0][1]}` : ''}</td><td class="n">${u.m[1][0]}${u.m[1][1] ? ` + 단기 ${u.m[1][1]}` : ''}</td><td class="n">${won(base(u))}</td><td>${esc(u.holder)}</td><td>${esc(u.bank)}</td><td class="c">${c1}</td><td>${c2}</td><td>${c3}</td></tr>`;
+    }).join('')}
+    <tr class="sum"><td colspan="2">합계</td><td class="n">${monthCount(0,0) + monthCount(0,1)}</td><td class="n">${monthCount(1,0) + monthCount(1,1)}</td><td class="n">${won(total)}</td><td colspan="5"></td></tr></tbody>
+  </table></div>
+</div>
+<div class="grid2">
+  <div class="card"><h2>확인할 것</h2><ul class="check">
+    <li><span class="mk n">✕</span><span>도서관: 예금주 장해외가 도서관 명단에 없음 (지난 회차 노정상)</span></li>
+    <li><span class="mk n">✕</span><span>학생상담센터: 출납명세서 금액 330,000원 ≠ 명단 300,000원</span></li>
+    <li><span class="mk w">!</span><span>홍보팀: 예금주 바뀜 장이전 → 윤모의 (입퇴사·환수에 담당자 변경 기록 있음)</span></li>
+  </ul></div>
+  <div class="card"><h2>지난 회차(9-10월)와 달라진 점</h2><ul class="check">
+    <li><span class="mk w">!</span><span>입학팀 백제외: 11-03 퇴사인데 명단 11·12월 칸이 채워져 있음 → 환수 대상</span></li>
+    <li><span class="mk y">✓</span><span>산학협력팀: 12월 1명 빠짐 (11-28 전보)</span></li>
+    <li><span class="mk y">✓</span><span>기획팀: 11월 1명 늘어남 (11-15 입사, 담당자 판단 지급)</span></li>
+  </ul></div>
+</div>`;
+
+V.resol = () => {
+  const n1 = monthCount(0,0), s1 = monthCount(0,1), n2 = monthCount(1,0), s2 = monthCount(1,1);
+  const title = `[총무팀] ${P.year}학년도 부서운영비 지급 건(${P.m1}-${P.m2}월)`;
+  const body = `1. ${P.m1}월: ${n1 + s1}명(${n1}명*30,000원 + ${s1}명*15,000원)\n2. ${P.m2}월: ${n2 + s2}명(${n2}명*30,000원 + ${s2}명*15,000원)`;
+  return `
+${memo('2 지급 결의 (비예산계정 결의서)', ['결재시스템에 옮겨 적을 내용만 만듭니다. 결재자·결재 일자는 다루지 않습니다.', '결의내역의 달별 인원은 명단에서 바로 셉니다. 합계가 명단 합계·출납명세서 합과 같은지 아래에 표시합니다.', '한글 금액은 숫자에서 자동으로 만듭니다. 1이 들어가는 자리(예: 1,000,000원 → "일백만" 또는 "백만")를 어떻게 쓰시는지 확인이 필요합니다.', '1-2월 회차도 학년도는 앞 해(예: 2027년 1-2월 → 2026학년도)로 적는 것으로 가정했습니다.', '추가 지급(기간 중 입사자) 결의 문구는 예시를 받으면 같은 방식으로 만듭니다.'])}
+<div class="grid2">
+  <div class="card"><h2>결의서에 넣을 내용 <span class="sub">상신 2026-11-04 · 완료</span></h2>
+    <div class="kv">
+      <span>결의명·제목</span><span><span id="c-title">${esc(title)}</span> ${copyBtn('c-title')}</span>
+      <span>금액</span><span><span id="c-han">금 ${hanAmt(total)} 원</span> ${copyBtn('c-han')} · ￦ ${won(total)}</span>
+      <span>출납</span><span>${esc(U[0].holder)} 외 ${U.length - 1}명</span>
+      <span>계정</span><span>등록금회계 · 지출 · 유동자산 / 기타유동자산 / 가지급금</span>
+    </div>
+    <h2 style="margin-top:14px">결의내역 <span class="r">${copyBtn('c-body')}</span></h2>
+    <div class="copybox" id="c-body">${esc(body)}</div>
+  </div>
+  <div class="card"><h2>맞는지 확인</h2><ul class="check">
+    <li><span class="mk y">✓</span><span>결의내역 합 ${won((n1 + n2) * P.gen + (s1 + s2) * P.short)}원 = 명단 합계 ${won(total)}원</span></li>
+    <li><span class="mk n">✕</span><span>출납명세서 합 ${won(total + 30000)}원 ≠ 명단 합계 (학생상담센터 30,000원 차이)</span></li>
+    <li><span class="mk y">✓</span><span>출납 ${U.length}건 = 명단 순번 ${U.length}건</span></li>
+    <li><span class="mk w">!</span><span>예금주 확인 2건 남음 (도서관, 학생상담센터) ${go('roster', '명단 확인으로')}</span></li>
+  </ul></div>
+</div>
+<div class="card"><h2>출납명세서용 목록 <span class="sub">결재시스템 출납명세서에 옮길 순서 그대로</span><span class="r"><button class="b sm" type="button">표 복사</button></span></h2>
+  <div class="scroll"><table><thead><tr><th>순번</th><th>출납구분</th><th>출납대상</th><th>은행</th><th>계좌번호</th><th>예금주</th><th class="n">금액</th></tr></thead>
+  <tbody>${U.map(u => `<tr><td>${u.no}</td><td>출금</td><td>교직원</td><td>${esc(u.bank)}</td><td class="muted">명단 값 (시안에서는 가림)</td><td>${esc(u.holder)}</td><td class="n">${won(base(u))}</td></tr>`).join('')}
+  <tr class="sum"><td colspan="6">합계</td><td class="n">${won(total)}</td></tr></tbody></table></div>
+</div>`;
+};
+
+V.notice = () => {
+  const t = `안녕하십니까, 총무처 총무팀 {담당자}입니다.\n\n금일 부서운영비(${P.year}년 ${P.m1}-${P.m2}월)가 각 부서 담당자에게 입금되었음을 안내드립니다.\n전보발령, 휴직 등에 따라 지급대상자가 일부 변경된 부서가 있을 수 있으니 반드시 명단과 금액을 확인하여 주시기 바랍니다.\n\n포털(업무시스템) 내 부서운영비 메뉴를 활용하여 정산서 제출을 요청드리오니\n첨부파일 매뉴얼과 정산 양식을 이용하여 ${krDate(P.due)}까지 부서운영비를 정산을 완료하여 주시기 바랍니다.\n\n기한 내 정산서 미제출 시 다음 부서운영비 지급이 불가하므로 원활한 지급을 위해 반드시 기한을 지켜 제출해 주시면 감사하겠습니다.\n\n[주의사항]\n- 부서 내 입·퇴사 등 인사변동이 있을 경우, 부서운영비 지급/환수 조정이 필요하오니 연락 주시기 바랍니다.\n- 개인 포인트 적립, 상품권 전환 등 개인적인 이익이 발생하는 방식으로 사용할 수 없습니다.\n- 개인 소장 목적의 물품 구입 및 비용 지출은 인정되지 않습니다. (예: 충전기, 키보드, 의류, 식재료, 주유비, 화장품, 장난감 등)\n- 가급적 구입 품목이 확인되는 증빙을 첨부해 주시기 바라며, 추가 확인이 필요한 경우 담당자가 별도로 요청할 수 있습니다.\n- 배부된 엑셀 정산 양식을 작성한 후 PDF로 변환하여 업로드해 주시기 바라며,\n  여러 부서가 묶여 지급된 경우, 제출 담당자께서 비고란에 각 부서명 기입 후 제출하여 주시기 바랍니다.\n- 총사용액은 지급 된 금액보다 반드시 같거나 많이 사용하여야 하며, 사업자 지출증빙 (사업자번호 들어감) 처리 건에 한해 인정이 가능합니다.\n\n부서운영(단합)비 관련하여 궁금한 점이 있으시다면 언제든지 연락주시기 바랍니다.\n\n감사합니다.\n{담당자} 올림`;
+  return `
+${memo('3 입금·안내 메일', ['입금일과 정산 마감일만 넣으면 보내 주신 메일 그대로 본문이 만들어집니다. 요일은 자동입니다.', '{담당자}는 설정에 넣은 이름으로 바뀝니다(시안에서는 그대로 둠).', '받는 사람 목록(부서 담당자 메일 주소)은 명단에 없어서 넣지 않았습니다. 필요하면 명단에 열을 추가하는 방법을 정합니다.', '메일은 직접 보내지 않고 복사해서 쓰십니다.'])}
+<div class="grid2">
+  <div class="card"><h2>이번 회차 일자</h2>
+    <div class="row">
+      <label class="field" for="paidDate">입금일<input id="paidDate" type="date" value="${P.paid}"></label>
+      <label class="field" for="dueDate">정산 마감일<input id="dueDate" type="date" value="${P.due}"></label>
+      <span class="tag t-info">마감 ${krDate(P.due)}</span>
+    </div>
+    <p class="muted" style="margin:10px 0 0">첨부: 매뉴얼, ${P.year}년 ${P.m1}-${P.m2}월 정산 양식(xlsx)</p>
+  </div>
+  <div class="card"><h2>보낸 기록</h2><ul class="check"><li><span class="mk y">✓</span><span>2026-11-06 발송 (담당자 표시)</span></li></ul></div>
+</div>
+<div class="card"><h2>지급 안내 메일 <span class="r">${copyBtn('c-notice')}</span></h2><div class="copybox" id="c-notice">${esc(t)}</div></div>`;
+};
+
+V.change = () => {
+  const c = CHANGES[1];
+  const mail = `안녕하십니까, 총무처 총무팀입니다.\n\n${P.year}년 ${P.m1}-${P.m2}월 부서운영비와 관련하여\n${c.reason}에 따른 ${c.months} 부서운영비 ${c.amt / 10000}만원을 환수 요청하고자 안내 드립니다.\n\n  -대상자: ${c.who}\n  -환수 금액: ${won(c.amt)}원\n  -입금 계좌: {설정의 수납 계좌}\n\n위 계좌로 입금 후 송금확인증을 본 메일로 회신해주시기 바랍니다.\n문의사항이 있으신 경우, 내선번호로 연락 부탁 드립니다.\n\n업무 협조에 감사합니다.`;
+  return `
+${memo('4 입퇴사·환수', ['인사담당자에게 들은 변동을 날짜와 함께 적으면 15일 기준으로 지급·환수를 계산합니다.', '기준: 15일까지 입사 → 그달부터 지급 / 14일까지 퇴사 → 그달 환수. 15일 당일·휴일이 낀 건은 "담당자 판단"으로 표시하고 결과를 고를 수 있습니다.', '홀수달 초 퇴사 = 두 달치(60,000원) 환수, 짝수달 퇴사 = 그달 30,000원 환수. 둘 다 환수 메일을 만듭니다. 단기근로자는 달마다 15,000원으로 계산(추론).', '추가 지급은 부서에 "먼저 쓰고 정산서에 추가분까지 포함" 안내 → 정산 검토 때 지급액에 더합니다.', '여기 변동이 명단(1)과 정산 결과(7)에 반영됐는지 자동으로 대조합니다.'])}
+<div class="card"><h2>이번 회차 변동 <span class="sub">${CHANGES.length}건</span><span class="r"><button class="b sm p" type="button">변동 추가</button></span></h2>
+  <div class="scroll"><table><thead><tr><th>부서</th><th>대상자</th><th>구분</th><th>일자</th><th>적용 기준</th><th>결과</th><th>상태</th><th></th></tr></thead>
+  <tbody>${CHANGES.map((x, i) => `<tr class="${i === 1 ? 'sel' : ''}"><td>${esc(x.dept)}</td><td>${esc(x.who)}</td><td>${esc(x.kind)}</td><td>${x.date}</td><td>${esc(x.rule)}${x.judge ? ' <span class="tag t-warn">담당자 판단</span>' : ''}</td><td>${esc(x.res)}</td><td><span class="tag t-${x.state[0]}">${esc(x.state[1])}</span></td><td>${x.mail ? '<button class="b sm" type="button">환수 메일</button>' : x.judge ? '<select aria-label="판단"><option>지급</option><option>지급 안 함</option></select>' : ''}</td></tr>`).join('')}</tbody></table></div>
+</div>
+<div class="grid2">
+  <div class="card"><h2>환수 요청 메일 <span class="sub">국제교류팀 · ${esc(c.who)}</span><span class="r">${copyBtn('c-back')}<button class="b sm" type="button">보냄으로 표시</button></span></h2>
+    <div class="copybox" id="c-back">${esc(mail)}</div>
+    <p class="muted" style="margin:8px 0 0">받는 사람: 국제교류팀 부서 담당자 (명단의 예금주 ${esc(U[9].holder)})</p>
+  </div>
+  <div class="card"><h2>추가 지급 <span class="sub">교무팀 · 정입사 사원 · 12월 30,000원</span></h2>
+    <ul class="check">
+      <li><span class="mk y">✓</span><span>부서에 안내함: 먼저 쓰고 정산서에 추가분 포함 (12-03)</span></li>
+      <li><span class="mk w">!</span><span>추가 지급 결의 문구: 예시를 받으면 만듦</span></li>
+      <li><span class="mk y">✓</span><span>정산 검토 지급액에 반영: 교무팀 240,000 + 30,000 = 270,000원</span></li>
+    </ul>
+  </div>
+</div>`;
+};
+
+let selUnit = 2;
+V.intake = () => {
+  const u = U.find(x => x.no === selUnit);
+  const R = [
+    ['2026-11-12','○○베이커리','다과구입',42000,'12****8808','발행','23019874','판독 완료',''],
+    ['2026-11-26','○○식당','부서 회식',186000,'12****8808','발행','40417762','판독 완료',''],
+    ['2026-12-09','○○마트','다과구입',58000,'—','표시 없음','—','확인 필요','지출증빙 발행 부분이 사진에 없음'],
+    ['2026-12-18','○○카페','음료',86000,'12****8808','발행','77120395','판독 완료',''],
+  ];
+  return `
+${memo('5 정산 접수', ['포털에서 받은 접수 목록(PDF)과 부서별 정산서·영수증(PDF, 여러 개면 ZIP)을 올립니다.', '"Claude로 읽기"를 누르면 영수증마다 일자·사용처·금액·식별번호·지출증빙·승인번호·품목을 뽑습니다. 흐리거나 잘린 것은 "확인 필요"로 남기고 직접 고칩니다.', '파일명에 부서명이 없으면 정산서 첫 장의 부서명으로 부서를 맞추고, 못 맞추면 직접 고르게 합니다.', '영수증 사진은 저장하지 않고 읽어 낸 값만 앱 저장소에 저장합니다(제안).', '읽기 기능이 실제로 되는지는 9-10월 ZIP을 받으면 따로 시험합니다.'])}
+<div class="grid2">
+  <div class="card"><h2>파일 올리기</h2>
+    <div class="drop">포털 접수 목록 PDF, 부서별 정산서 PDF 또는 ZIP을 여기에 끌어다 놓기<br><button class="b sm" type="button" style="margin-top:8px">파일 고르기</button></div>
+    <p class="muted" style="margin:8px 0 0">.alz, .egg 압축은 열지 못하니 .zip으로 받아 주세요.</p>
+  </div>
+  <div class="card"><h2>제출 현황 <span class="sub">마감 ${krDate(P.due)}</span></h2>
+    <div class="notice bad">미제출 ${subNo.length}건: ${subNo.map(x => x.dept).join(', ')} · 이 부서들 때문에 정산 결의를 올릴 수 없습니다</div>
+    <p class="muted" style="margin:8px 0 0">제출 ${subOk.length}건 · 접수 목록 대조 완료</p>
+  </div>
+</div>
+<div class="card"><h2>부서별 접수 <span class="sub">행을 누르면 아래에 영수증 판독 결과</span></h2>
+  <div class="scroll"><table><thead><tr><th>순번</th><th>부서</th><th>제출일</th><th class="n">접수 목록 사용액</th><th class="n">재합산 사용액</th><th>판독</th></tr></thead>
+  <tbody>${U.map(x => `<tr class="click${x.no === selUnit ? ' sel' : ''}" data-unit="${x.no}"><td>${x.no}</td><td>${esc(x.note || x.dept)}</td><td>${x.sub ? x.sub : '<span class="tag t-bad">미제출</span>'}</td><td class="n">${x.used == null ? '' : won(x.listed || x.used)}</td><td class="n">${x.used == null ? '' : won(x.used)}${x.listed ? ' <span class="tag t-warn">다름</span>' : ''}</td><td>${!x.sub ? '' : x.no === 11 ? '<span class="tag t-warn">확인 필요 1</span>' : x.no === 2 ? '<span class="tag t-warn">확인 필요 1</span>' : '<span class="tag t-ok">완료</span>'}</td></tr>`).join('')}</tbody></table></div>
+</div>
+<div class="card"><h2>영수증 판독 결과 <span class="sub">${esc(u.dept)} · 정산서 1 · 영수증 ${R.length}</span><span class="r"><button class="b sm p" type="button">Claude로 다시 읽기</button></span></h2>
+  <div class="scroll"><table><thead><tr><th>#</th><th>승인일</th><th>사용처</th><th>정산서 내역</th><th class="n">금액</th><th>식별번호</th><th>지출증빙</th><th>승인번호</th><th>상태</th></tr></thead>
+  <tbody>${R.map((r, i) => `<tr><td>${i + 1}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="n">${won(r[3])}</td><td>${r[4]}</td><td>${r[5]}</td><td>${r[6]}</td><td>${r[7] === '판독 완료' ? '<span class="tag t-ok">판독 완료</span>' : `<span class="tag t-warn">${r[7]}</span> <span class="muted">${r[8]}</span>`}</td></tr>`).join('')}
+  <tr class="sum"><td colspan="4">항목 합 / 정산서 합계 / 접수 목록</td><td class="n">${won(R.reduce((s, r) => s + r[3], 0))}</td><td colspan="4">${won(u.used || 0)} / ${won(u.listed || u.used || 0)}</td></tr></tbody></table></div>
+  <p class="muted" style="margin:8px 0 0">값을 누르면 고칠 수 있게 만듭니다. 고친 값은 "직접 고침"으로 표시합니다.</p>
+</div>`;
+};
+
+V.review = () => `
+${memo('6 증빙 검토', ['자동 점검 10가지(요구사항 4장) 결과를 부서별로 모읍니다. 판단은 담당자가 합니다.', '"보완"은 부서에 직접 연락해야 하는 건입니다. 메일은 만들지 않고, 연락했는지만 체크합니다.', '"확인"은 담당자가 보고 정상/보완을 고르는 건(용도, 중복, 판독 불가)입니다.', '용도 확인 단어: 꽃, 비품, 상품권, 선물, 포인트, 충전기, 키보드, 의류, 식재료, 주유비, 화장품, 장난감 (설정에서 고침).'])}
+<div class="chips"><button type="button" aria-pressed="true">전체 ${issues.length}</button><button type="button" aria-pressed="false">보완 ${needFix.length}</button><button type="button" aria-pressed="false">확인 ${issues.length - needFix.length}</button><button type="button" aria-pressed="false">이상 없음 ${U.filter(u => u.sub && !u.is.length).length}</button></div>
+<div class="card"><h2>보완 필요 <span class="sub">부서에 직접 연락</span></h2>
+  <div class="cards">${needFix.map(i => `<div class="icard bad"><div class="hd"><b>${esc(i.u.dept)}</b><span class="tag t-bad">보완</span><span>${esc(i.msg)}</span><span class="amt">지급 ${won(fin(i.u))} · 사용 ${won(i.u.used)}</span></div><div class="row"><label class="row" style="gap:6px"><input type="checkbox"> 연락함</label><input type="text" placeholder="메모 (예: 12-24 전화, 재제출 약속)" style="flex:1 1 260px;min-width:0" aria-label="메모"></div></div>`).join('')}</div>
+</div>
+<div class="card"><h2>확인 필요 <span class="sub">담당자 판단</span></h2>
+  <div class="cards">${issues.filter(i => i.act !== '보완').map(i => `<div class="icard"><div class="hd"><b>${esc(i.u.dept)}</b><span class="tag t-warn">${esc(i.act)}</span><span>${esc(i.msg)}</span></div><div class="row"><div class="chips"><button type="button" aria-pressed="false">정상</button><button type="button" aria-pressed="false">보완으로</button><button type="button" aria-pressed="false">불인정</button></div></div></div>`).join('')}</div>
+</div>
+<div class="card"><h2>이상 없음</h2><p style="margin:0">${U.filter(u => u.sub && !u.is.length).map(u => esc(u.note || u.dept)).join(' · ')} <span class="tag t-ok">묶음 제출 비고란 부서명 확인</span></p></div>`;
+
+V.result = () => {
+  const rows = U.map(u => ({u, f:fin(u), d:u.used == null ? null : u.used - fin(u)}));
+  const sumF = rows.reduce((s, r) => s + r.f, 0), sumU = rows.reduce((s, r) => s + (r.u.used || 0), 0);
+  const rep = `1. 검토 개요\n  가. 대상: ${P.year}년 ${P.m1}-${P.m2}월 부서운영비 정산 ${U.length}건\n  나. 검토 방법: 정산서 항목 재합산, 영수증 대조(금액·승인일·식별번호·지출증빙·승인번호), 용도 확인\n2. 총괄 결과\n  가. 지급액 ${won(sumF)}원 (정기 ${won(total)}원, 추가 ${won(U.reduce((s,u)=>s+u.add,0))}원, 환수 ${won(U.reduce((s,u)=>s+u.back,0))}원)\n  나. 사용액 ${won(sumU)}원 (제출 ${subOk.length}건 기준)\n3. 부서별 지급액 대비 사용액: 붙임 표\n4. 확인·보완 요청 사항\n${needFix.map((i, k) => `  ${'가나다라마바사'[k]}. ${i.u.dept}: ${i.msg}`).join('\n')}\n5. 서식 오기 및 조치 의견\n  가. 연구지원팀: 상단 정산금액과 항목 합 불일치 → 접수 목록 사용액 수정`;
+  return `
+${memo('7 정산 결과', ['제출·보완이 끝나면 정산 지출결의에 쓸 숫자를 정리합니다. 정산 지출결의 양식은 아직 못 받아서, 예시를 받으면 결의 문구를 2단계처럼 만듭니다.', '명단의 "정산 사용액" 열을 채운 엑셀을 내려받을 수 있게 합니다(명단 양식 그대로, 차액 = 입금액 − 사용액).', '검토 결과 보고서는 9-10월 보고서 형식(1. 검토 개요 ~ 5. 서식 오기 및 조치 의견)을 따릅니다. 03 보고서 원문을 받으면 문구를 맞춥니다.', '마감 후 "다음 회차 열기"로 1-2월 명단을 이번 명단에서 복사해 시작합니다.'])}
+<div class="notice bad">미제출 ${subNo.length}건, 보완 ${needFix.length}건이 남아 있어 아직 정산 결의를 올릴 수 없습니다. ${go('review', '증빙 검토로')}</div>
+<div class="card"><h2>부서별 지급액 대비 사용액 <span class="r"><button class="b sm" type="button">명단(사용액 포함) 엑셀 받기</button></span></h2>
+  <div class="scroll"><table><thead><tr><th>순번</th><th>부서</th><th>예금주</th><th class="n">정기 지급</th><th class="n">추가</th><th class="n">환수</th><th class="n">확정 지급</th><th class="n">사용액</th><th class="n">차액(사용−지급)</th><th>상태</th></tr></thead>
+  <tbody>${rows.map(({u, f, d}) => `<tr><td>${u.no}</td><td>${esc(u.note || u.dept)}</td><td>${esc(u.holder)}</td><td class="n">${won(base(u))}</td><td class="n">${u.add ? '+' + won(u.add) : ''}</td><td class="n">${u.back ? '−' + won(u.back) : ''}</td><td class="n"><b>${won(f)}</b></td><td class="n">${u.used == null ? '' : won(u.used)}</td><td class="n${d != null && d < 0 ? ' neg' : ''}">${d == null ? '' : (d > 0 ? '+' : '') + won(d)}</td><td>${!u.sub ? '<span class="tag t-bad">미제출</span>' : u.is.some(i => i[2] === '보완') ? '<span class="tag t-bad">보완</span>' : u.is.length ? '<span class="tag t-warn">확인</span>' : '<span class="tag t-ok">완료</span>'}</td></tr>`).join('')}
+  <tr class="sum"><td colspan="3">합계</td><td class="n">${won(total)}</td><td class="n">+${won(U.reduce((s,u)=>s+u.add,0))}</td><td class="n">−${won(U.reduce((s,u)=>s+u.back,0))}</td><td class="n">${won(sumF)}</td><td class="n">${won(sumU)}</td><td></td><td></td></tr></tbody></table></div>
+</div>
+<div class="grid2">
+  <div class="card"><h2>검토 결과 보고서 <span class="r">${copyBtn('c-rep')}</span></h2><div class="copybox" id="c-rep">${esc(rep)}</div></div>
+  <div class="card"><h2>정산 지출결의 <span class="sub">양식 예시 필요</span></h2><p class="muted" style="margin:0">정산 지출결의 화면(또는 캡처)을 받으면 결의명·결의내역·금액을 2단계처럼 만들어 드립니다.</p>
+    <div style="margin-top:12px">${go('home', '다음 회차(2027년 1-2월) 열기')}</div></div>
+</div>`;
+};
+
+V.set = () => `
+${memo('설정', ['회차와 상관없는 값입니다. 앱 저장소(본인만)에만 저장하고 공개 저장소에는 넣지 않습니다.', '정산 양식에서 찾은 수식 문제 4건은 사이트와 별개로, 원하시면 고친 양식을 따로 만들어 드립니다.'])}
+<div class="grid2">
+  <div class="card"><h2>기본 값</h2><div class="kv">
+    <span>담당자 이름</span><span><input id="setName" placeholder="메일 서명에 들어감"></span>
+    <span>학교 사업자번호</span><span><input id="setBiz" placeholder="영수증 식별번호 대조용"></span>
+    <span>환수 입금 계좌</span><span><input id="setAcct" placeholder="은행 계좌번호"></span>
+    <span>월 지급 단가</span><span>일반 ${won(P.gen)}원 · 단기근로자 ${won(P.short)}원</span>
+    <span>입퇴사 기준일</span><span>매월 15일 (15일 당일 입사는 지급, 당일 퇴사는 환수 안 함, 휴일 낀 건은 담당자 판단)</span>
+  </div></div>
+  <div class="card"><h2>용도 확인 단어</h2><p style="margin:0">꽃 · 비품 · 상품권 · 선물 · 포인트 · 충전기 · 키보드 · 의류 · 식재료 · 주유비 · 화장품 · 장난감</p>
+    <h2 style="margin-top:14px">메일 양식</h2><p style="margin:0">지급 안내 메일 · 환수 요청 메일 <span class="muted">(보내 주신 원문 그대로, 바뀌는 칸만 자동)</span></p></div>
+</div>`;
+
+// ===== 그리기
+function render() {
+  document.getElementById('stepper').innerHTML = STEPS.map(s => `<button type="button" class="${s.c}" data-go="${s.k}"${s.k === cur ? ' aria-current="step"' : ''}><span class="dot"></span><span class="no">${s.no}${s.ph ? ' · ' + s.ph : ''}</span><span class="nm">${s.nm}</span><span class="st">${esc(s.st)}</span></button>`).join('');
+  document.getElementById('sideSet').setAttribute('aria-pressed', String(cur === 'set'));
+  document.getElementById('main').innerHTML = V[cur]();
+}
+document.addEventListener('click', e => {
+  const g = e.target.closest('[data-go]');
+  if (g) { cur = g.dataset.go; render(); window.scrollTo(0, 0); return; }
+  const r = e.target.closest('[data-unit]');
+  if (r) { selUnit = +r.dataset.unit; render(); return; }
+  const c = e.target.closest('[data-copy]');
+  if (c) {
+    const el = document.getElementById(c.dataset.copy);
+    const done = () => { c.textContent = '복사됨'; setTimeout(() => { c.textContent = '복사'; }, 1500); };
+    const pick = () => { const s = getSelection(), rg = document.createRange(); rg.selectNodeContents(el); s.removeAllRanges(); s.addRange(rg); c.textContent = '선택됨 · Ctrl+C'; };
+    try { navigator.clipboard.writeText(el.innerText).then(done, pick); } catch { pick(); }
+    return;
+  }
+  const chip = e.target.closest('.chips button');
+  if (chip) { chip.parentElement.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === chip))); }
+});
+document.getElementById('memoToggle').addEventListener('change', e => document.body.classList.toggle('nomemo', !e.target.checked));
+render();
+</script>
