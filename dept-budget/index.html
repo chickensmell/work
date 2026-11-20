@@ -113,6 +113,8 @@ dialog img{display:block;max-width:100%;max-height:78vh;margin:0 auto}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 'use strict';
 // ================= 기본 도구
@@ -650,14 +652,207 @@ async function runReads(c, list, opt) {
   const worker = async () => {
     while (!stop && i < list.length) {
       const x = list[i++];
-      try { await readOne(c, x, opt); }
-      catch (e) { x.status = '실패'; x.err = ERR[e?.code] || (e?.code ? `${e.code}` : String(e?.message || e)); render(); if (['not_granted', 'rate_limited', 'cancelled', 'sampling_disabled', 'images_unavailable'].includes(e?.code)) stop = true; }
+      try { await (x.type === 'xlsx' ? readXlsx : readOne)(c, x, opt); }
+      catch (e) { x.status = '실패'; x.err = ERR[e?.code] || (typeof e?.code === 'string' ? e.code : String(e?.message || e)); render(); if (['not_granted', 'rate_limited', 'cancelled', 'sampling_disabled', 'images_unavailable'].includes(e?.code)) stop = true; }
     }
   };
   await Promise.all([worker(), worker()]);
   running = false; render();
 }
 const unclear = r => r && (!r.data.sheet || (r.data.receipts || []).some(x => (x.readable && x.readable !== 'ok') || (x.kind === '현금영수증' && !x.biz_id)));
+
+// ================= 정산: 엑셀 정산서 (칸 값은 바로 읽고, 붙은 사진만 Claude가 읽음)
+const EMU = 9525;
+const cellTxt = cl => cl ? String(cl.w ?? cl.v ?? '').trim() : '';
+const cellNum = cl => !cl ? null : typeof cl.v === 'number' ? cl.v : num(cellTxt(cl));
+function cellISO(cl) {
+  if (!cl) return null;
+  if (cl.t === 'd' && cl.v instanceof Date) return `${cl.v.getFullYear()}-${pad(cl.v.getMonth() + 1)}-${pad(cl.v.getDate())}`;
+  if (cl.t === 'n' && cl.v > 30000 && cl.v < 80000) { const d = XLSX.SSF.parse_date_code(cl.v); return `${d.y}-${pad(d.m)}-${pad(d.d)}`; }
+  const m = cellTxt(cl).match(/(\d{2,4})\s*[.\-\/년]\s*(\d{1,2})\s*[.\-\/월]\s*(\d{1,2})/);
+  if (m) { let y = +m[1]; if (y < 100) y += 2000; return `${y}-${pad(+m[2])}-${pad(+m[3])}`; }
+  return null;
+}
+const wsCells = ws => Object.keys(ws).filter(k => k[0] !== '!').map(k => ({...XLSX.utils.decode_cell(k), cl: ws[k]}));
+function wsLabel(ws, re) {
+  const f = wsCells(ws).find(x => re.test(cellTxt(x.cl).replace(/\s/g, '')));
+  if (!f) return {};
+  const after = cellTxt(f.cl).split(/[:：]/).slice(1).join(':').trim();
+  let right = null; for (let k = 1; k <= 4 && !right; k++) { const cl = ws[XLSX.utils.encode_cell({r: f.r, c: f.c + k})]; if (cl && cellTxt(cl) !== '') right = cl; }
+  return {after, right, r: f.r, c: f.c};
+}
+const labNum = o => (o.after ? num(o.after) : null) ?? cellNum(o.right);
+const labTxt = o => o.after || cellTxt(o.right);
+function sheetFromWs(ws) {
+  if (!ws || !ws['!ref']) return null;
+  const hdr = wsCells(ws).find(x => /^내역$/.test(cellTxt(x.cl).replace(/\s/g, '')));
+  if (!hdr) return null;
+  const rg = XLSX.utils.decode_range(ws['!ref']), col = {}, hr = hdr.r;
+  for (let c = rg.s.c; c <= rg.e.c; c++) { const t = cellTxt(ws[XLSX.utils.encode_cell({r: hr, c})]).replace(/[\s.]/g, ''); if (/^NO$/i.test(t)) col.no = c; else if (t === '일자') col.date = c; else if (t === '내역') col.desc = c; else if (t === '금액') col.amt = c; else if (t === '사용처') col.place = c; }
+  const g = (r, c) => c == null ? null : ws[XLSX.utils.encode_cell({r, c})];
+  const items = []; let total = null;
+  for (let r = hr + 1; r <= rg.e.r; r++) {
+    if (/합\s*계/.test([rg.s.c, col.no, col.date].map(c => cellTxt(g(r, c))).join(''))) { total = cellNum(g(r, col.amt)); break; }
+    const amount = cellNum(g(r, col.amt)), desc = cellTxt(g(r, col.desc));
+    if (!amount && !desc) continue;
+    items.push({no: num(cellTxt(g(r, col.no))) ?? items.length + 1, date: cellISO(g(r, col.date)), desc, amount, place: cellTxt(g(r, col.place))});
+  }
+  return {dept: labTxt(wsLabel(ws, /부서명/)) || null, note: null, paid: labNum(wsLabel(ws, /가지급액/)), settled: labNum(wsLabel(ws, /정산금액/)), period: labTxt(wsLabel(ws, /사용기간/)) || null, items, total};
+}
+async function parseXlsxFile(bytes) {
+  const wb = XLSX.read(bytes, {type: 'array', cellNF: true});
+  const sheets = wb.SheetNames.map(name => ({name, ws: wb.Sheets[name], images: []}));
+  try {
+    const z = await JSZip.loadAsync(bytes);
+    const xml = async p => { const f = z.file(p); return f ? new DOMParser().parseFromString(await f.async('string'), 'application/xml') : null; };
+    const rels = async p => { const d = await xml(p), m = {}; if (d) for (const r of d.getElementsByTagName('Relationship')) m[r.getAttribute('Id')] = r.getAttribute('Target'); return m; };
+    const resolve = (base, t) => { if (!t) return ''; if (t.startsWith('/')) return t.slice(1); const parts = base.split('/').slice(0, -1); for (const x of t.split('/')) { if (x === '..') parts.pop(); else if (x !== '.') parts.push(x); } return parts.join('/'); };
+    const relOf = p => p.replace(/([^/]+)$/, '_rels/$1.rels');
+    const wbx = await xml('xl/workbook.xml'), wbr = await rels('xl/_rels/workbook.xml.rels');
+    const sh = [...wbx.getElementsByTagName('sheet')];
+    for (let i = 0; i < sh.length; i++) {
+      const sp = resolve('xl/workbook.xml', wbr[sh[i].getAttribute('r:id')]);
+      const sx = await xml(sp); const dr = sx?.getElementsByTagName('drawing')[0]; if (!dr) continue;
+      const dp = resolve(sp, (await rels(relOf(sp)))[dr.getAttribute('r:id')]);
+      const dx = await xml(dp); if (!dx) continue;
+      const drels = await rels(relOf(dp));
+      for (const an of [...dx.documentElement.children]) {
+        const blip = an.getElementsByTagName('a:blip')[0]; if (!blip) continue;
+        const mp = resolve(dp, drels[blip.getAttribute('r:embed')]), mf = z.file(mp); if (!mf) continue;
+        const type = {png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', bmp: 'image/bmp', webp: 'image/webp'}[mp.split('.').pop().toLowerCase()];
+        const pos = tg => { const e = an.getElementsByTagName('xdr:' + tg)[0]; if (!e) return null; const v = n => +(e.getElementsByTagName('xdr:' + n)[0]?.textContent || 0); return {c: v('col'), dx: v('colOff') / EMU, r: v('row'), dy: v('rowOff') / EMU}; };
+        const ext = an.getElementsByTagName('xdr:ext')[0] || an.getElementsByTagName('a:ext')[0];
+        sheets[i]?.images.push({type, blob: type ? new Blob([await mf.async('uint8array')], {type}) : null, from: pos('from'), to: pos('to'), w: ext ? +ext.getAttribute('cx') / EMU : null, h: ext ? +ext.getAttribute('cy') / EMU : null});
+      }
+    }
+  } catch (e) { /* 옛 .xls 등: 그림은 못 읽어도 칸 값은 씀 */ }
+  // 정산서 시트, 증빙 시트, 빈 시트 가리기
+  const mainIdx = sheets.findIndex(s => sheetFromWs(s.ws));
+  const sheet = mainIdx >= 0 ? sheetFromWs(sheets[mainIdx].ws) : null;
+  const evid = [];
+  sheets.forEach((s, i) => {
+    s.imgs = s.images.filter(im => im.blob);
+    if (i === mainIdx) { s.keep = true; s.role = '정산서'; return; }
+    if (/결재/.test(s.name)) { s.keep = s.imgs.length > 0; s.role = '결재'; return; }
+    const amount = labNum(wsLabel(s.ws, /^금액$/)), desc = labTxt(wsLabel(s.ws, /^사용내역$/));
+    s.keep = s.imgs.length > 0 || amount > 0 || (mainIdx < 0 && wsCells(s.ws).length > 0);
+    s.role = '증빙';
+    if (i > mainIdx && mainIdx >= 0) { const n = evid.length + 1; evid.push({n, sheet: i, desc, amount, date: cellISO(wsLabel(s.ws, /^사용일자$/).right), place: labTxt(wsLabel(s.ws, /^사용처$/)), images: s.imgs.map(im => im.blob), badImages: s.images.length - s.imgs.length, keep: s.keep}); }
+  });
+  return {wb, sheets, sheet, evid, mainIdx};
+}
+// 시트를 그림으로 (PDF용): 칸 너비·높이·병합·붙은 사진 위치를 그대로 옮김
+function sheetBox(sh) {
+  const ws = sh.ws, cells = wsCells(ws).filter(x => cellTxt(x.cl) !== ''), merges = ws['!merges'] || [];
+  let er = 0, ec = 0;
+  cells.forEach(x => { er = Math.max(er, x.r); ec = Math.max(ec, x.c); });
+  merges.forEach(m => { if (m.s.r <= er + 40) { er = Math.max(er, m.e.r); ec = Math.max(ec, m.e.c); } });
+  sh.imgs.forEach(im => { if (im.to) { er = Math.max(er, im.to.r); ec = Math.max(ec, im.to.c); } else if (im.from) { er = Math.max(er, im.from.r + 10); ec = Math.max(ec, im.from.c + 3); } });
+  const cw = c => { const k = (ws['!cols'] || [])[c]; return k?.hidden ? 0 : k?.wpx || (k?.wch ? k.wch * 7 + 5 : 64); };
+  const rh = r => { const k = (ws['!rows'] || [])[r]; return k?.hidden ? 0 : k?.hpx || (k?.hpt ? k.hpt * 4 / 3 : 20); };
+  const X = [0], Y = [0];
+  for (let c = 0; c <= ec + 1; c++) X.push(X[c] + cw(c));
+  for (let r = 0; r <= er + 1; r++) Y.push(Y[r] + rh(r));
+  const covered = new Set(); const span = {};
+  merges.forEach(m => { span[`${m.s.r},${m.s.c}`] = m; for (let r = m.s.r; r <= m.e.r; r++) for (let c = m.s.c; c <= m.e.c; c++) if (r !== m.s.r || c !== m.s.c) covered.add(`${r},${c}`); });
+  let h = `<table style="border-collapse:collapse;table-layout:fixed;width:${X[ec + 1]}px;font:13px 'Malgun Gothic','Apple SD Gothic Neo',sans-serif;color:#000"><colgroup>${Array.from({length: ec + 1}, (_, c) => `<col style="width:${cw(c)}px">`).join('')}</colgroup>`;
+  for (let r = 0; r <= er; r++) {
+    h += `<tr style="height:${rh(r)}px">`;
+    for (let c = 0; c <= ec; c++) {
+      if (covered.has(`${r},${c}`)) continue;
+      const m = span[`${r},${c}`], cl = ws[XLSX.utils.encode_cell({r, c})], t = cellTxt(cl);
+      const isNum = cl && cl.t === 'n';
+      const big = m && m.e.c - m.s.c >= 3 && r <= 1 && t;
+      h += `<td${m ? ` rowspan="${m.e.r - m.s.r + 1}" colspan="${m.e.c - m.s.c + 1}"` : ''} style="border:1px solid #444;padding:1px 4px;overflow:hidden;white-space:pre-wrap;vertical-align:middle;${isNum ? 'text-align:right;' : ''}${big ? 'font-size:20px;font-weight:bold;text-align:center;' : ''}">${esc(isNum && !cl.z?.match(/[ymd]/i) ? won(cl.v) : t)}</td>`;
+    }
+    h += '</tr>';
+  }
+  h += '</table>';
+  const imgs = sh.imgs.map(im => {
+    if (!im.from) return '';
+    const left = X[im.from.c] + im.from.dx, top = Y[im.from.r] + im.from.dy;
+    const w = im.to ? X[im.to.c] + im.to.dx - left : im.w, hh = im.to ? Y[im.to.r] + im.to.dy - top : im.h;
+    return `<img src="${URL.createObjectURL(im.blob)}" style="position:absolute;left:${left}px;top:${top}px;width:${w}px;height:${hh}px;object-fit:fill" alt="">`;
+  }).join('');
+  return {html: `<div style="position:relative">${h}${imgs}</div>`, width: X[ec + 1], height: Y[er + 1]};
+}
+async function sheetCanvas(sh) {
+  const b = sheetBox(sh);
+  const host = document.createElement('div');
+  host.style.cssText = `position:fixed;left:-30000px;top:0;width:${b.width + 2}px;background:#fff;color:#000`;
+  host.innerHTML = b.html; document.body.appendChild(host);
+  await Promise.all([...host.querySelectorAll('img')].map(i => i.decode().catch(() => {})));
+  try { return await html2canvas(host, {scale: 2, backgroundColor: '#ffffff', logging: false}); }
+  finally { host.querySelectorAll('img').forEach(i => URL.revokeObjectURL(i.src)); host.remove(); }
+}
+async function xlsxPdf(x) {
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({unit: 'mm', format: 'a4', orientation: 'portrait'});
+  const pages = x.xl.sheets.filter(s => s.keep);
+  for (let i = 0; i < pages.length; i++) {
+    const cv = await sheetCanvas(pages[i]);
+    let w = 190, h = cv.height * w / cv.width; if (h > 277) { h = 277; w = cv.width * h / cv.height; }
+    if (i) doc.addPage();
+    doc.addImage(cv.toDataURL('image/jpeg', 0.9), 'JPEG', (210 - w) / 2, 10, w, h);
+  }
+  return new Uint8Array(doc.output('arraybuffer'));
+}
+async function shrink(blob, longSide) {
+  const bmp = await createImageBitmap(blob);
+  const k = Math.min(1, longSide / Math.max(bmp.width, bmp.height));
+  const cv = document.createElement('canvas'); cv.width = Math.round(bmp.width * k); cv.height = Math.round(bmp.height * k);
+  const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(bmp, 0, 0, cv.width, cv.height);
+  return new Promise(r => cv.toBlob(r, 'image/jpeg', 0.85));
+}
+function xlsxPrompt(x, lab) {
+  return `부서운영비 정산서 엑셀 "${x.name}"에 붙어 있던 영수증 사진 ${lab.length}장입니다. 이미지 순서대로 아래 증빙에 해당합니다.
+${lab.map((e, i) => `- ${i + 1}번째 이미지 → page ${e.n + 1} (정산서 ${e.n}번 항목: ${e.date || '날짜?'} ${e.desc || ''} ${won(e.amount)}원 ${e.place || ''})`).join('\n')}
+규칙:
+- 보이는 그대로만 적고 추측하지 마세요. 흐리거나 잘려서 확실하지 않은 값은 null로 두고 readable을 "partial" 또는 "unreadable"로.
+- 사람 이름(대표자 등)은 적지 마세요. 금액은 숫자만, 날짜는 YYYY-MM-DD.
+- 영수증 한 장마다 receipts에 한 줄(한 사진에 여러 장이면 여러 줄, page는 위에 적힌 번호).
+- biz_id: 현금영수증의 "신청자 식별번호"/"사업자 지출증빙 번호" 칸 글자 그대로(예: 12****1234). 없거나 안 보이면 null.
+- proof: 현금영수증에 "지출증빙"이 보이면 "지출증빙", "소득공제"면 "소득공제", 현금영수증인데 그 표시가 없으면 "표시없음", 현금영수증이 아니면 "해당없음".
+- sheet_desc에는 위에 적힌 정산서 항목 내역을 그대로 적으세요.
+JSON 하나만 답하세요:
+{"receipts": [{"page": 2, "kind": "현금영수증|카드영수증|간이영수증|주문내역|기타", "date": "2026-09-30", "amount": 23920, "biz_id": "12****1234", "proof": "지출증빙", "approval": "승인번호 또는 null", "order_no": "주문번호 또는 null", "merchant": "가맹점", "items": "품목 짧게", "sheet_desc": "정산서 항목 내역", "readable": "ok|partial|unreadable", "note": "이상한 점 한 줄 또는 null"}]}`;
+}
+async function readXlsx(c, x, opt) {
+  x.status = '엑셀 읽는 중'; x.err = null; render();
+  const t0 = performance.now();
+  const res = {sheet: x.xl.sheet, receipts: [], missing: [], src: 'xlsx'};
+  const imgs = [], lab = [];
+  for (const e of x.xl.evid) {
+    if (!e.images.length && e.amount > 0) res.missing.push(e.n);
+    for (const b of e.images) {
+      let img = null;
+      try { img = await shrink(b, opt.res); } catch { if (/jpeg|png|gif|webp/.test(b.type)) img = b; }
+      if (img) { imgs.push(img); lab.push(e); } else res.receipts.push({page: e.n + 1, kind: '기타', readable: 'unreadable', note: '사진 파일을 열지 못함', sheet_desc: e.desc});
+    }
+  }
+  const max = Math.max(1, limits?.images?.maxCount || 20);
+  for (let a = 0; a < imgs.length; a += max) {
+    x.status = `영수증 읽는 중 (${a + 1}~${Math.min(imgs.length, a + max)}/${imgs.length}장)`; render();
+    const r = await sample.json(xlsxPrompt(x, lab.slice(a, a + max)), {images: imgs.slice(a, a + max), modelTier: opt.tier, signal: ctl.signal});
+    if (r && Array.isArray(r.receipts)) res.receipts.push(...r.receipts);
+  }
+  x.ms = performance.now() - t0; x.status = '완료';
+  const id = `${c.id}_${x.key}`, old = ST.reads[id];
+  const no = old?.no ?? x.no ?? guessUnit(c, res.sheet?.dept, x.name);
+  saveRead(id, {name: x.name, key: x.key, no, pages: x.pages, tier: opt.tier, res: opt.res, ms: Math.round(x.ms), at: today(), data: res});
+  render();
+}
+async function savePdf(x) {
+  x.status = 'PDF 만드는 중'; render();
+  try { const bytes = await xlsxPdf(x); x.status = ST.reads[`${cyc().id}_${x.key}`] ? '읽음' : '대기'; render(); await offerFile(x.name.replace(/\.xlsx?$/i, '') + '.pdf', bytes); }
+  catch (e) { x.status = '실패'; x.err = 'PDF를 만들지 못함: ' + (e.message || e); render(); }
+}
+async function saveAllPdf() {
+  const list = F.filter(x => x.type === 'xlsx');
+  const z = new JSZip();
+  for (const x of list) { x.status = 'PDF 만드는 중'; render(); try { z.file(x.name.replace(/\.xlsx?$/i, '') + '.pdf', await xlsxPdf(x)); x.status = ST.reads[`${cyc().id}_${x.key}`] ? '읽음' : '대기'; } catch (e) { x.status = '실패'; x.err = 'PDF를 만들지 못함'; } render(); }
+  await offerFile(`정산서 PDF ${list.length}개.zip`, await z.generateAsync({type: 'uint8array'}));
+}
 
 // ================= 정산: 점검
 const sheetUsed = r => { const s = r.data.sheet; if (!s) return null; const items = (s.items || []).reduce((a, it) => a + (num(it.amount) || 0), 0); return items || num(s.settled); };
@@ -688,6 +883,7 @@ function settleIssues(c) {
       const u = c.units.find(u => u.no === no);
       if (u && /[·,]/.test(u.dept)) { const names = u.dept.split(/[·,]/).map(x => x.trim()).filter(Boolean); const txt = `${s.note || ''} ${s.dept || ''}`; if (names.some(n => !txt.includes(n))) add(no, 'warn', '묶음 제출 비고란 부서명 확인', `비고: ${s.note || '(없음)'} · 명단: ${u.dept}`, r.docId); }
     }
+    for (const n of r.data.missing || []) { const it = (s?.items || []).find(i => i.no === n) || {}; add(no, 'bad', '증빙 사진 없음', `정산서 ${n}번 ${it.date || ''} ${it.desc || ''} ${won(it.amount)}원 · 증빙 시트에 사진이 없음`, r.docId); }
     for (const x of R) {
       const where = `${x.page}쪽 · ${x.date || '날짜?'} ${x.merchant || ''} ${won(x.amount)}원`;
       if (x.readable && x.readable !== 'ok') add(no, 'warn', '영수증이 잘 안 보임', `${where}${x.note ? ' · ' + x.note : ''} → 홈택스 매입 내역 대조`, r.docId, x.page);
@@ -737,7 +933,7 @@ function viewSettle(c) {
   const fileRows = F.length ? F.map(x => {
     const id = `${c.id}_${x.key}`, r = ST.reads[id];
     const no = r ? r.no : x.no;
-    return `<tr><td>${esc(x.name)}</td><td class="n">${x.pages ?? ''}</td><td><select data-fileunit="${x.key}"><option value="">(부서 고르기)</option>${c.units.map(u => `<option value="${u.no}"${no === u.no ? ' selected' : ''}>${u.no}. ${esc(u.dept)}</option>`).join('')}</select></td><td>${r && x.status !== '완료' && !x.status.startsWith('읽는') && !x.status.startsWith('그림') ? tag('ok', `읽음 ${r.at.slice(5)}`) : x.status === '완료' ? tag('ok', '완료') : x.status === '실패' ? tag('bad', '실패') + ` <span class="muted">${esc(x.err)}</span>` : tag('info', x.status)}</td><td class="n">${x.ms ? Math.round(x.ms / 1000) + '초' : ''}</td><td>${r || x.status === '실패' ? `<button class="b sm" type="button" data-again="${x.key}">다시 읽기</button>` : `<button class="b sm" type="button" data-read1="${x.key}"${running || !canRead ? ' disabled' : ''}>읽기</button>`}</td></tr>`;
+    return `<tr><td>${x.type === 'xlsx' ? tag('info', '엑셀') + ' ' : ''}${esc(x.name)}${x.warn ? `<br><span class="tag t-warn">${esc(x.warn)}</span>` : ''}</td><td class="n">${x.type === 'xlsx' ? `${x.pages ?? ''}<span class="muted"> / 시트 ${x.sheetCount ?? ''}</span>` : x.pages ?? ''}</td><td><select data-fileunit="${x.key}"><option value="">(부서 고르기)</option>${c.units.map(u => `<option value="${u.no}"${no === u.no ? ' selected' : ''}>${u.no}. ${esc(u.dept)}</option>`).join('')}</select></td><td>${r && x.status !== '완료' && !x.status.startsWith('읽는') && !x.status.startsWith('그림') ? tag('ok', `읽음 ${r.at.slice(5)}`) : x.status === '완료' ? tag('ok', '완료') : x.status === '실패' ? tag('bad', '실패') + ` <span class="muted">${esc(x.err)}</span>` : tag('info', x.status)}</td><td class="n">${x.ms ? Math.round(x.ms / 1000) + '초' : ''}</td><td>${r || x.status === '실패' ? `<button class="b sm" type="button" data-again="${x.key}">다시 읽기</button>` : `<button class="b sm" type="button" data-read1="${x.key}"${running || !canRead ? ' disabled' : ''}>읽기</button>`}${x.type === 'xlsx' && x.xl ? ` <button class="b sm" type="button" data-pdf="${x.key}">PDF로 저장</button>` : ''}</td></tr>`;
   }).join('') : rs.map(r => `<tr><td>${esc(r.name)}</td><td class="n">${r.pages ?? ''}</td><td><select data-readunit="${r.docId}"><option value="">(부서 고르기)</option>${c.units.map(u => `<option value="${u.no}"${r.no === u.no ? ' selected' : ''}>${u.no}. ${esc(u.dept)}</option>`).join('')}</select></td><td>${tag('ok', '읽음 ' + r.at.slice(5))}</td><td class="n"></td><td><button class="b sm d" type="button" data-delread="${r.docId}">지우기</button></td></tr>`).join('');
   // 금액 요약
   const sumRows = units.map(u => {
@@ -768,9 +964,10 @@ ${UI.msg ? `<div class="notice ${UI.msg.cls}">${esc(UI.msg.t)}</div>` : ''}
 </div>
 ${sec('files', '정산서 올리기·읽기', `${rs.length ? tag('ok', '읽은 파일 ' + rs.length) : tag('wait', '아직 없음')}`, `
   <div class="row">
-    <label class="b p" for="settleFile">ZIP·PDF 고르기</label><input id="settleFile" type="file" accept=".zip,.pdf,application/pdf,application/zip" multiple hidden>
+    <label class="b p" for="settleFile">ZIP·PDF·엑셀 고르기</label><input id="settleFile" type="file" accept=".zip,.pdf,.xlsx,.xls,application/pdf,application/zip" multiple hidden>
     <button class="b" type="button" data-act="readAll"${!F.some(x => !ST.reads[`${c.id}_${x.key}`]) || running || !canRead ? ' disabled' : ''}>안 읽은 파일 읽기</button>
     <button class="b" type="button" data-act="readUnclear"${!F.some(x => unclear(ST.reads[`${c.id}_${x.key}`])) || running || !canRead ? ' disabled' : ''}>안 보인 파일만 다시 읽기 (정밀)</button>
+    ${F.some(x => x.type === 'xlsx' && x.xl) ? '<button class="b" type="button" data-act="allPdf">엑셀을 PDF로 모두 저장(ZIP)</button>' : ''}
     ${running ? '<button class="b d" type="button" data-act="stopRead">멈추기</button>' : ''}
     <span class="muted">${canRead ? `1차는 빠른 모델·보통 크기 그림으로 읽고, 안 보인 것만 다시 읽습니다. 한 번 읽은 파일은 저장돼 다시 읽지 않습니다.` : 'Claude 앱에서 열어야 영수증을 읽을 수 있습니다.'}</span>
   </div>
@@ -863,6 +1060,8 @@ document.addEventListener('click', async e => {
   if (a === 'stopRead') { ctl?.abort(); return; }
   if (a === 'nextCycle') { let y = c.y, m = c.m1 + 2; if (m > 11) { m = 1; y++; } const id = `${y}-${pad(m)}`; if (!ST.cycles[id]) { ST.cycles[id] = newCycle(y, m, c); saveCycle(ST.cycles[id]); } ST.meta.cur = id; UI.tab = 'pay'; saveMeta(); render(); return; }
   if (a === 'delCycle') { if (await ask('회차 지우기', `<p>${cycleLabel(c)} 회차의 명단·변동·검토 기록을 모두 지웁니다. 되돌릴 수 없습니다.</p>`, '지우기', true)) { delete ST.cycles[c.id]; if (db) { db.doc('cycles/' + c.id).delete().catch(() => {}); for (const r of readsOf(c)) { delete ST.reads[r.docId]; db.doc('reads/' + r.docId).delete().catch(() => {}); } } ST.meta.cur = Object.keys(ST.cycles).sort().pop() || null; saveMeta(); if (mode === 'local') persist(); render(); } return; }
+  const pdfb = t.closest('[data-pdf]'); if (pdfb) return savePdf(F.find(f => f.key === pdfb.dataset.pdf));
+  if (a === 'allPdf') return saveAllPdf();
   const r1 = t.closest('[data-read1]'); if (r1) { const x = F.find(f => f.key === r1.dataset.read1); return runReads(c, [x], {tier: 'quick', res: 1000}); }
   const ag = t.closest('[data-again]'); if (ag) { const x = F.find(f => f.key === ag.dataset.again); return runReads(c, [x], {tier: 'default', res: 1450}); }
   const dr = t.closest('[data-delread]'); if (dr) { if (await ask('읽은 결과 지우기', '<p>이 파일의 판독 결과를 지웁니다.</p>', '지우기', true)) { delete ST.reads[dr.dataset.delread]; if (db) db.doc('reads/' + dr.dataset.delread).delete().catch(() => {}); else persist(); render(); } return; }
@@ -894,16 +1093,32 @@ document.addEventListener('change', async e => {
   if (t.id === 'settleFile' && c) {
     const list = [...t.files];
     const dec = bytes => { const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(typeof bytes === 'string' ? [...bytes].map(ch => ch.charCodeAt(0)) : bytes); try { return new TextDecoder('utf-8', {fatal: true}).decode(u8); } catch { return new TextDecoder('euc-kr').decode(u8); } };
-    const add = async (name, bytes) => { const key = hash(name + ':' + bytes.length); if (F.some(x => x.key === key)) return; F.push({key, name, bytes, status: ST.reads[`${c.id}_${key}`] ? '읽음' : '대기', no: guessUnit(c, name)}); };
+    const add = async (name, bytes) => {
+      const key = hash(name + ':' + bytes.length); if (F.some(x => x.key === key)) return;
+      const x = {key, name, bytes, type: /\.xlsx?$/i.test(name) ? 'xlsx' : 'pdf', status: ST.reads[`${c.id}_${key}`] ? '읽음' : '대기', no: guessUnit(c, name)};
+      if (x.type === 'xlsx') {
+        try {
+          x.xl = await parseXlsxFile(bytes);
+          x.pages = x.xl.sheets.filter(s => s.keep).length; x.sheetCount = x.xl.sheets.length;
+          if (!x.xl.sheet) { x.status = '실패'; x.err = '정산서 시트(내역·금액 표)를 찾지 못함'; }
+          x.no = x.no ?? guessUnit(c, x.xl.sheet?.dept);
+          x.xl.evid.forEach(e => { if (e.images[0]) pageImg[`${key}:${e.n + 1}`] = URL.createObjectURL(e.images[0]); });
+          if (/\.xls$/i.test(name)) x.warn = '옛 엑셀(.xls)은 사진을 읽지 못합니다. .xlsx로 받아 주세요.';
+          else if (x.xl.evid.some(e => e.badImages)) x.warn = '열 수 없는 형식의 사진이 있습니다(그림 파일로 다시 붙여 달라고 요청).';
+        } catch (err) { x.status = '실패'; x.err = '엑셀을 열지 못함'; }
+      }
+      F.push(x);
+    };
     try {
       for (const f of list) {
-        if (/\.zip$/i.test(f.name)) { const z = await JSZip.loadAsync(f, {decodeFileName: dec}); for (const ent of Object.values(z.files)) { if (ent.dir || !/\.pdf$/i.test(ent.name) || /__MACOSX|\/\._/.test(ent.name)) continue; await add(ent.name.split('/').pop(), await ent.async('uint8array')); } }
-        else if (/\.pdf$/i.test(f.name)) await add(f.name, new Uint8Array(await f.arrayBuffer()));
+        if (/\.zip$/i.test(f.name)) { const z = await JSZip.loadAsync(f, {decodeFileName: dec}); for (const ent of Object.values(z.files)) { if (ent.dir || !/\.(pdf|xlsx?)$/i.test(ent.name) || /__MACOSX|\/\._|\/~\$/.test(ent.name)) continue; await add(ent.name.split('/').pop(), await ent.async('uint8array')); } }
+        else if (/\.(pdf|xlsx?)$/i.test(f.name)) await add(f.name, new Uint8Array(await f.arrayBuffer()));
       }
-      for (const x of F) if (x.pages == null) { try { const d = await pdfjsLib.getDocument({data: x.bytes.slice()}).promise; x.pages = d.numPages; await d.destroy(); } catch { x.status = '실패'; x.err = 'PDF를 열지 못함'; } }
+      for (const x of F) if (x.type === 'pdf' && x.pages == null) { try { const d = await pdfjsLib.getDocument({data: x.bytes.slice()}).promise; x.pages = d.numPages; await d.destroy(); } catch { x.status = '실패'; x.err = 'PDF를 열지 못함'; } }
       // 이미 읽은 파일은 영수증 보기용 그림만 만듦
-      for (const x of F) if (ST.reads[`${c.id}_${x.key}`] && !pageImg[`${x.key}:1`]) await renderPages(x, 1000).catch(() => {});
-      notify(`PDF ${F.length}개를 올렸습니다. [안 읽은 파일 읽기]를 누르세요.`, 'ok');
+      for (const x of F) if (x.type === 'pdf' && ST.reads[`${c.id}_${x.key}`] && !pageImg[`${x.key}:1`]) await renderPages(x, 1000).catch(() => {});
+      const nx = F.filter(x => x.type === 'xlsx').length;
+      notify(`파일 ${F.length}개를 올렸습니다(PDF ${F.length - nx}, 엑셀 ${nx}). [안 읽은 파일 읽기]를 누르세요.`, 'ok');
     } catch (err) { notify('파일을 열지 못했습니다: ' + (err.message || err), 'bad'); }
     return;
   }

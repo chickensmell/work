@@ -10,7 +10,10 @@ const LIBS = {
   'jszip/3.10.1/jszip.min.js': path.join(NM, 'jszip/dist/jszip.min.js'),
   'pdf.js/3.11.174/pdf.min.js': path.join(NM, 'pdfjs-dist/build/pdf.min.js'),
   'pdf.js/3.11.174/pdf.worker.min.js': path.join(NM, 'pdfjs-dist/build/pdf.worker.min.js'),
+  'html2canvas/1.4.1/html2canvas.min.js': path.join(NM, 'html2canvas/dist/html2canvas.min.js'),
+  'jspdf/2.5.1/jspdf.umd.min.js': path.join(NM, 'jspdf/dist/jspdf.umd.min.js'),
 };
+const JSZip = require('jszip');
 
 // ---- 가짜 명단: 실제 명단과 같은 모양 (순번·부서·입금계좌 병합, 은행과 예금주를 한 칸에, 계좌번호 없음)
 // [부서, 은행, 계좌, 예금주, [[이름, 11월, 12월], ...]]
@@ -43,6 +46,45 @@ function fakeRoster(file) {
   const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!merges'] = merges;
   const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, '부서운영비 지급내역');
   XLSX.writeFile(wb, file);
+}
+
+// ---- 가짜 부서 정산서 엑셀: 정산서 시트 + 지출증빙첨부 6개 + 결재방, 증빙 1·2·4에만 사진, 5·6은 빈 시트
+const zlib = require('zlib');
+function makePng(w, h) {   // 회색 바탕 가짜 영수증 그림
+  const crc = b => { let c, t = []; for (let n = 0; n < 256; n++) { c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; } let x = 0xffffffff; for (const v of b) x = t[(x ^ v) & 255] ^ (x >>> 8); return (x ^ 0xffffffff) >>> 0; };
+  const chunk = (type, data) => { const len = Buffer.alloc(4); len.writeUInt32BE(data.length); const td = Buffer.concat([Buffer.from(type), data]); const c = Buffer.alloc(4); c.writeUInt32BE(crc(td)); return Buffer.concat([len, td, c]); };
+  const ihdr = Buffer.alloc(13); ihdr.writeUInt32BE(w, 0); ihdr.writeUInt32BE(h, 4); ihdr[8] = 8; ihdr[9] = 2;
+  const raw = Buffer.alloc((w * 3 + 1) * h, 200); for (let y = 0; y < h; y++) raw[y * (w * 3 + 1)] = 0;
+  return Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+}
+const PNG = makePng(60, 90);
+async function fakeSettleXlsx(file) {
+  const items = [['2026-11-12', '다과', 42000, '○○베이커리'], ['2026-11-26', '회식', 186000, '○○식당'], ['2026-12-09', '다과', 58000, '○○마트'], ['2026-12-18', '음료', 86000, '○○카페']];
+  const wb = XLSX.utils.book_new();
+  const main = [['부서운영비 사용 정산서'], [], ['지급일자 :', '2026년 11월', '가 지급액', 360000, '부 서 명 : ', '학사지원팀'], ['정산일자 :', '2026-12-19', '정산금액', 372000, '작 성 자 : ', 'O O O (인)'], ['사용기간 :', '11월 ~ 12월'], [' 제      목 : 11월 ~ 12월 부서운영비 정산'], ['NO.', '일자', '내 역 ', '금 액', '사용처', '지출증빙']];
+  for (let i = 0; i < 20; i++) { const it = items[i]; main.push(it ? [i + 1, it[0], it[1], it[2], it[3], '현금영수증'] : [i + 1]); }
+  main.push(['합계', '', '', items.reduce((s, x) => s + x[2], 0), '차액', 12000]);
+  const ws = XLSX.utils.aoa_to_sheet(main); ws['!merges'] = [{s: {r: 0, c: 0}, e: {r: 0, c: 5}}]; ws['!cols'] = [{wch: 10}, {wch: 12}, {wch: 18}, {wch: 12}, {wch: 14}, {wch: 12}];
+  XLSX.utils.book_append_sheet(wb, ws, '부서운영비 사용 정산서 1page');
+  for (let k = 1; k <= 6; k++) {
+    const it = items[k - 1] || ['', '', 0, ''];
+    const e = XLSX.utils.aoa_to_sheet([['지출증빙첨부'], [], ['사용내역', it[1]], ['사용일자', it[0], '금액', it[2], '사 용 처', it[3]], ...Array.from({length: 30}, () => []), ['소 계', it[2]], ['합 계', items.slice(0, k).reduce((s, x) => s + x[2], 0)]]);
+    e['!merges'] = [{s: {r: 0, c: 0}, e: {r: 0, c: 5}}, {s: {r: 4, c: 0}, e: {r: 33, c: 5}}];
+    XLSX.utils.book_append_sheet(wb, e, k === 1 ? '지출증빙첨부' : `지출증빙첨부 (${k})`);
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['결재', '담당', '대리', '부장', '처장']]), '결재방');
+  const z = await JSZip.loadAsync(XLSX.write(wb, {bookType: 'xlsx', type: 'buffer'}));
+  for (const k of [2, 3, 5]) {   // 시트 번호(1=정산서) → 증빙 1·2·4
+    const sp = `xl/worksheets/sheet${k}.xml`;
+    z.file(sp, (await z.file(sp).async('string')).replace('</worksheet>', '<drawing r:id="rIdImg"/></worksheet>').replace('<worksheet ', '<worksheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" '));
+    z.file(`xl/worksheets/_rels/sheet${k}.xml.rels`, `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rIdImg" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing${k}.xml"/></Relationships>`);
+    z.file(`xl/drawings/drawing${k}.xml`, `<?xml version="1.0" encoding="UTF-8"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><xdr:twoCellAnchor><xdr:from><xdr:col>1</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>6</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:to><xdr:col>4</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>28</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="2" name="그림 1"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="rId1"/></xdr:blipFill><xdr:spPr/></xdr:pic><xdr:clientData/></xdr:twoCellAnchor></xdr:wsDr>`);
+    z.file(`xl/drawings/_rels/drawing${k}.xml.rels`, `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/image${k}.png"/></Relationships>`);
+    z.file(`xl/media/image${k}.png`, PNG);
+  }
+  const ct = await z.file('[Content_Types].xml').async('string');
+  z.file('[Content_Types].xml', ct.replace('<Default ', '<Default Extension="png" ContentType="image/png"/><Default '));
+  fs.writeFileSync(file, await z.generateAsync({type: 'nodebuffer'}));
 }
 
 let fails = 0;
@@ -147,7 +189,30 @@ const ok = (cond, msg) => { console.log((cond ? '  통과 ' : '  실패 ') + msg
   ok(back.sum === back.cur, `내보낸 명단 합계 = 현재 명단 (${back.sum} / ${back.cur})`);
   ok(back.holder === '최더미' && back.bank === 'KB국민', '내보낸 명단의 은행·예금주 다시 읽힘');
 
-  console.log('7. 화면');
+  console.log('7. 엑셀 정산서 읽기·PDF 만들기');
+  const xlsxFile = path.join(tmp, 'fake-settle.xlsx'); await fakeSettleXlsx(xlsxFile);
+  await p.evaluate(() => { UI.open.files = true; render(); });
+  await p.setInputFiles('#settleFile', xlsxFile);
+  await p.waitForFunction(() => F.some(x => x.type === 'xlsx' && x.pages != null), null, {timeout: 15000});
+  const xi = await p.evaluate(() => { const x = F.find(f => f.type === 'xlsx'); return {pages: x.pages, sheets: x.sheetCount, no: x.no, sheet: x.xl.sheet, evid: x.xl.evid.map(e => [e.n, e.images.length, e.amount, e.keep])}; });
+  ok(xi.sheets === 8 && xi.pages === 5, `시트 8개 중 빈 시트 빼고 5쪽 (${xi.pages}/${xi.sheets})`);
+  ok(xi.sheet.dept === '학사지원팀' && xi.sheet.paid === 360000 && xi.sheet.settled === 372000, `정산서 머리 칸 (${xi.sheet.dept}/${xi.sheet.paid}/${xi.sheet.settled})`);
+  ok(xi.sheet.items.length === 4 && xi.sheet.items[2].date === '2026-12-09' && xi.sheet.items[2].amount === 58000 && xi.sheet.total === 372000, `정산서 표 4줄·합계 (${xi.sheet.items.length}/${xi.sheet.total})`);
+  ok(xi.no === 2, `부서 자동 맞춤 → 학사지원팀 (${xi.no})`);
+  ok(JSON.stringify(xi.evid.map(e => e[1])) === '[1,1,0,1,0,0]', `증빙 시트 사진 찾기 ${JSON.stringify(xi.evid.map(e => e[1]))}`);
+  await p.evaluate(() => { sample = {json: async (prompt, o) => ({receipts: o.images.map((_, i) => ({page: +(prompt.match(/→ page (\d+)/g)[i].match(/\d+/)[0]), kind: '현금영수증', date: '2026-11-26', amount: 1000, biz_id: '12****0000', proof: '지출증빙', approval: 'X' + i, merchant: '○○', items: '다과', readable: 'ok'}))})}; limits = {images: {maxCount: 20}}; render(); });
+  await p.click(`[data-read1="${await p.evaluate(() => F.find(f => f.type === 'xlsx').key)}"]`);
+  await p.waitForFunction(() => Object.values(ST.reads).some(r => r.data.src === 'xlsx'), null, {timeout: 15000}).catch(async e => { console.log(await p.evaluate(() => F.map(x => [x.name, x.status, x.err]))); throw e; });
+  const xr = await p.evaluate(() => { const r = Object.values(ST.reads).find(r => r.data.src === 'xlsx'); return {missing: r.data.missing, pages: r.data.receipts.map(x => x.page)}; });
+  ok(JSON.stringify(xr.missing) === '[3]', `사진 없는 증빙 찾기 (${JSON.stringify(xr.missing)})`);
+  ok(JSON.stringify(xr.pages) === '[2,3,5]', `사진별 증빙 번호 (${JSON.stringify(xr.pages)})`);
+  const iss2 = await p.evaluate(() => settleIssues(cyc()).filter(i => i.no === 2).map(i => i.t));
+  ok(iss2.includes('증빙 사진 없음'), '증빙 사진 없음 → 보완');
+  const pdf = await p.evaluate(async () => { const x = F.find(f => f.type === 'xlsx'); const b = await xlsxPdf(x); const d = await pdfjsLib.getDocument({data: b.slice()}).promise; let bin = ''; b.forEach(v => { bin += String.fromCharCode(v); }); return {head: String.fromCharCode(...b.slice(0, 5)), n: d.numPages, size: b.length, b64: btoa(bin)}; });
+  fs.writeFileSync(path.join(tmp, 'fake-settle.pdf'), Buffer.from(pdf.b64, 'base64'));
+  ok(pdf.head === '%PDF-' && pdf.n === 5, `PDF 만들기: ${pdf.n}쪽 (${Math.round(pdf.size / 1024)}KB)`);
+
+  console.log('8. 화면');
   await p.click('[data-tab="pay"]'); await p.screenshot({path: path.join(tmp, 'pay.png'), fullPage: true});
   await p.click('[data-tab="settle"]'); await p.screenshot({path: path.join(tmp, 'settle.png'), fullPage: true});
   ok(!errs.length, '페이지 오류 없음' + (errs.length ? ': ' + errs.join(' | ') : ''));

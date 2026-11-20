@@ -47,8 +47,8 @@
 - 판단 원칙: 재직기간은 학교 전임·정규직 임용일 기준(병원 최초 임용일 아님), 누적 학기는 신청인 기준, 대학 한도는 신청인 총 학기(1명 8, 3명 24).
 
 ## 부서운영비 정산 검토 수정 순서
-1. `dept-budget/index.html`을 고친다(빌드 없음, 라이브러리는 cdnjs에서 불러옴: SheetJS 0.18.5, JSZip 3.10.1, pdf.js 3.11.174).
-2. 시험: `npm i --prefix dept-budget/tests` 후 `node dept-budget/tests/smoke.test.js` (가짜 명단을 만들어 명단 읽기·변동·환수·결의 문구·점검·엑셀 내보내기 확인). 새 규칙은 이 시험에 시나리오를 추가한다.
+1. `dept-budget/index.html`을 고친다(빌드 없음, 라이브러리는 cdnjs에서 불러옴: SheetJS 0.18.5, JSZip 3.10.1, pdf.js 3.11.174, html2canvas 1.4.1, jsPDF 2.5.1).
+2. 시험: `npm i --prefix dept-budget/tests` 후 `node dept-budget/tests/smoke.test.js` (가짜 명단·가짜 정산서 엑셀을 만들어 명단 읽기·변동·환수·결의 문구·점검·엑셀 내보내기·엑셀 정산서 읽기·PDF 만들기 확인). 새 규칙은 이 시험에 시나리오를 추가한다.
 3. Artifact 도구로 같은 주소에 다시 게시한다: `url` = https://claude.ai/artifact/6fbA1r7BM7Ed68Qd42xmZo, `file_path` = `dept-budget/index.html`. `capabilities`는 생략해서 기존 설정(db 본인만 읽기·쓰기, sample 그림 포함, downloads)을 유지한다.
 4. 기능·규칙은 `docs/부서운영비-요구사항.md`를 따른다. 요청·변경·결정은 **11. 변경 이력** 표 맨 아래에 한 줄씩 추가한다(공통 규칙 1~3).
 5. 커밋하고 `dept-budget` 브랜치에 푸시한다.
