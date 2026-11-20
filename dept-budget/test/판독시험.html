@@ -1,0 +1,311 @@
+<title>영수증 판독 시험</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: 위 설명·설정 카드 → 파일 목록(진행 상태) → 확인할 것 → 부서별 요약. 부서운영비 시안과 같은 색 체계 */
+:root{
+  --bg:#f6f7f9; --panel:#ffffff; --ink:#1d2330; --muted:#677084; --line:#dfe3ea; --head:#f0f2f6; --sunk:#eceef2;
+  --accent:#1f5fbf; --accent-soft:#e8f0fc; --on-accent:#ffffff;
+  --ok:#1e7a46; --ok-soft:#e5f4ea; --warn:#a35a00; --warn-soft:#fff3e0; --bad:#b3261e; --bad-soft:#fdeceb; --input:#fffdf3;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#14171d; --panel:#1c2028; --ink:#e4e8ef; --muted:#9aa3b5; --line:#323947; --head:#252a34; --sunk:#2a2f39;
+  --accent:#7aa7ec; --accent-soft:#1f2c42; --on-accent:#0f1520;
+  --ok:#6cc896; --ok-soft:#173025; --warn:#e8a65a; --warn-soft:#3a2a16; --bad:#f08a80; --bad-soft:#3d1d1b; --input:#22262f; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14171d; --panel:#1c2028; --ink:#e4e8ef; --muted:#9aa3b5; --line:#323947; --head:#252a34; --sunk:#2a2f39;
+  --accent:#7aa7ec; --accent-soft:#1f2c42; --on-accent:#0f1520;
+  --ok:#6cc896; --ok-soft:#173025; --warn:#e8a65a; --warn-soft:#3a2a16; --bad:#f08a80; --bad-soft:#3d1d1b; --input:#22262f; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14px/1.55 "Malgun Gothic","Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+main{max-width:1280px;margin:0 auto;padding-block:18px 40px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));display:flex;flex-direction:column;gap:14px}
+h1{font-size:18px;margin:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.card h2{font-size:15px;margin:0;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.card h2 .sub{font-size:12px;color:var(--muted);font-weight:normal}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted)}
+input,select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--input);color:var(--ink)}
+.field{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+.b{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:6px;padding:7px 12px;cursor:pointer}
+.b.p{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.b.sm{padding:3px 9px;font-size:12px}
+.b:disabled{opacity:.5;cursor:default}
+.b:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+th{background:var(--head);white-space:nowrap}
+td.n,th.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:12px;margin:1px 2px 1px 0;white-space:nowrap}
+.t-bad{background:var(--bad-soft);color:var(--bad)} .t-warn{background:var(--warn-soft);color:var(--warn)}
+.t-ok{background:var(--ok-soft);color:var(--ok)} .t-info{background:var(--accent-soft);color:var(--accent)} .t-wait{background:var(--sunk);color:var(--muted)}
+.notice{padding:9px 12px;border-radius:8px;background:var(--warn-soft);color:var(--warn)}
+.notice.bad{background:var(--bad-soft);color:var(--bad)} .notice.ok{background:var(--ok-soft);color:var(--ok)}
+.icard{border:1px solid var(--line);border-left:4px solid var(--warn);border-radius:8px;padding:8px 12px;display:flex;flex-direction:column;gap:4px}
+.icard.bad{border-left-color:var(--bad)}
+.icard .hd{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.cards{display:flex;flex-direction:column;gap:6px}
+dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;max-width:min(900px,95vw)}
+dialog img{display:block;max-width:100%;max-height:80vh}
+pre{white-space:pre-wrap;font-size:12px;background:var(--sunk);border-radius:8px;padding:8px;max-height:300px;overflow:auto}
+</style>
+
+<main>
+  <div class="row"><h1>영수증 판독 시험</h1><span class="muted">9~10월 증빙 ZIP으로 사이트 안 판독이 되는지 확인하는 시험 페이지입니다.</span></div>
+
+  <div class="card">
+    <h2>1. 설정</h2>
+    <div class="row">
+      <label class="field" for="from">정산 기간 시작<input id="from" type="date" value="2026-09-01"></label>
+      <label class="field" for="to">정산 기간 끝<input id="to" type="date" value="2026-10-31"></label>
+      <label class="field" for="biz">학교 식별번호 끝 4자리<input id="biz" inputmode="numeric" maxlength="4" placeholder="예: 1234" style="width:110px"></label>
+      <label class="field" for="tier">판독 모델<select id="tier"><option value="default">기본</option><option value="complex">정밀(느림)</option></select></label>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>2. 파일 <span class="sub">ZIP 하나 또는 PDF 여러 개</span></h2>
+    <div class="row">
+      <input id="file" type="file" accept=".zip,.pdf,application/pdf,application/zip" multiple aria-label="ZIP 또는 PDF 파일">
+      <button class="b p" id="run" type="button" disabled>Claude로 읽기 시작</button>
+      <button class="b" id="stop" type="button" hidden>멈추기</button>
+      <span id="state" class="muted"></span>
+    </div>
+    <div id="warn"></div>
+    <div class="scroll"><table><thead><tr><th>#</th><th>파일</th><th class="n">쪽</th><th>글자층</th><th>상태</th><th class="n">걸린 시간</th><th></th></tr></thead><tbody id="files"><tr><td colspan="7" class="muted">파일을 고르면 목록이 나옵니다. 이전에 읽은 결과가 있으면 아래에 먼저 보입니다.</td></tr></tbody></table></div>
+  </div>
+
+  <div class="card">
+    <h2>3. 확인할 것 <span class="sub" id="issueSub"></span></h2>
+    <div class="cards" id="issues"><span class="muted">아직 결과가 없습니다.</span></div>
+  </div>
+
+  <div class="card">
+    <h2>4. 부서별 요약</h2>
+    <div class="scroll"><table><thead><tr><th>#</th><th>부서(정산서)</th><th class="n">가지급액</th><th class="n">상단 정산금액</th><th class="n">항목 합</th><th class="n">합계 칸</th><th class="n">영수증</th><th class="n">판독 불완전</th><th>문제</th></tr></thead><tbody id="sum"></tbody></table></div>
+  </div>
+</main>
+<dialog id="dlg"><div class="row" style="justify-content:space-between"><b id="dlgT"></b><button class="b sm" type="button" id="dlgX">닫기</button></div><img id="dlgImg" alt="영수증 쪽"></dialog>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const won = n => n == null || n === '' || isNaN(n) ? '' : Number(n).toLocaleString('ko-KR');
+const KEYWORDS = ['꽃','화분','플라워','비품','의자','충전기','멀티','USB','핸드워시','상품권','선물','포인트','키보드','의류','식재료','주유','화장품','장난감','생활용품'];
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+let sample = null, db = null, limits = null;
+let F = [];           // {idx, name, bytes, pages, textPages, status, ms, res, err}
+const pageImg = {};   // `${idx}:${page}` -> object URL (이 화면에서만, 저장 안 함)
+let ctl = null;
+
+try { const v = localStorage.getItem('dept-budget-test-biz'); if (v) $('biz').value = v; } catch {}
+$('biz').addEventListener('input', () => { try { localStorage.setItem('dept-budget-test-biz', $('biz').value); } catch {} render(); });
+['from','to'].forEach(id => $(id).addEventListener('change', render));
+
+// ===== 파일 읽기
+const decName = bytes => {
+  const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(typeof bytes === 'string' ? [...bytes].map(c => c.charCodeAt(0)) : bytes);
+  try { return new TextDecoder('utf-8', {fatal: true}).decode(u8); } catch { return new TextDecoder('euc-kr').decode(u8); }
+};
+$('file').addEventListener('change', async e => {
+  const list = [...e.target.files];
+  F = []; $('state').textContent = '파일 여는 중...';
+  for (const f of list) {
+    if (/\.zip$/i.test(f.name)) {
+      const z = await JSZip.loadAsync(f, {decodeFileName: decName});
+      for (const ent of Object.values(z.files)) {
+        if (ent.dir || !/\.pdf$/i.test(ent.name) || /__MACOSX|\/\._/.test(ent.name)) continue;
+        F.push({name: ent.name.split('/').pop(), bytes: await ent.async('uint8array')});
+      }
+    } else if (/\.pdf$/i.test(f.name)) F.push({name: f.name, bytes: new Uint8Array(await f.arrayBuffer())});
+  }
+  F.forEach((x, i) => Object.assign(x, {idx: i, status: '대기', pages: null, ms: null, res: null, err: null}));
+  for (const x of F) {
+    try {
+      const doc = await pdfjsLib.getDocument({data: x.bytes.slice()}).promise;
+      x.pages = doc.numPages;
+      const t = await (await doc.getPage(1)).getTextContent();
+      x.text1 = t.items.map(i => i.str).join(' ').replace(/\s+/g, ' ').trim();
+      await doc.destroy();
+    } catch (err) { x.status = '열기 실패'; x.err = String(err?.message || err); }
+  }
+  // 저장된 결과가 같은 파일 이름이면 붙임
+  for (const x of F) { const old = saved.find(s => s.name === x.name); if (old) { x.res = old.res; x.ms = old.ms; x.status = '완료(저장됨)'; } }
+  $('state').textContent = `PDF ${F.length}개 · ${F.reduce((s, x) => s + (x.pages || 0), 0)}쪽`;
+  $('run').disabled = !F.length;
+  render();
+});
+
+// ===== 그림 만들기
+async function renderPages(x) {
+  const doc = await pdfjsLib.getDocument({data: x.bytes.slice()}).promise;
+  const out = [], texts = [];
+  for (let p = 1; p <= doc.numPages; p++) {
+    const page = await doc.getPage(p);
+    const v1 = page.getViewport({scale: 1});
+    const scale = Math.min(2.5, 1100 / Math.max(v1.width, v1.height) * (v1.width < v1.height ? 1.32 : 1));
+    const vp = page.getViewport({scale});
+    const cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+    const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+    await page.render({canvasContext: ctx, viewport: vp}).promise;
+    const blob = await new Promise(r => cv.toBlob(r, 'image/jpeg', 0.85));
+    out.push(blob);
+    pageImg[`${x.idx}:${p}`] = URL.createObjectURL(blob);
+    if (p <= 2) { const t = await page.getTextContent(); texts.push(`[${p}쪽] ` + t.items.map(i => i.str).join(' ').replace(/\s+/g, ' ').trim()); }
+  }
+  await doc.destroy();
+  return {blobs: out, text: texts.join('\n').slice(0, 6000)};
+}
+
+function prompt(x, a, b, n, text) {
+  return `대학 총무팀의 부서운영비 정산 증빙을 읽어 JSON으로 옮겨 주세요.
+첨부 이미지는 한 부서가 낸 PDF "${x.name}"의 ${a}~${b}쪽(전체 ${n}쪽)이며, 이미지 순서가 곧 쪽 순서입니다(첫 이미지 = ${a}쪽).
+보통 첫 쪽은 "부서운영비 사용 정산서"(머리: 지급일자·가지급액·정산일자·정산금액·부서명·사용기간 / 표: NO·일자·내역·금액·사용처·지출증빙 / 맨 아래 합계)이고,
+그 뒤 쪽마다 "지출증빙첨부"(위 칸: 사용내역·사용일자·금액·사용처, 아래: 영수증 사진)입니다. 서식이 다른 부서도 있습니다.
+${text ? `PDF 글자층에서 뽑은 글자(표 읽기 참고용, 이미지와 다르면 이미지가 우선):\n${text}\n` : ''}
+규칙:
+- 보이는 그대로만 적고 추측하지 마세요. 흐리거나 잘려서 확실하지 않은 값은 null로 두고 readable을 "partial" 또는 "unreadable"로.
+- 사람 이름(작성자·대표자·결재자)은 적지 마세요.
+- 금액은 숫자만(원·쉼표 없이). 날짜는 YYYY-MM-DD(연도가 26이면 2026).
+- 영수증 한 장마다 receipts에 한 줄. 한 쪽에 여러 장이면 여러 줄, 영수증이 없는 쪽은 넣지 않음.
+- biz_id: 현금영수증의 "신청자 식별번호"/"사업자 지출증빙 번호" 칸 글자 그대로(예: 12****1234). 없거나 안 보이면 null.
+- proof: 현금영수증에 "지출증빙"이라고 보이면 "지출증빙", "소득공제"면 "소득공제", 현금영수증인데 그 표시가 사진에 없으면 "표시없음", 카드전표·주문내역 등 현금영수증이 아니면 "해당없음".
+${a === 1 ? '' : '- 이 묶음에는 정산서 첫 쪽이 없을 수 있습니다. 없으면 sheet는 null.\n'}
+JSON 하나만 답하세요:
+{"sheet": {"dept": "부서명", "note": "비고 칸(여러 부서명 등) 또는 null", "paid": 가지급액, "settled": 상단 정산금액, "period": "사용기간 원문", "items": [{"no": 1, "date": "2026-09-17", "desc": "내역", "amount": 21000, "place": "사용처"}], "total": 표 맨 아래 합계 또는 null} 또는 null,
+ "receipts": [{"page": 2, "kind": "현금영수증|카드영수증|간이영수증|주문내역|기타", "date": "2026-09-30", "amount": 23920, "biz_id": "12****1234", "proof": "지출증빙", "approval": "승인번호 또는 null", "order_no": "주문번호 또는 null", "merchant": "가맹점", "items": "품목 짧게", "sheet_desc": "그 쪽 위 사용내역 칸", "readable": "ok|partial|unreadable", "note": "이상한 점 한 줄 또는 null"}]}`;
+}
+
+async function readOne(x) {
+  x.status = '그림 만드는 중'; x.err = null; render();
+  const t0 = performance.now();
+  const {blobs, text} = await renderPages(x);
+  if (!sample) { x.status = '그림만 만듦(Claude 연결 없음)'; x.ms = performance.now() - t0; render(); return; }
+  const max = Math.max(1, limits?.images?.maxCount || 20);
+  const res = {sheet: null, receipts: []};
+  for (let a = 1; a <= blobs.length; a += max) {
+    const b = Math.min(blobs.length, a + max - 1);
+    x.status = `Claude가 읽는 중 (${a}~${b}/${blobs.length}쪽)`; render();
+    const r = await sample.json(prompt(x, a, b, blobs.length, a === 1 ? text : ''), {images: blobs.slice(a - 1, b), modelTier: $('tier').value, signal: ctl.signal});
+    if (r && r.sheet && !res.sheet) res.sheet = r.sheet;
+    if (r && Array.isArray(r.receipts)) res.receipts.push(...r.receipts);
+  }
+  x.res = res; x.ms = performance.now() - t0; x.status = '완료';
+  if (db) {
+    try { await db.doc(`results/f${String(x.idx).padStart(2, '0')}`).set({name: x.name, pages: x.pages, ms: Math.round(x.ms), tier: $('tier').value, at: new Date().toISOString(), j: JSON.stringify(res)}); }
+    catch (e) { x.status = '완료(저장 실패)'; }
+  }
+  render();
+}
+
+const ERR = {not_granted: 'Claude 사용을 허용하지 않아 멈췄습니다.', rate_limited: '요청이 많아 잠시 막혔습니다. 몇 분 뒤 이 파일만 다시 읽어 주세요.', image_rejected: '그림 파일을 받지 않았습니다.', invalid_json: '답을 표로 바꾸지 못했습니다. 이 파일만 다시 읽어 주세요.', refused: 'Claude가 이 파일을 읽지 않았습니다.', cancelled: '멈춤', images_unavailable: '이 화면에서는 그림을 보낼 수 없습니다.'};
+async function runList(list) {
+  ctl = new AbortController();
+  $('run').disabled = true; $('stop').hidden = false;
+  let i = 0, stopAll = false;
+  const worker = async () => {
+    while (!stopAll && i < list.length) {
+      const x = list[i++];
+      try { await readOne(x); }
+      catch (e) {
+        x.status = '실패'; x.err = ERR[e?.code] || (e?.code ? `${e.code}: ${e.message}` : String(e?.message || e)); render();
+        if (['not_granted', 'rate_limited', 'cancelled', 'sampling_disabled', 'images_unavailable'].includes(e?.code)) stopAll = true;
+      }
+    }
+  };
+  await Promise.all([worker(), worker()]);
+  $('run').disabled = false; $('stop').hidden = true;
+  $('state').textContent = `끝 · 완료 ${F.filter(x => x.res).length}/${F.length}`;
+}
+$('run').addEventListener('click', () => runList(F.filter(x => !x.res || x.status.startsWith('실패'))));
+$('stop').addEventListener('click', () => ctl?.abort());
+
+// ===== 점검
+const num = v => v == null || v === '' ? null : Number(String(v).replace(/[^\d.-]/g, '')) || (String(v).trim() === '0' ? 0 : null);
+function checks(all) {
+  const out = [], from = $('from').value, to = $('to').value, biz = $('biz').value.trim();
+  const appr = {};
+  for (const x of all) for (const r of x.res.receipts || []) if (r.approval) (appr[String(r.approval).replace(/\s/g, '')] ||= []).push({x, r});
+  for (const x of all) {
+    const s = x.res.sheet, R = x.res.receipts || [];
+    const dept = s?.dept || x.name;
+    const add = (lv, t, d, page) => out.push({x, dept, lv, t, d, page});
+    if (!s) add('warn', '정산서 첫 쪽을 못 찾음', '부서명·금액을 직접 확인');
+    else {
+      const sumItems = (s.items || []).reduce((a, it) => a + (num(it.amount) || 0), 0);
+      const settled = num(s.settled), total = num(s.total), paid = num(s.paid);
+      if (settled != null && sumItems && settled !== sumItems) add('warn', '사용액과 총합 다름', `상단 정산금액 ${won(settled)} · 항목 합 ${won(sumItems)}${total != null ? ` · 합계 칸 ${won(total)}` : ''}`);
+      else if (total != null && sumItems && total !== sumItems) add('warn', '합계 칸과 항목 합 다름', `합계 칸 ${won(total)} · 항목 합 ${won(sumItems)}`);
+      const used = sumItems || settled;
+      if (paid != null && used != null && used < paid) add('bad', '사용액이 지급액보다 적음', `가지급액 ${won(paid)} · 사용 ${won(used)}`);
+      for (const it of s.items || []) {
+        if (it.date && from && to && (it.date < from || it.date > to)) add('warn', '정산서 일자가 기간 밖', `${it.no}번 ${it.date} ${it.desc || ''} ${won(it.amount)}`);
+        const hit = KEYWORDS.find(k => (it.desc || '').includes(k));
+        if (hit) add('warn', `내역 확인: ${hit}`, `${it.no}번 ${it.desc} ${won(it.amount)}`);
+      }
+    }
+    for (const r of R) {
+      const where = `${r.page}쪽 · ${r.date || '날짜?'} ${r.merchant || ''} ${won(r.amount)}원`;
+      if (r.readable && r.readable !== 'ok') add('warn', '영수증이 잘 안 보임', `${where}${r.note ? ' · ' + r.note : ''}`, r.page);
+      if (r.kind === '현금영수증') {
+        if (!r.biz_id) add('bad', '지출증빙 번호 안 보임', where, r.page);
+        else if (biz && !String(r.biz_id).replace(/\D/g, '').endsWith(biz)) add('bad', '식별번호가 학교 번호 아님', `${where} · ${r.biz_id}`, r.page);
+        if (r.proof === '표시없음') add('bad', '지출증빙 표시 없음', where, r.page);
+        if (r.proof === '소득공제') add('bad', '소득공제로 발행됨', where, r.page);
+      }
+      if (r.date && from && to && (r.date < from || r.date > to)) add('bad', '정산 기간 밖 영수증', where, r.page);
+      const hit = KEYWORDS.find(k => `${r.items || ''} ${r.sheet_desc || ''} ${r.merchant || ''}`.includes(k));
+      if (hit) add('warn', `내역 확인: ${hit}`, `${where} · ${r.items || ''}`, r.page);
+      const dup = r.approval && appr[String(r.approval).replace(/\s/g, '')];
+      if (dup && dup.length > 1) add('warn', '승인번호 중복', `${where} · 승인번호 ${r.approval} · 같은 번호: ${dup.filter(d => d.r !== r).map(d => (d.x.res.sheet?.dept || d.x.name) + ' ' + d.r.page + '쪽').join(', ')}`, r.page);
+    }
+  }
+  return out;
+}
+
+// ===== 그리기
+function render() {
+  const tb = $('files');
+  if (F.length) tb.innerHTML = F.map(x => `<tr><td>${x.idx + 1}</td><td>${esc(x.name)}</td><td class="n">${x.pages ?? ''}</td><td>${x.text1 ? '<span class="tag t-ok">있음</span>' : '<span class="tag t-wait">스캔</span>'}</td><td>${x.status.startsWith('완료') ? `<span class="tag t-ok">${esc(x.status)}</span>` : x.status.startsWith('실패') || x.status === '열기 실패' ? `<span class="tag t-bad">${esc(x.status)}</span> <span class="muted">${esc(x.err)}</span>` : `<span class="tag t-info">${esc(x.status)}</span>`}</td><td class="n">${x.ms ? Math.round(x.ms / 1000) + '초' : ''}</td><td>${x.res || x.status.startsWith('실패') ? `<button class="b sm" type="button" data-again="${x.idx}">다시 읽기</button>` : ''}</td></tr>`).join('');
+  const all = (F.length ? F : saved).filter(x => x.res);
+  const iss = checks(all);
+  const bad = iss.filter(i => i.lv === 'bad'), warn = iss.filter(i => i.lv === 'warn');
+  $('issueSub').textContent = all.length ? `${all.length}개 파일 · 보완 후보 ${bad.length} · 확인 ${warn.length}` : '';
+  $('issues').innerHTML = all.length ? [...bad, ...warn].map(i => `<div class="icard${i.lv === 'bad' ? ' bad' : ''}"><div class="hd"><b>${esc(i.dept)}</b><span class="tag t-${i.lv}">${i.lv === 'bad' ? '보완' : '확인'}</span><b>${esc(i.t)}</b>${i.page && pageImg[`${i.x.idx}:${i.page}`] ? `<button class="b sm" type="button" data-img="${i.x.idx}:${i.page}" style="margin-left:auto">그 쪽 보기</button>` : ''}</div><div class="muted">${esc(i.d)}</div></div>`).join('') || '<span class="tag t-ok">걸린 것 없음</span>' : '<span class="muted">아직 결과가 없습니다.</span>';
+  $('sum').innerHTML = all.map(x => {
+    const s = x.res.sheet || {}, R = x.res.receipts || [];
+    const items = (s.items || []).reduce((a, it) => a + (num(it.amount) || 0), 0);
+    const n = iss.filter(i => i.x === x);
+    return `<tr><td>${x.idx + 1}</td><td>${esc(s.dept || x.name)}${s.note ? `<br><span class="muted">${esc(s.note)}</span>` : ''}</td><td class="n">${won(num(s.paid))}</td><td class="n">${won(num(s.settled))}</td><td class="n">${won(items)}</td><td class="n">${won(num(s.total))}</td><td class="n">${R.length}</td><td class="n">${R.filter(r => r.readable && r.readable !== 'ok').length}</td><td>${n.length ? `${n.filter(i => i.lv === 'bad').length ? `<span class="tag t-bad">보완 ${n.filter(i => i.lv === 'bad').length}</span>` : ''}${n.filter(i => i.lv === 'warn').length ? `<span class="tag t-warn">확인 ${n.filter(i => i.lv === 'warn').length}</span>` : ''}` : '<span class="tag t-ok">없음</span>'}</td></tr>`;
+  }).join('');
+}
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-again]');
+  if (a) { const x = F[+a.dataset.again]; x.res = null; runList([x]); return; }
+  const im = e.target.closest('[data-img]');
+  if (im) { $('dlgImg').src = pageImg[im.dataset.img]; const [i, p] = im.dataset.img.split(':'); $('dlgT').textContent = `${F[+i].name} · ${p}쪽`; $('dlg').showModal(); }
+});
+$('dlgX').addEventListener('click', () => $('dlg').close());
+
+// ===== 시작: Claude·저장소 연결, 이전 결과 불러오기
+let saved = [];
+(async () => {
+  if (!window.claude?.use) { $('warn').innerHTML = '<div class="notice">Claude 앱 밖에서 열려 그림 만들기까지만 시험합니다.</div>'; return; }
+  [sample, db] = await Promise.all([claude.use('sample'), claude.use('db')]);
+  limits = sample ? await sample.limits().catch(() => null) : null;
+  if (!sample) $('warn').innerHTML = '<div class="notice bad">이 화면에서는 Claude를 부를 수 없습니다. 그림 만들기까지만 됩니다.</div>';
+  else if (!limits?.images) $('warn').innerHTML = '<div class="notice bad">이 화면에서는 그림을 Claude에게 보낼 수 없습니다.</div>';
+  else $('warn').innerHTML = `<div class="notice ok">준비됨 · 한 번에 그림 ${limits.images.maxCount}장까지 · 첫 읽기 때 Claude 사용 허용을 묻습니다.</div>`;
+  if (db) {
+    try {
+      const snap = await db.collection('results').get();
+      saved = snap.docs.map(d => { const v = d.data(); return {idx: +d.id.slice(1), name: v.name, pages: v.pages, ms: v.ms, res: JSON.parse(v.j), status: '완료(저장됨)'}; }).sort((a, b) => a.idx - b.idx);
+      if (saved.length && !F.length) { $('state').textContent = `저장된 결과 ${saved.length}개 · 사진 보기는 ZIP을 다시 고르면 됨`; render(); }
+    } catch {}
+  }
+})();
+</script>
