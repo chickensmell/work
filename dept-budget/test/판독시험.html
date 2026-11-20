@@ -59,7 +59,8 @@ pre{white-space:pre-wrap;font-size:12px;background:var(--sunk);border-radius:8px
       <label class="field" for="from">정산 기간 시작<input id="from" type="date" value="2026-09-01"></label>
       <label class="field" for="to">정산 기간 끝<input id="to" type="date" value="2026-10-31"></label>
       <label class="field" for="biz">학교 식별번호 끝 4자리<input id="biz" inputmode="numeric" maxlength="4" placeholder="예: 1234" style="width:110px"></label>
-      <label class="field" for="tier">판독 모델<select id="tier"><option value="default">기본</option><option value="complex">정밀(느림)</option></select></label>
+      <label class="field" for="tier">판독 모델<select id="tier"><option value="quick" selected>빠름 (사용량 적음)</option><option value="default">기본</option><option value="complex">정밀 (사용량 많음)</option></select></label>
+      <label class="field" for="res">그림 크기<select id="res"><option value="1000" selected>보통 (사용량 적음)</option><option value="1450">크게</option></select></label>
     </div>
   </div>
 
@@ -69,6 +70,7 @@ pre{white-space:pre-wrap;font-size:12px;background:var(--sunk);border-radius:8px
       <input id="file" type="file" accept=".zip,.pdf,application/pdf,application/zip" multiple aria-label="ZIP 또는 PDF 파일">
       <button class="b p" id="run" type="button" disabled>Claude로 읽기 시작</button>
       <button class="b" id="stop" type="button" hidden>멈추기</button>
+      <button class="b" id="again2" type="button" disabled>안 보인 파일만 다시 읽기 (기본 모델·크게)</button>
       <span id="state" class="muted"></span>
     </div>
     <div id="warn"></div>
@@ -141,13 +143,13 @@ $('file').addEventListener('change', async e => {
 });
 
 // ===== 그림 만들기
-async function renderPages(x) {
+async function renderPages(x, longSide) {
   const doc = await pdfjsLib.getDocument({data: x.bytes.slice()}).promise;
   const out = [], texts = [];
   for (let p = 1; p <= doc.numPages; p++) {
     const page = await doc.getPage(p);
     const v1 = page.getViewport({scale: 1});
-    const scale = Math.min(2.5, 1100 / Math.max(v1.width, v1.height) * (v1.width < v1.height ? 1.32 : 1));
+    const scale = longSide / Math.max(v1.width, v1.height);
     const vp = page.getViewport({scale});
     const cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
     const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
@@ -180,37 +182,37 @@ JSON 하나만 답하세요:
  "receipts": [{"page": 2, "kind": "현금영수증|카드영수증|간이영수증|주문내역|기타", "date": "2026-09-30", "amount": 23920, "biz_id": "12****1234", "proof": "지출증빙", "approval": "승인번호 또는 null", "order_no": "주문번호 또는 null", "merchant": "가맹점", "items": "품목 짧게", "sheet_desc": "그 쪽 위 사용내역 칸", "readable": "ok|partial|unreadable", "note": "이상한 점 한 줄 또는 null"}]}`;
 }
 
-async function readOne(x) {
+async function readOne(x, opt = {tier: $('tier').value, res: +$('res').value}) {
   x.status = '그림 만드는 중'; x.err = null; render();
   const t0 = performance.now();
-  const {blobs, text} = await renderPages(x);
+  const {blobs, text} = await renderPages(x, opt.res);
   if (!sample) { x.status = '그림만 만듦(Claude 연결 없음)'; x.ms = performance.now() - t0; render(); return; }
   const max = Math.max(1, limits?.images?.maxCount || 20);
   const res = {sheet: null, receipts: []};
   for (let a = 1; a <= blobs.length; a += max) {
     const b = Math.min(blobs.length, a + max - 1);
     x.status = `Claude가 읽는 중 (${a}~${b}/${blobs.length}쪽)`; render();
-    const r = await sample.json(prompt(x, a, b, blobs.length, a === 1 ? text : ''), {images: blobs.slice(a - 1, b), modelTier: $('tier').value, signal: ctl.signal});
+    const r = await sample.json(prompt(x, a, b, blobs.length, a === 1 ? text : ''), {images: blobs.slice(a - 1, b), modelTier: opt.tier, signal: ctl.signal});
     if (r && r.sheet && !res.sheet) res.sheet = r.sheet;
     if (r && Array.isArray(r.receipts)) res.receipts.push(...r.receipts);
   }
-  x.res = res; x.ms = performance.now() - t0; x.status = '완료';
+  x.res = res; x.ms = performance.now() - t0; x.status = `완료 · ${({quick: '빠름', default: '기본', complex: '정밀'})[opt.tier]} · ${opt.res >= 1400 ? '크게' : '보통'}`;
   if (db) {
-    try { await db.doc(`results/f${String(x.idx).padStart(2, '0')}`).set({name: x.name, pages: x.pages, ms: Math.round(x.ms), tier: $('tier').value, at: new Date().toISOString(), j: JSON.stringify(res)}); }
+    try { await db.doc(`results/f${String(x.idx).padStart(2, '0')}`).set({name: x.name, pages: x.pages, ms: Math.round(x.ms), tier: opt.tier, res: opt.res, at: new Date().toISOString(), j: JSON.stringify(res)}); }
     catch (e) { x.status = '완료(저장 실패)'; }
   }
   render();
 }
 
 const ERR = {not_granted: 'Claude 사용을 허용하지 않아 멈췄습니다.', rate_limited: '요청이 많아 잠시 막혔습니다. 몇 분 뒤 이 파일만 다시 읽어 주세요.', image_rejected: '그림 파일을 받지 않았습니다.', invalid_json: '답을 표로 바꾸지 못했습니다. 이 파일만 다시 읽어 주세요.', refused: 'Claude가 이 파일을 읽지 않았습니다.', cancelled: '멈춤', images_unavailable: '이 화면에서는 그림을 보낼 수 없습니다.'};
-async function runList(list) {
+async function runList(list, opt) {
   ctl = new AbortController();
   $('run').disabled = true; $('stop').hidden = false;
   let i = 0, stopAll = false;
   const worker = async () => {
     while (!stopAll && i < list.length) {
       const x = list[i++];
-      try { await readOne(x); }
+      try { await readOne(x, opt); }
       catch (e) {
         x.status = '실패'; x.err = ERR[e?.code] || (e?.code ? `${e.code}: ${e.message}` : String(e?.message || e)); render();
         if (['not_granted', 'rate_limited', 'cancelled', 'sampling_disabled', 'images_unavailable'].includes(e?.code)) stopAll = true;
@@ -223,6 +225,8 @@ async function runList(list) {
 }
 $('run').addEventListener('click', () => runList(F.filter(x => !x.res || x.status.startsWith('실패'))));
 $('stop').addEventListener('click', () => ctl?.abort());
+const unclear = x => x.res && (!x.res.sheet || (x.res.receipts || []).some(r => (r.readable && r.readable !== 'ok') || (r.kind === '현금영수증' && !r.biz_id)));
+$('again2').addEventListener('click', () => { const list = F.filter(unclear); if (!list.length) { $('state').textContent = '다시 읽을 파일 없음'; return; } list.forEach(x => { x.res = null; }); runList(list, {tier: 'default', res: 1450}); });
 
 // ===== 점검
 const num = v => v == null || v === '' ? null : Number(String(v).replace(/[^\d.-]/g, '')) || (String(v).trim() === '0' ? 0 : null);
@@ -271,6 +275,7 @@ function checks(all) {
 function render() {
   const tb = $('files');
   if (F.length) tb.innerHTML = F.map(x => `<tr><td>${x.idx + 1}</td><td>${esc(x.name)}</td><td class="n">${x.pages ?? ''}</td><td>${x.text1 ? '<span class="tag t-ok">있음</span>' : '<span class="tag t-wait">스캔</span>'}</td><td>${x.status.startsWith('완료') ? `<span class="tag t-ok">${esc(x.status)}</span>` : x.status.startsWith('실패') || x.status === '열기 실패' ? `<span class="tag t-bad">${esc(x.status)}</span> <span class="muted">${esc(x.err)}</span>` : `<span class="tag t-info">${esc(x.status)}</span>`}</td><td class="n">${x.ms ? Math.round(x.ms / 1000) + '초' : ''}</td><td>${x.res || x.status.startsWith('실패') ? `<button class="b sm" type="button" data-again="${x.idx}">다시 읽기</button>` : ''}</td></tr>`).join('');
+  $('again2').disabled = !F.some(unclear);
   const all = (F.length ? F : saved).filter(x => x.res);
   const iss = checks(all);
   const bad = iss.filter(i => i.lv === 'bad'), warn = iss.filter(i => i.lv === 'warn');
