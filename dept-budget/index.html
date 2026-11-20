@@ -195,7 +195,7 @@ function newCycle(y, m1, fromPrev) {
   const id = `${y}-${pad(m1)}`;
   const c = {id, y, m1, m2: m1 + 1, units: [], people: [], paid: null, changes: [], refunds: {}, used: {}, dec: {}, notes: {}, paidDate: '', dueDate: '', mailSent: '', resolDate: '', settleDate: ''};
   if (fromPrev) {
-    c.units = fromPrev.units.map(u => ({...clone(u), prevHolder: u.holder, prevAcct: u.acct}));
+    c.units = fromPrev.units.map(u => ({...clone(u), prevHolder: u.holder}));
     c.people = fromPrev.people.filter(p => p.a[1] > 0).map(p => ({...clone(p), a: [p.a[1], p.a[1]]}));
     c.fromPrev = fromPrev.id;
   }
@@ -287,7 +287,7 @@ function readRoster(buf) {
     const key = (raw(t.r, col.no) == null || String(raw(t.r, col.no)).trim() === '') && cur ? cur.key : `${t.r}`;
     if (!cur || cur.key !== key) {
       const ac = parseAcct(cell(r, col.acct));
-      cur = {key, no: units.length + 1, dept: String(cell(r, col.dept) ?? '').trim().replace(/\s*[\n,]\s*/g, '·'), bank: ac.bank, acct: ac.acct, holder: ac.holder, srcNo: num(noRaw)};
+      cur = {key, no: units.length + 1, dept: String(cell(r, col.dept) ?? '').trim().replace(/\s*[\n,]\s*/g, '·'), bank: ac.bank, holder: ac.holder, srcNo: num(noRaw)};
       units.push(cur);
     }
     people.push({id: uid(), no: cur.no, name, a});
@@ -306,7 +306,7 @@ function rosterSheet(c, list = c.people, withUsed = false) {
     const ps = unitPeople(c, u.no, list).filter(p => amt(p) > 0);
     if (!ps.length) continue;
     const r0 = r;
-    ps.forEach((p, i) => { aoa.push([i ? '' : u.no, i ? '' : u.dept, p.name, p.a[0] || '', p.a[1] || '', i ? '' : `${u.bank} ${u.acct}\n${u.holder}`.trim(), i ? '' : ps.length, '', i ? '' : (usedOf(u.no) ?? ''), '']); r++; });
+    ps.forEach((p, i) => { aoa.push([i ? '' : u.no, i ? '' : u.dept, p.name, p.a[0] || '', p.a[1] || '', i ? '' : `${u.bank}\n${u.holder}`.trim(), i ? '' : ps.length, '', i ? '' : (usedOf(u.no) ?? ''), '']); r++; });
     const r1 = r - 1;
     [0, 1, 5, 6, 7, 8, 9].forEach(ci => { if (r1 > r0) merges.push({s: {r: r0, c: ci}, e: {r: r1, c: ci}}); });
     aoa[r0][7] = {t: 'n', v: totalOf(ps), f: `SUM(D${r0 + 1}:E${r1 + 1})`};
@@ -388,9 +388,8 @@ function rosterChecks(c) {
     if (!ps.some(p => amt(p) > 0)) continue;
     if (!u.holder) out.push(['n', u.no, `${u.dept}: 예금주를 읽지 못함 (명단에서 직접 넣어 주세요)`]);
     else if (!ps.some(p => p.name === u.holder && amt(p) > 0)) out.push(['n', u.no, `${u.dept}: 예금주 ${u.holder}이(가) 이 순번 명단에 없음`]);
-    if (!u.acct) out.push(['n', u.no, `${u.dept}: 계좌번호를 읽지 못함`]);
     const pu = prev && prev.units.find(x => x.no === u.no);
-    if (pu && (pu.holder !== u.holder || pu.acct !== u.acct)) out.push(['w', u.no, `${u.dept}: 지난 회차와 예금주·계좌가 다름 (${pu.holder || '?'} ${pu.acct || ''} → ${u.holder || '?'} ${u.acct || ''})`]);
+    if (pu && pu.holder !== u.holder) out.push(['w', u.no, `${u.dept}: 지난 회차와 예금주가 다름 (${pu.holder || '?'} → ${u.holder || '?'})`]);
     ps.forEach(p => p.a.forEach((v, i) => { if (v && v !== ST.meta.gen && v !== ST.meta.short) out.push(['w', u.no, `${u.dept} ${p.name}: ${[c.m1, c.m2][i]}월 금액 ${won(v)}원이 단가와 다름`]); }));
   }
   // 출납명세서 대조
@@ -402,8 +401,6 @@ function rosterChecks(c) {
       if (!line) { out.push(['n', u.no, `${u.dept}: 출납명세서에 예금주 ${u.holder}이(가) 없음`]); continue; }
       const nums = line.split(/[\t ]+/).filter(x => /^\d{1,3}(,\d{3})+$|^\d{4,8}$/.test(x.trim())).map(x => +x.replace(/,/g, '')).filter(v => v >= 1000 && v < 1e8);
       if (!nums.includes(s)) out.push(['n', u.no, `${u.dept}: 출납명세서 금액(${nums.map(won).join(', ') || '없음'}) ≠ 명단 ${won(s)}원`]);
-      const accDigits = (u.acct || '').replace(/\D/g, '');
-      if (accDigits && !line.replace(/\D/g, '').includes(accDigits)) out.push(['w', u.no, `${u.dept}: 출납명세서 계좌가 명단 계좌와 다름`]);
     }
   }
   return out;
@@ -431,7 +428,6 @@ ${UI.msg ? `<div class="notice ${UI.msg.cls}">${esc(UI.msg.t)}</div>` : ''}
     if (open) tr += `<tr class="edit"><td colspan="9"><div class="row" style="margin-bottom:8px">
       <label class="field">부서<input data-u="dept" value="${esc(u.dept)}" style="width:240px"${locked ? ' disabled' : ''}></label>
       <label class="field">은행<input data-u="bank" value="${esc(u.bank)}" style="width:110px"${locked ? ' disabled' : ''}></label>
-      <label class="field">계좌번호<input data-u="acct" value="${esc(u.acct)}" style="width:170px"${locked ? ' disabled' : ''}></label>
       <label class="field">예금주<input data-u="holder" value="${esc(u.holder)}" style="width:90px"${locked ? ' disabled' : ''}></label>
       ${locked ? '<span class="muted">지급 확정 뒤에는 아래 "명단 변동"으로 고칩니다.</span>' : ''}</div>
       <table><thead><tr><th>대상자</th><th>${c.m1}월</th><th>${c.m2}월</th><th></th></tr></thead><tbody>
@@ -446,7 +442,7 @@ ${UI.msg ? `<div class="notice ${UI.msg.cls}">${esc(UI.msg.t)}</div>` : ''}
   const title = `[총무팀] ${acadYear(c)}학년도 부서운영비 지급 건(${c.m1}-${c.m2}월)`;
   const line = (m, st) => `${m}월: ${st.g + st.s}명(${st.g}명*${won(meta.gen)}원${st.s ? ` + ${st.s}명*${won(meta.short)}원` : ''})`;
   const body = `1. ${line(c.m1, b0)}\n2. ${line(c.m2, b1)}`;
-  const cashTsv = bu.map((u, i) => [i + 1, '출금', '교직원', u.holder, u.bank, u.acct, u.holder, unitSum(c, u.no, bp)].join('\t')).join('\n');
+  const cashTsv = bu.map((u, i) => [i + 1, u.bank, u.holder, unitSum(c, u.no, bp)].join('\t')).join('\n');
   // 메일
   const mail = `안녕하십니까, 총무처 총무팀 ${meta.name || '○○○'}입니다.\n\n\n금일 부서운영비(${c.y}년 ${c.m1}-${c.m2}월)가 각 부서 담당자에게 입금되었음을 안내드립니다.\n\n전보발령, 휴직 등에 따라 지급대상자가 일부 변경된 부서가 있을 수 있으니 반드시 명단과 금액을 확인하여 주시기 바랍니다.\n\n \n\n포털(업무시스템) 내 부서운영비 메뉴를 활용하여 정산서 제출을 요청드리오니 \n\n첨부파일 매뉴얼과 정산 양식을 이용하여 ${c.dueDate ? krDate(c.dueDate) : '{정산 마감일}'}까지 부서운영비를 정산을 완료하여 주시기 바랍니다.\n\n\n\n기한 내 정산서 미제출 시 다음 부서운영비 지급이 불가하므로 원활한 지급을 위해 반드시 기한을 지켜 제출해 주시면 감사하겠습니다.\n\n \n\n${NOTICE_RULES.split('\n').join('\n\n')}\n\n \n\n부서운영(단합)비 관련하여 궁금한 점이 있으시다면 언제든지 연락주시기 바랍니다.\n\n \n\n감사합니다.\n\n${meta.name || '○○○'} 올림`;
   return `
@@ -460,8 +456,8 @@ ${sec('roster', '명단 확인', `${nErr ? tag('bad', '확인 ' + nErr) : ''}${n
     <thead><tr><th rowspan="2">순번</th><th rowspan="2">부서</th><th colspan="2" class="c">${c.m1}월</th><th colspan="2" class="c">${c.m2}월</th><th rowspan="2" class="n">합계 금액</th><th rowspan="2">예금주</th><th rowspan="2">확인</th></tr>
     <tr><th class="n">인원</th><th class="n">금액</th><th class="n">인원</th><th class="n">금액</th></tr></thead>
     <tbody>${rows}<tr class="sum"><td colspan="2">합계</td><td class="n">${s0.g + s0.s}</td><td class="n">${won(s0.sum)}</td><td class="n">${s1.g + s1.s}</td><td class="n">${won(s1.sum)}</td><td class="n">${won(totalOf(act))}</td><td colspan="2"></td></tr></tbody></table></div>
-  <p class="muted" style="margin:0">행을 누르면 그 순번의 대상자와 계좌를 고칠 수 있습니다.</p>
-  <details class="more"><summary>출납명세서 대조 (결재시스템 출납명세서를 복사해 붙여넣기)</summary><textarea id="cash" placeholder="출납명세서 표를 그대로 붙여넣으면 예금주·금액·계좌를 명단과 비교합니다.">${esc(c.cash || '')}</textarea></details>`)}
+  <p class="muted" style="margin:0">행을 누르면 그 순번의 대상자와 예금주를 고칠 수 있습니다.</p>
+  <details class="more"><summary>출납명세서 대조 (결재시스템 출납명세서를 복사해 붙여넣기)</summary><textarea id="cash" placeholder="출납명세서 표를 그대로 붙여넣으면 예금주·금액을 명단과 비교합니다.">${esc(c.cash || '')}</textarea></details>`)}
 ${sec('resol', '지급 결의서 (비예산계정 결의서)', c.paid ? tag('ok', '확정 ' + c.paid.at.slice(5)) : tag('wait', '확정 전'), `
   <div class="kv">
     <span>결의명·제목</span><span><span id="c-title">${esc(title)}</span> ${copyBtn('c-title')}</span>
@@ -470,7 +466,7 @@ ${sec('resol', '지급 결의서 (비예산계정 결의서)', c.paid ? tag('ok'
     <span>결의내역</span><span><span class="copybox" id="c-body" style="display:inline-block">${esc(body)}</span> ${copyBtn('c-body')}</span>
   </div>
   ${b0.other.length || b1.other.length ? '<div class="notice">단가와 다른 금액이 있어 결의내역 인원에서 빠졌습니다. 명단을 확인해 주세요.</div>' : ''}
-  <details class="more"><summary>출납명세서용 목록 (${bu.length}건)</summary><div class="row" style="margin:8px 0">${copyBtn('c-cash')}<span class="muted">순번·출납구분·출납대상·출납대상자·은행·계좌번호·예금주·금액 (탭으로 구분)</span></div><div class="scroll"><table><thead><tr><th>순번</th><th>은행</th><th>계좌번호</th><th>예금주</th><th class="n">금액</th></tr></thead><tbody>${bu.map((u, i) => `<tr><td>${i + 1}</td><td>${esc(u.bank)}</td><td>${esc(u.acct)}</td><td>${esc(u.holder)}</td><td class="n">${won(unitSum(c, u.no, bp))}</td></tr>`).join('')}</tbody></table></div><pre id="c-cash" hidden>${esc(cashTsv)}</pre></details>`)}
+  <details class="more"><summary>출납명세서용 목록 (${bu.length}건)</summary><div class="row" style="margin:8px 0">${copyBtn('c-cash')}<span class="muted">순번·은행·예금주·금액 (탭으로 구분)</span></div><div class="scroll"><table><thead><tr><th>순번</th><th>은행</th><th>예금주</th><th class="n">금액</th></tr></thead><tbody>${bu.map((u, i) => `<tr><td>${i + 1}</td><td>${esc(u.bank)}</td><td>${esc(u.holder)}</td><td class="n">${won(unitSum(c, u.no, bp))}</td></tr>`).join('')}</tbody></table></div><pre id="c-cash" hidden>${esc(cashTsv)}</pre></details>`)}
 ${sec('notice', '입금·안내 메일', c.mailSent ? tag('ok', c.mailSent.slice(5) + ' 보냄') : tag('wait', '안 보냄'), `
   <div class="row">
     <label class="field" for="paidDate">입금일<input id="paidDate" type="date" value="${esc(c.paidDate)}"></label>
@@ -506,7 +502,7 @@ function viewChange(c) {
     ${needPerson ? `<label class="field" for="fPerson">대상자${personOpt(f.pid)}</label>` : ''}
     ${['입사', '복직'].includes(f.kind) || isHolder || f.kind === '전보' ? `<label class="field" for="fUnit">${f.kind === '전보' ? '옮겨 간 부서' : '부서(순번)'}${unitOpt(f.no, 'fUnit')}</label>` : ''}
     ${['입사', '복직'].includes(f.kind) ? `<label class="field" for="fName">이름<input id="fName" value="${esc(f.name || '')}" style="width:110px"></label><label class="field" for="fRate">구분<select id="fRate"><option value="${meta.gen}">전일제</option><option value="${meta.short}"${+f.rate === meta.short ? ' selected' : ''}>반일제</option></select></label>` : ''}
-    ${isHolder ? `<label class="field" for="fHolder">새 예금주<input id="fHolder" value="${esc(f.holder || '')}" style="width:100px"></label><label class="field" for="fBank">은행<input id="fBank" value="${esc(f.bank || '')}" style="width:100px"></label><label class="field" for="fAcct">계좌번호<input id="fAcct" value="${esc(f.acct || '')}" style="width:160px"></label>` : ''}
+    ${isHolder ? `<label class="field" for="fHolder">새 예금주<input id="fHolder" value="${esc(f.holder || '')}" style="width:100px"></label><label class="field" for="fBank">은행<input id="fBank" value="${esc(f.bank || '')}" style="width:100px"></label>` : ''}
     <label class="field" for="fDate">일자<input id="fDate" type="date" value="${esc(f.date || '')}"></label>
     <label class="field" for="fMemo">메모<input id="fMemo" value="${esc(f.memo || '')}" placeholder="예: 인사담당 11-20 통보" style="width:180px"></label>
     <button class="b p" type="button" data-act="applyChange">명단에 반영</button>
@@ -570,9 +566,9 @@ function applyChange(c) {
   } else {
     const u = c.units.find(x => x.no === +(f.no || 0)); if (!u) return notify('부서를 골라 주세요.', 'bad');
     if (!f.holder) return notify('새 예금주를 넣어 주세요.', 'bad');
-    const old = `${u.holder} ${u.bank} ${u.acct}`.trim();
-    u.holder = f.holder; if (f.bank) u.bank = f.bank; if (f.acct) u.acct = f.acct;
-    Object.assign(rec, {name: f.holder, dept: u.dept, desc: `예금주 ${old} → ${u.holder} ${u.bank} ${u.acct}`.trim(), money: 0});
+    const old = `${u.holder} ${u.bank}`.trim();
+    u.holder = f.holder; if (f.bank) u.bank = f.bank;
+    Object.assign(rec, {name: f.holder, dept: u.dept, desc: `예금주 ${old} → ${u.holder} ${u.bank}`.trim(), money: 0});
   }
   c.changes.forEach(x => delete x.before);
   rec.before = before;
@@ -858,7 +854,7 @@ document.addEventListener('click', async e => {
   if (a === 'unlock') { if (await ask('지급 확정 풀기', '<p>지급 기준이 없어져 환수·추가 지급 계산이 사라집니다. 명단 변동 기록은 남습니다.</p>', '풀기', true)) { c.paid = null; update(c); } return; }
   if (a === 'dlRoster') return saveRosterFile(c, false);
   if (a === 'dlRosterUsed') return saveRosterFile(c, true);
-  if (a === 'addUnit') { const no = Math.max(0, ...c.units.map(u => u.no)) + 1; c.units.push({no, dept: '새 부서', bank: '', acct: '', holder: ''}); c.people.push({id: uid(), no, name: '', a: [ST.meta.gen, ST.meta.gen]}); UI.edit = no; return update(c); }
+  if (a === 'addUnit') { const no = Math.max(0, ...c.units.map(u => u.no)) + 1; c.units.push({no, dept: '새 부서', bank: '', holder: ''}); c.people.push({id: uid(), no, name: '', a: [ST.meta.gen, ST.meta.gen]}); UI.edit = no; return update(c); }
   if (a === 'mailSent') { c.mailSent = c.mailSent ? '' : today(); return update(c); }
   if (a === 'applyChange') return applyChange(c);
   if (a === 'undoChange') { const ch = c.changes.filter(x => !x.undone), last = ch[ch.length - 1]; if (last?.before && await ask('되돌리기', `<p>${esc(last.kind)} · ${esc(last.dept)} ${esc(last.name)} 변동을 되돌립니다.</p>`, '되돌리기')) { c.people = last.before.people; c.units = last.before.units; c.changes = c.changes.filter(x => x !== last); update(c); } else if (!last?.before) notify('이 변동은 되돌릴 수 없습니다(가장 최근 변동만 되돌릴 수 있음).', 'bad'); return; }
@@ -926,7 +922,7 @@ document.addEventListener('change', async e => {
   if (t.id?.startsWith('f')) {
     const f = UI.form;
     if (t.id === 'fKind') { UI.form = {kind: t.value, date: f.date, memo: f.memo}; return render(); }
-    const map = {fPerson: 'pid', fUnit: 'no', fName: 'name', fRate: 'rate', fHolder: 'holder', fBank: 'bank', fAcct: 'acct', fDate: 'date', fMemo: 'memo'};
+    const map = {fPerson: 'pid', fUnit: 'no', fName: 'name', fRate: 'rate', fHolder: 'holder', fBank: 'bank', fDate: 'date', fMemo: 'memo'};
     if (t.id === 'fJudge') f.judge = t.value === '1'; else if (map[t.id]) { f[map[t.id]] = t.value; if (t.id === 'fDate') f.judge = null; }
     return render();
   }

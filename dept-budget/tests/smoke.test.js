@@ -12,7 +12,7 @@ const LIBS = {
   'pdf.js/3.11.174/pdf.worker.min.js': path.join(NM, 'pdfjs-dist/build/pdf.worker.min.js'),
 };
 
-// ---- 가짜 명단: 실제 명단과 같은 모양 (순번·부서·입금계좌 병합, 계좌와 예금주를 한 칸에)
+// ---- 가짜 명단: 실제 명단과 같은 모양 (순번·부서·입금계좌 병합, 은행과 예금주를 한 칸에, 계좌번호 없음)
 // [부서, 은행, 계좌, 예금주, [[이름, 11월, 12월], ...]]
 const G = 30000, S = 15000;
 const ppl = (prefix, n, a = [G, G]) => Array.from({length: n}, (_, i) => [`${prefix}${i + 1}`, ...a]);
@@ -36,7 +36,7 @@ function fakeRoster(file) {
   let r = 5;
   UNITS.forEach(([dept, bank, acct, holder, ps], k) => {
     const r0 = r;
-    ps.forEach((p, i) => { aoa.push([i ? null : k + 1, i ? null : dept, p[0], p[1] || null, p[2] || null, i ? null : `${bank} ${acct}\n${holder}`, i ? null : ps.length, i ? null : ps.reduce((s, x) => s + x[1] + x[2], 0)]); r++; });
+    ps.forEach((p, i) => { aoa.push([i ? null : k + 1, i ? null : dept, p[0], p[1] || null, p[2] || null, i ? null : `${bank}\n${holder}`, i ? null : ps.length, i ? null : ps.reduce((s, x) => s + x[1] + x[2], 0)]); r++; });
     if (r - 1 > r0) [0, 1, 5, 6, 7].forEach(c => merges.push({s: {r: r0, c}, e: {r: r - 1, c}}));
   });
   aoa.push(['합계']);
@@ -66,7 +66,7 @@ const ok = (cond, msg) => { console.log((cond ? '  통과 ' : '  실패 ') + msg
   ok(C.units.length === 12, `순번 12건 (${C.units.length})`);
   ok(C.people.length === 68, `대상자 68명 (${C.people.length})`);
   ok(C.units[0].dept === '총무팀·재무팀·시설관리팀', `묶음 부서명 (${C.units[0].dept})`);
-  ok(C.units[3].bank === 'KB국민' && C.units[3].acct === '000-00-0000-004' && C.units[3].holder === '최더미', `계좌 칸 나누기 (${C.units[3].bank}/${C.units[3].acct}/${C.units[3].holder})`);
+  ok(C.units[3].bank === 'KB국민' && C.units[3].holder === '최더미', `입금계좌 칸 나누기 (${C.units[3].bank}/${C.units[3].holder})`);
   const body = await p.textContent('#c-body');
   ok(body.includes('1. 11월: 68명(65명*30,000원 + 3명*15,000원)') && body.includes('2. 12월: 67명(64명*30,000원 + 3명*15,000원)'), '지급 결의내역 달별 인원');
   ok((await p.textContent('#c-title')) === '[총무팀] 2026학년도 부서운영비 지급 건(11-12월)', '지급 결의명(학년도)');
@@ -76,7 +76,7 @@ const ok = (cond, msg) => { console.log((cond ? '  통과 ' : '  실패 ') + msg
   ok(chk.some(t => t.startsWith('도서관: 예금주 장해외')), '예금주가 명단에 없는 순번 표시');
 
   console.log('2. 출납명세서 대조');
-  await p.evaluate(() => { const c = cyc(); c.cash = c.units.map((u, i) => `${i + 1}\t출금\t교직원\t${u.holder}\t${u.bank}\t${u.acct}\t${u.holder}\t${(u.no === 4 ? 330000 : unitSum(c, u.no)).toLocaleString('ko-KR')}`).join('\n'); render(); });
+  await p.evaluate(() => { const c = cyc(); c.cash = c.units.map((u, i) => `${i + 1}\t출금\t교직원\t${u.holder}\t${u.bank}\t${u.holder}\t${(u.no === 4 ? 330000 : unitSum(c, u.no)).toLocaleString('ko-KR')}`).join('\n'); render(); });
   const chk2 = await p.evaluate(() => rosterChecks(cyc()).map(x => x[2]));
   ok(chk2.some(t => t.startsWith('학생상담센터: 출납명세서 금액(330,000)')), '출납명세서 금액 다름 표시');
   ok(!chk2.some(t => t.startsWith('학사지원팀: 출납')), '맞는 순번은 표시 안 함');
@@ -90,7 +90,7 @@ const ok = (cond, msg) => { console.log((cond ? '  통과 ' : '  실패 ') + msg
   await apply({kind: '퇴사', pid: await pid('국제1'), date: '2026-12-10'});
   await apply({kind: '입사', no: 7, name: '노보름', rate: G, date: '2026-11-15'});
   await apply({kind: '퇴사', pid: await pid('기획1'), date: '2026-12-15'});      // 15일 당일 퇴사 → 환수 안 함
-  await apply({kind: '부서 담당자(예금주) 변경', no: 8, holder: '홍보1', bank: '신한', acct: '110-999-000008', date: '2026-11-20'});
+  await apply({kind: '부서 담당자(예금주) 변경', no: 8, holder: '홍보1', bank: '신한', date: '2026-11-20'});
   const df = await p.evaluate(() => diffs(cyc()).map(d => [d.name, d.refSum, d.addSum]));
   const get = n => df.find(d => d[0] === n) || [n, 0, 0];
   ok(get('입학1')[1] === 60000, `홀수달 초 퇴사 → 60,000원 환수 (${get('입학1')[1]})`);
@@ -99,7 +99,7 @@ const ok = (cond, msg) => { console.log((cond ? '  통과 ' : '  실패 ') + msg
   ok(get('노보름')[2] === 60000, `11월 15일 입사 → 11·12월 추가 (${get('노보름')[2]})`);
   ok(get('기획1')[1] === 0, `15일 당일 퇴사 → 환수 없음 (${get('기획1')[1]})`);
   C = await c();
-  ok(C.units[7].holder === '홍보1' && C.units[7].acct === '110-999-000008', '예금주 변경 반영');
+  ok(C.units[7].holder === '홍보1' && C.units[7].bank === '신한', '예금주 변경 반영');
   await p.evaluate(() => { UI.open.change = true; render(); });
   ok((await p.textContent('#main')).includes('면직자 발생에 따른 11-12월 부서운영비 6만원을 환수 요청'), '환수 메일 문구 (두 달)');
   ok((await p.textContent('#main')).includes('면직자 발생에 따른 12월 부서운영비 3만원을 환수 요청'), '환수 메일 문구 (한 달)');
@@ -143,9 +143,9 @@ const ok = (cond, msg) => { console.log((cond ? '  통과 ' : '  실패 ') + msg
   ok(tiles.includes('6 / 12'), `제출 6/12 (${tiles.replace(/\s+/g, ' ').slice(0, 40)})`);
 
   console.log('6. 명단 엑셀 내보내기 → 다시 읽기');
-  const back = await p.evaluate(() => { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, rosterSheet(cyc(), cyc().people, true), 'x'); const out = XLSX.write(wb, {bookType: 'xlsx', type: 'array'}); const r = readRoster(new Uint8Array(out)); return {u: r.units.length, p: r.people.length, sum: totalOf(r.people), cur: totalOf(cyc().people.filter(x => amt(x) > 0)), holder: r.units[3].holder, acct: r.units[3].acct}; });
+  const back = await p.evaluate(() => { const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, rosterSheet(cyc(), cyc().people, true), 'x'); const out = XLSX.write(wb, {bookType: 'xlsx', type: 'array'}); const r = readRoster(new Uint8Array(out)); return {u: r.units.length, p: r.people.length, sum: totalOf(r.people), cur: totalOf(cyc().people.filter(x => amt(x) > 0)), holder: r.units[3].holder, bank: r.units[3].bank}; });
   ok(back.sum === back.cur, `내보낸 명단 합계 = 현재 명단 (${back.sum} / ${back.cur})`);
-  ok(back.holder === '최더미' && back.acct === '000-00-0000-004', '내보낸 명단의 계좌·예금주 다시 읽힘');
+  ok(back.holder === '최더미' && back.bank === 'KB국민', '내보낸 명단의 은행·예금주 다시 읽힘');
 
   console.log('7. 화면');
   await p.click('[data-tab="pay"]'); await p.screenshot({path: path.join(tmp, 'pay.png'), fullPage: true});
