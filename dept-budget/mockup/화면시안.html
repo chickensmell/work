@@ -217,7 +217,7 @@ V.pay = () => {
   const c = CHANGES[1];
   const back = `안녕하십니까, 총무처 총무팀입니다.\n\n${P.year}년 ${P.m1}-${P.m2}월 부서운영비와 관련하여\n면직자 발생에 따른 ${c.months} 부서운영비 ${c.amt / 10000}만원을 환수 요청하고자 안내 드립니다.\n\n  -대상자: ${c.who}\n  -환수 금액: ${won(c.amt)}원\n  -입금 계좌: {설정의 수납 계좌}\n\n위 계좌로 입금 후 송금확인증을 본 메일로 회신해주시기 바랍니다.\n문의사항이 있으신 경우, 내선번호로 연락 부탁 드립니다.\n\n업무 협조에 감사합니다.`;
   return `
-${memo('지급', ['한 화면에 위에서 아래로 일하는 순서대로 둡니다: 명단 → 결의서 → 안내 메일 → 기간 중 입퇴사.', '구역마다 오른쪽에 상태가 보이고, 끝난 구역은 접어 둡니다.', '명단 표 전체, 출납명세서 목록처럼 긴 것은 "펼치기" 안에 넣었습니다.'])}
+${memo('지급', ['한 화면에 위에서 아래로 일하는 순서대로 둡니다: 명단 → 결의서 → 안내 메일 → 기간 중 입퇴사.', '구역마다 오른쪽에 상태가 보이고, 끝난 구역은 접어 둡니다.', '명단 표 전체, 출납명세서 목록처럼 긴 것은 "펼치기" 안에 넣었습니다.', '입퇴사는 자주 없으므로 맨 아래에 접어 두고, 변동이 없으면 "이번 회차 변동 없음" 한 줄과 [변동 추가] 버튼만 보입니다. 시안에는 예시로 변동을 넣어 두었습니다.'])}
 ${sec('s-roster', '명단 확인', `${tag('bad', '확인 2')}${tag('warn', '바뀜 1')}`, `
   <div class="row"><span class="muted">2026년 11-12월 지급 명단 · ${U.length}건 · 11월 ${n1 + s1}명 · 12월 ${n2 + s2}명 · ${won(total)}원</span><button class="b sm" type="button">명단 다시 올리기</button><button class="b sm" type="button">출납명세서 붙여넣기</button></div>
   <ul class="check">${rosterIssues.map(([k, t]) => `<li>${mk(k)}<span>${esc(t)}</span></li>`).join('')}</ul>
@@ -237,12 +237,12 @@ ${sec('s-notice', '입금·안내 메일', tag('ok', '11-06 보냄'), `
   <div class="row"><label class="field" for="paidDate">입금일<input id="paidDate" type="date" value="${P.paid}"></label><label class="field" for="dueDate">정산 마감일<input id="dueDate" type="date" value="${P.due}"></label></div>
   <div class="row"><b>메일 본문</b>${copyBtn('c-notice')}<span class="muted">받는 사람은 전 직원(사이트에서 다루지 않음)</span></div>
   <div class="copybox" id="c-notice">${esc(notice)}</div>`)}
-${sec('s-change', '기간 중 입퇴사·환수', `${tag('bad', '환수 메일 1')}${tag('warn', '추가 지급 1')}`, `
+${sec('s-change', '기간 중 입퇴사·환수 <span class="muted" style="font-weight:normal;font-size:12px">있을 때만</span>', `${tag('bad', '환수 메일 1')}${tag('warn', '추가 지급 1')}`, `
   <div class="row"><span class="muted">15일 기준: 15일까지 입사 → 그달부터 지급 / 14일까지 퇴사 → 그달 환수 / 15일 당일·휴일 낀 건은 담당자 판단</span><button class="b sm p" type="button">변동 추가</button></div>
   <div class="scroll"><table><thead><tr><th>부서</th><th>대상자</th><th>구분</th><th>일자</th><th>결과</th><th>상태</th><th></th></tr></thead>
   <tbody>${CHANGES.map(x => `<tr><td>${esc(x.dept)}</td><td>${esc(x.who)}</td><td>${esc(x.kind)}</td><td>${x.date}</td><td>${esc(x.res)}</td><td>${tag(x.st[0], x.st[1])}</td><td>${x.mail ? '<button class="b sm" type="button">환수 메일</button>' : ''}</td></tr>`).join('')}</tbody></table></div>
   <div class="row"><b>환수 메일 · 국제교류팀</b>${copyBtn('c-back')}<button class="b sm" type="button">보냄으로 표시</button></div>
-  <div class="copybox" id="c-back">${esc(back)}</div>`, true)}`;
+  <div class="copybox" id="c-back">${esc(back)}</div>`, false)}`;
 };
 
 V.settle = () => {
@@ -278,10 +278,27 @@ ${memo('정산', ['예전 5·6·7단계(접수·검토·결과)를 한 화면으
   <tbody>${R.map((r, i) => `<tr><td>${i + 1}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="n">${won(r[3])}</td><td${r[7] ? ' class="hl"' : ''}>${r[4]}</td><td${r[7] ? ' class="hl"' : ''}>${r[5]}</td><td${r[7] ? ' class="hw"' : ''}>${r[6]}</td></tr>`).join('')}</tbody></table></div>
   ${u.is.length ? u.is.map(i => `<div class="row">${tag(i[0] === '보완' ? 'bad' : 'warn', i[0])}<span>${esc(i[1])}</span>${i[0] === '보완' ? '<label class="row" style="gap:6px"><input type="checkbox"> 연락함</label><input type="text" placeholder="메모" aria-label="메모" style="flex:1 1 200px;min-width:0">' : '<div class="chips"><button type="button" aria-pressed="false">정상</button><button type="button" aria-pressed="false">보완으로</button></div>'}</div>`).join('') : '<span class="tag t-ok">이상 없음</span>'}
 </div>
-<details class="sec"><summary><h2>마감 정리</h2><span class="st">${tag('wait', '미제출·보완 끝나면')}</span></summary><div class="in">
-  <div class="row"><button class="b" type="button">명단(정산 사용액 포함) 엑셀 받기</button><button class="b" type="button">검토 결과 보고서 보기</button><span class="muted">정산 지출결의 문구는 양식 예시를 받으면 추가</span></div>
-</div></details>`;
+${settleResol()}`;
 };
+
+function settleResol() {
+  // 가짜 자료: 환수·추가 지급을 반영한 최종 인원 (11월 −1, 12월 −1 −1 +1)
+  const a1 = mc(0,0) - 1, b1 = mc(0,1), a2 = mc(1,0) - 1, b2 = mc(1,1);
+  const x1 = a1 * P.gen + b1 * P.short, x2 = a2 * P.gen + b2 * P.short, sumF = U.reduce((s, x) => s + fin(x), 0);
+  const title = `[총무팀] ${P.year}년 ${P.m1}-${P.m2}월 부서운영비 정산`;
+  const body = `1. ${P.m1}월 지급 내역(${won(x1)}원)\n  가. 전일제: ${a1}명*30,000원= ${won(a1 * P.gen)}원\n  나. 반일제 근무 직원: ${b1}명*15,000원= ${won(b1 * P.short)}원\n2. ${P.m2}월 지급 내역(${won(x2)}원)\n  가. 전일제: ${a2}명*30,000원= ${won(a2 * P.gen)}원\n  나. 반일제 근무 직원: ${b2}명*15,000원= ${won(b2 * P.short)}원`;
+  return `<details class="sec" open><summary><h2>정산 결의서 (대체결의서)</h2><span class="st">${tag('bad', `미제출 ${subNo.length} · 보완 ${cntK('보완')} 남음`)}</span></summary><div class="in">
+  <div class="memo"><b class="t">시안 메모 · 정산 결의서</b><ul><li>보내 주신 9-10월 대체결의서 형식 그대로입니다. 금액은 사용액이 아니라 그 회차에 실제 지급한 금액(가지급금 → 복리후생비로 바꿈)입니다.</li><li>달별 인원은 환수·추가 지급을 반영한 최종 인원으로 가정했습니다. 확인이 필요합니다.</li><li>지급 결의서와 달리 결의명은 "학년도"가 아니라 "${P.year}년"으로 씁니다(예시 기준).</li></ul></div>
+  <div class="kv">
+    <span>결의명·제목</span><span><span id="c-stitle">${esc(title)}</span> ${copyBtn('c-stitle')}</span>
+    <span>금액</span><span>${won(x1 + x2)}원 ${x1 + x2 === sumF ? tag('ok', '확정 지급액 합과 같음') : tag('bad', '확정 지급액 합과 다름')}</span>
+    <span>차변</span><span>관리운영비 · 운영비 · 복리후생비 · 복리후생비-일반 <span class="muted">(사업실행계획 ${P.year}학년도 부서운영(단합)비 지급 건)</span></span>
+    <span>대변</span><span>유동자산 · 기타유동자산 · 가지급금</span>
+    <span>결의내역</span><span><span class="copybox" id="c-sbody" style="display:inline-block">${esc(body)}</span> ${copyBtn('c-sbody')}</span>
+  </div>
+  <div class="row"><button class="b" type="button">명단(정산 사용액 포함) 엑셀 받기</button><button class="b" type="button">검토 결과 보고서 보기</button></div>
+</div></details>`;
+}
 
 V.set = () => `
 <div class="grid2">
