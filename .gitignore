@@ -18,3 +18,4 @@ node_modules/
 *.alz
 *.egg
 dept-budget/tests/.tmp/
+!dept-budget/tests/package.json

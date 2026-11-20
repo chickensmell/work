@@ -1,0 +1,6 @@
+{
+  "name": "dept-budget-tests",
+  "private": true,
+  "description": "부서운영비 사이트 자동 시험 (가짜 자료만 사용)",
+  "devDependencies": { "jszip": "3.10.1", "pdfjs-dist": "3.11.174", "xlsx": "0.18.5" }
+}
