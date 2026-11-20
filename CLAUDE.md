@@ -19,7 +19,7 @@
 | --- | --- | --- | --- |
 | 나의 업무 보드 | `work-board` | `board/` | `docs/업무보드-요구사항.md` |
 | 자녀학비보조 관리 | `child-tuition` | `child-tuition/` | `docs/자녀학비보조-요구사항.md` |
-| 부서운영비 정산 검토 | (결정 전, 임시 `claude/vigilant-rubin-aljesy`) | `dept-budget/` | `docs/부서운영비-요구사항.md` |
+| 부서운영비 정산 검토 | `dept-budget` | `dept-budget/` | `docs/부서운영비-요구사항.md` |
 
 ## 나의 업무 보드 수정 순서
 1. `board/index.html`을 고친다.
