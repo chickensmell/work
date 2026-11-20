@@ -137,7 +137,7 @@ td.hw{background:var(--warn-soft);color:var(--warn)}
 </style>
 
 <div class="proto">
-  <b>화면 시안 v3</b><span>가짜 자료 · 탭 이동·접기·행 선택만 됨 · 오늘을 2026-12-24(정산 마감 다음 날)로 가정</span>
+  <b>화면 시안 v6</b><span>가짜 자료 · 탭 이동·접기·행 선택만 됨 · 오늘을 2026-12-24(정산 마감 다음 날)로 가정</span>
   <label><input type="checkbox" id="memoToggle" checked> 시안 메모 보기</label>
 </div>
 <header>
@@ -174,11 +174,11 @@ const U = [
   {no:12, dept:'학생지원팀', holder:'서누락', prev:'서누락', bank:'신한은행', inList:true, m:[[6,1],[6,1]], add:0, back:0, used:402700, sub:'12-19', is:[]},
 ];
 const CHANGES = [
-  {dept:'입학팀', who:'백제외 사원', kind:'퇴사', date:'2026-11-03', res:'11·12월 환수 60,000원', st:['warn','회신 대기'], mail:true},
-  {dept:'국제교류팀', who:'윤사직 주임', kind:'퇴사', date:'2026-12-10', res:'12월 환수 30,000원', st:['bad','메일 안 보냄'], mail:true, months:'12월', amt:30000},
-  {dept:'교무팀', who:'정입사 사원', kind:'입사', date:'2026-12-02', res:'12월 추가 지급 30,000원', st:['warn','추가 지급 중']},
-  {dept:'기획팀', who:'노보름 사원', kind:'입사', date:'2026-11-15', res:'15일 당일 → 지급(담당자 판단)', st:['ok','명단 반영']},
-  {dept:'홍보팀', who:'장이전 대리', kind:'퇴사·담당자', date:'2026-10-31', res:'예금주 장이전 → 윤모의', st:['ok','명단 반영']},
+  {apply:'11·12월 칸 지움 · 입학팀 5→4명', dept:'입학팀', who:'백제외 사원', kind:'퇴사', date:'2026-11-03', res:'11·12월 환수 60,000원', st:['warn','회신 대기'], mail:true},
+  {apply:'12월 칸 지움 · 국제교류팀 12월 3→2명', dept:'국제교류팀', who:'윤사직 주임', kind:'퇴사', date:'2026-12-10', res:'12월 환수 30,000원', st:['bad','메일 안 보냄'], mail:true, months:'12월', amt:30000},
+  {apply:'12월 칸 추가 · 교무팀 12월 4→5명', dept:'교무팀', who:'정입사 사원', kind:'입사', date:'2026-12-02', res:'12월 추가 지급 30,000원', st:['warn','추가 지급 중']},
+  {apply:'11·12월 칸 추가 (15일 당일 → 담당자 판단: 지급)', dept:'기획팀', who:'노보름 사원', kind:'입사', date:'2026-11-15', res:'15일 당일 → 지급(담당자 판단)', st:['ok','명단 반영']},
+  {apply:'예금주 장이전 → 윤모의', dept:'홍보팀', who:'장이전 대리', kind:'퇴사·담당자', date:'2026-10-31', res:'예금주 장이전 → 윤모의', st:['ok','명단 반영']},
 ];
 const P = {gen:30000, short:15000, m1:11, m2:12, year:2026, due:'2026-12-23', paid:'2026-11-06'};
 const won = n => Number(n).toLocaleString('ko-KR');
@@ -217,9 +217,9 @@ V.pay = () => {
   const c = CHANGES[1];
   const back = `안녕하십니까, 총무처 총무팀입니다.\n\n${P.year}년 ${P.m1}-${P.m2}월 부서운영비와 관련하여\n면직자 발생에 따른 ${c.months} 부서운영비 ${c.amt / 10000}만원을 환수 요청하고자 안내 드립니다.\n\n  -대상자: ${c.who}\n  -환수 금액: ${won(c.amt)}원\n  -입금 계좌: {설정의 수납 계좌}\n\n위 계좌로 입금 후 송금확인증을 본 메일로 회신해주시기 바랍니다.\n문의사항이 있으신 경우, 내선번호로 연락 부탁 드립니다.\n\n업무 협조에 감사합니다.`;
   return `
-${memo('지급', ['한 화면에 위에서 아래로 일하는 순서대로 둡니다: 명단 → 결의서 → 안내 메일 → 기간 중 입퇴사.', '구역마다 오른쪽에 상태가 보이고, 끝난 구역은 접어 둡니다.', '명단은 순번별 11월·12월 인원과 금액, 합계를 바로 보이게 했습니다. 출납명세서 목록처럼 긴 것만 "펼치기" 안에 둡니다.', '입퇴사는 자주 없으므로 맨 아래에 접어 두고, 변동이 없으면 "이번 회차 변동 없음" 한 줄과 [변동 추가] 버튼만 보입니다. 시안에는 예시로 변동을 넣어 두었습니다.'])}
+${memo('지급', ['한 화면에 위에서 아래로 일하는 순서대로 둡니다: 명단 → 결의서 → 안내 메일 → 기간 중 입퇴사.', '구역마다 오른쪽에 상태가 보이고, 끝난 구역은 접어 둡니다.', '명단은 순번별 11월·12월 인원과 금액, 합계를 바로 보이게 했습니다. 출납명세서 목록처럼 긴 것만 "펼치기" 안에 둡니다.', '명단 변동은 사이트에 적기만 하면 됩니다(부서·이름·구분·날짜). 사이트가 15일 기준으로 명단 칸을 고치고, 고친 명단을 지금 양식 그대로 엑셀로 받을 수 있습니다.', '변동은 자주 없으므로 맨 아래에 접어 둡니다. 없으면 "이번 회차 변동 없음" 한 줄과 입력 칸만 보입니다(시안에는 예시 변동을 넣어 둠).', '지급 결의 뒤에 생긴 변동은 지급 결의를 바꾸지 않고, 환수·추가 지급과 정산 결의서 최종 인원, 다음 회차 명단에 들어갑니다.'])}
 ${sec('s-roster', '명단 확인', `${tag('bad', '확인 2')}${tag('warn', '바뀜 1')}`, `
-  <div class="row"><span class="muted">2026년 11-12월 지급 명단 · ${U.length}건 · 11월 ${n1 + s1}명 · 12월 ${n2 + s2}명 · ${won(total)}원</span><button class="b sm" type="button">명단 다시 올리기</button><button class="b sm" type="button">출납명세서 붙여넣기</button></div>
+  <div class="row"><span class="muted">2026년 11-12월 지급 명단 · ${U.length}건 · 11월 ${n1 + s1}명 · 12월 ${n2 + s2}명 · ${won(total)}원</span><button class="b sm" type="button">고친 명단 엑셀 받기</button><button class="b sm" type="button">명단 파일로 다시 올리기</button><button class="b sm" type="button">출납명세서 붙여넣기</button></div>
   <ul class="check">${rosterIssues.map(([k, t]) => `<li>${mk(k)}<span>${esc(t)}</span></li>`).join('')}</ul>
   <div class="scroll"><table>
     <thead><tr><th rowspan="2">순번</th><th rowspan="2">부서</th><th colspan="2" class="c">11월</th><th colspan="2" class="c">12월</th><th rowspan="2" class="n">합계 금액</th><th rowspan="2">예금주</th><th rowspan="2">확인</th></tr>
@@ -239,46 +239,59 @@ ${sec('s-notice', '입금·안내 메일', tag('ok', '11-06 보냄'), `
   <div class="row"><label class="field" for="paidDate">입금일<input id="paidDate" type="date" value="${P.paid}"></label><label class="field" for="dueDate">정산 마감일<input id="dueDate" type="date" value="${P.due}"></label></div>
   <div class="row"><b>메일 본문</b>${copyBtn('c-notice')}<span class="muted">받는 사람은 전 직원(사이트에서 다루지 않음)</span></div>
   <div class="copybox" id="c-notice">${esc(notice)}</div>`)}
-${sec('s-change', '기간 중 입퇴사·환수 <span class="muted" style="font-weight:normal;font-size:12px">있을 때만</span>', `${tag('bad', '환수 메일 1')}${tag('warn', '추가 지급 1')}`, `
-  <div class="row"><span class="muted">15일 기준: 15일까지 입사 → 그달부터 지급 / 14일까지 퇴사 → 그달 환수 / 15일 당일·휴일 낀 건은 담당자 판단</span><button class="b sm p" type="button">변동 추가</button></div>
-  <div class="scroll"><table><thead><tr><th>부서</th><th>대상자</th><th>구분</th><th>일자</th><th>결과</th><th>상태</th><th></th></tr></thead>
-  <tbody>${CHANGES.map(x => `<tr><td>${esc(x.dept)}</td><td>${esc(x.who)}</td><td>${esc(x.kind)}</td><td>${x.date}</td><td>${esc(x.res)}</td><td>${tag(x.st[0], x.st[1])}</td><td>${x.mail ? '<button class="b sm" type="button">환수 메일</button>' : ''}</td></tr>`).join('')}</tbody></table></div>
+${sec('s-change', '명단 변동 <span class="muted" style="font-weight:normal;font-size:12px">있을 때만</span>', `${tag('bad', '환수 메일 1')}${tag('warn', '추가 지급 1')}`, `
+  <div class="row">
+    <label class="field" for="cgDept">부서<select id="cgDept">${U.map(u => `<option>${esc(u.dept)}</option>`).join('')}</select></label>
+    <label class="field" for="cgName">이름·직급<input id="cgName" placeholder="예: 홍길동 사원"></label>
+    <label class="field" for="cgKind">구분<select id="cgKind"><option>입사</option><option>퇴사</option><option>전보(부서 이동)</option><option>휴직·복직</option><option>반일제 ↔ 전일제</option><option>부서 담당자(예금주) 변경</option></select></label>
+    <label class="field" for="cgDate">일자<input id="cgDate" type="date"></label>
+    <button class="b p" type="button" style="align-self:flex-end">명단에 반영</button>
+  </div>
+  <p class="muted" style="margin:0">15일 기준: 15일까지 입사 → 그달부터 지급 / 14일까지 퇴사 → 그달 환수 / 15일 당일·휴일 낀 건은 반영 전에 지급 여부를 물어봄</p>
+  <div class="scroll"><table><thead><tr><th>부서</th><th>대상자</th><th>구분</th><th>일자</th><th>명단에 반영된 내용</th><th>돈</th><th>상태</th><th></th></tr></thead>
+  <tbody>${CHANGES.map(x => `<tr><td>${esc(x.dept)}</td><td>${esc(x.who)}</td><td>${esc(x.kind)}</td><td>${x.date}</td><td>${esc(x.apply)}</td><td>${esc(x.res.includes('환수') || x.res.includes('추가') ? x.res : '')}</td><td>${tag(x.st[0], x.st[1])}</td><td>${x.mail ? '<button class="b sm" type="button">환수 메일</button>' : ''}</td></tr>`).join('')}</tbody></table></div>
+  <div class="row"><button class="b sm" type="button">고친 명단 엑셀 받기</button><span class="muted">지금 명단 양식(순번·부서·대상자·11월·12월·입금계좌·인원·입금액·정산 사용액·차액, 변동사항 표) 그대로</span></div>
   <div class="row"><b>환수 메일 · 국제교류팀</b>${copyBtn('c-back')}<button class="b sm" type="button">보냄으로 표시</button></div>
   <div class="copybox" id="c-back">${esc(back)}</div>`, false)}`;
 };
 
 V.settle = () => {
-  const u = U.find(x => x.no === sel);
-  const R = {
-    2: [['2026-11-12','○○베이커리','다과',42000,'12****8808','지출증빙','23019874',null],
-        ['2026-11-26','○○식당','회식',186000,'12****8808','지출증빙','40417762',null],
-        ['2026-12-09','○○마트','다과',58000,'?','표시 없음','?','증빙'],
-        ['2026-12-18','○○카페','음료',86000,'12****8808','지출증빙','77120395',null]],
-  }[sel] || [['2026-11-20','○○식당','회식',Math.round((u.used || 0) * 0.6),'12****8808','지출증빙','31840022',null],['2026-12-11','○○제과','다과',(u.used || 0) - Math.round((u.used || 0) * 0.6),'12****8808','지출증빙','55021978',null]];
+  // 확인할 것: [순번, 구분, 짧은 제목, 사이트가 읽은 내용]
+  const CK = [
+    [2, '보완', '지출증빙 번호 안 보임', '영수증 3 · 12-09 ○○마트 58,000원: 현금영수증 사진에 지출증빙 표시와 식별번호 부분이 잘려 있음'],
+    [4, '보완', '식별번호가 학교 번호 아님', '영수증 2 · 12-05 ○○레스토랑 133,800원: 식별번호 01****5521 (개인 번호로 보임)'],
+    [6, '보완', '정산 기간 밖 영수증', '영수증 1 · 승인일 2026-10-28 (11-12월분에 청구)'],
+    [7, '보완', '사용액이 지급액보다 적음', '사용액 290,000원 < 지급액 300,000원 (10,000원 미달)'],
+    [3, '확인', '사용액과 총합 다름', '정산서 상단 정산금액 363,360원 · 항목 7개 합 380,360원 · 영수증 합 380,360원 → 접수 목록 사용액을 380,360원으로 고칠지'],
+    [5, '확인', '내역 이상: 꽃', '영수증 4 · 12-10 ○○플라워 45,000원: 품목 "꽃다발", 정산서 내역 "다과"'],
+    [7, '확인', '승인번호 중복', '영수증 5 승인번호 40417762 = 홍보팀 영수증 2 (같은 결제를 두 부서가 청구했는지)'],
+    [8, '확인', '승인번호 중복', '영수증 2 승인번호 40417762 = 기획팀 영수증 5'],
+    [11, '확인', '사진 흐림', '영수증 6: 금액·승인번호를 못 읽음 → 홈택스 매입 내역에서 확인'],
+  ];
+  const fix = CK.filter(c => c[1] === '보완'), chk = CK.filter(c => c[1] === '확인');
+  const dn = no => esc(U.find(x => x.no === no).dept);
+  const card = c => `<div class="icard${c[1] === '보완' ? ' bad' : ''}"><div class="hd"><b>${dn(c[0])}</b>${tag(c[1] === '보완' ? 'bad' : 'warn', c[1])}<b>${esc(c[2])}</b>${c[3].startsWith('영수증') ? '<button class="b sm" type="button" style="margin-left:auto">영수증 사진 보기</button>' : ''}</div><div class="muted">${esc(c[3])}</div><div class="row">${c[1] === '보완' ? '<label class="row" style="gap:6px"><input type="checkbox"> 연락함</label><input type="text" placeholder="메모" aria-label="메모" style="flex:1 1 200px;min-width:0">' : '<div class="chips"><button type="button" aria-pressed="false">문제없음</button><button type="button" aria-pressed="false">보완으로</button></div>'}</div></div>`;
   const rows = U.map(x => {
     const d = x.used == null ? null : x.used - fin(x);
-    const fx = x.is.filter(i => i[0] === '보완').length, ck = x.is.filter(i => i[0] === '확인').length;
-    const res = !x.sub ? tag('bad', '미제출') : fx ? tag('bad', `보완 ${fx}`) + (ck ? tag('warn', `확인 ${ck}`) : '') : ck ? tag('warn', `확인 ${ck}`) : tag('ok', '이상 없음');
-    return `<tr class="click${x.no === sel ? ' sel' : ''}" data-unit="${x.no}"><td>${x.no}</td><td>${esc(x.dept)}</td><td>${x.sub || ''}</td><td class="n">${won(fin(x))}</td><td class="n">${x.used == null ? '' : won(x.used)}</td><td class="n${d != null && d < 0 ? ' neg' : ''}">${d == null ? '' : (d > 0 ? '+' : '') + won(d)}</td><td>${res}</td><td class="muted">${x.is.map(i => esc(i[1])).join(' · ')}</td></tr>`;
+    const f = CK.filter(c => c[0] === x.no && c[1] === '보완').length, k = CK.filter(c => c[0] === x.no && c[1] === '확인').length;
+    const res = !x.sub ? tag('bad', '미제출') : (f ? tag('bad', `보완 ${f}`) : '') + (k ? tag('warn', `확인 ${k}`) : '') || tag('ok', '이상 없음');
+    return `<tr><td>${x.no}</td><td>${esc(x.dept)}</td><td>${x.sub || ''}</td><td class="n">${won(fin(x))}</td><td class="n">${x.used == null ? '' : won(x.used)}</td><td class="n${d != null && d < 0 ? ' neg' : ''}">${d == null ? '' : (d > 0 ? '+' : '') + won(d)}</td><td>${res}</td></tr>`;
   }).join('');
   const sumF = U.reduce((s, x) => s + fin(x), 0), sumU = U.reduce((s, x) => s + (x.used || 0), 0);
   return `
-${memo('정산', ['예전 5·6·7단계(접수·검토·결과)를 한 화면으로 합쳤습니다.', '부서 표 하나만 보고, 문제 있는 부서를 누르면 아래에 그 부서 영수증만 펼쳐집니다. 문제 칸은 빨갛게 표시합니다.', '"보완"은 직접 연락할 건(연락함 체크만), "확인"은 담당자가 정상/보완을 고를 건입니다.', '지급액 = 정기 + 추가 지급 − 환수. 차액 = 사용액 − 지급액(빨간색은 미달).'])}
+${memo('정산', ['영수증 전체 내역은 보여 주지 않습니다. 사이트가 다 읽고, 확인이 필요한 것만 모아 보여 줍니다.', '확인할 것: 내역 이상, 지출증빙·식별번호 안 보임/다름, 사용액과 총합 다름, 기간 밖, 승인번호 중복, 사용액 미달, 사진 흐림.', '"보완" = 부서에 직접 연락할 것(연락함 체크만). "확인" = 보시고 문제없음/보완으로 고를 것.', '"영수증 사진 보기"는 그 한 장만 띄웁니다. 아래 부서 표는 금액 요약만 둡니다.'])}
 <div class="tiles">
   <div class="tile">제출<b>${U.length - subNo.length} / ${U.length}</b></div>
   <div class="tile alert">미제출<b>${subNo.map(x => x.dept).join(', ')}</b></div>
-  <div class="tile alert">보완 (직접 연락)<b>${cntK('보완')}건</b></div>
-  <div class="tile">확인 (담당자 판단)<b>${cntK('확인')}건</b></div>
+  <div class="tile alert">보완 (직접 연락)<b>${fix.length}건</b></div>
+  <div class="tile">확인 (보고 판단)<b>${chk.length}건</b></div>
 </div>
-<div class="card"><h2>부서별 정산 <span class="sub">행을 누르면 영수증</span><span class="r"><button class="b sm p" type="button">ZIP·PDF 올리기</button><button class="b sm" type="button">접수 목록 PDF 올리기</button></span></h2>
-  <div class="chips" style="margin-bottom:8px"><button type="button" aria-pressed="true">전체 ${U.length}</button><button type="button" aria-pressed="false">문제 있는 부서만 ${U.filter(x => !x.sub || x.is.length).length}</button></div>
-  <div class="scroll"><table><thead><tr><th>순번</th><th>부서</th><th>제출일</th><th class="n">지급액</th><th class="n">사용액</th><th class="n">차액</th><th>결과</th><th>내용</th></tr></thead>
-  <tbody>${rows}<tr class="sum"><td colspan="3">합계</td><td class="n">${won(sumF)}</td><td class="n">${won(sumU)}</td><td colspan="3"></td></tr></tbody></table></div>
+<div class="card"><h2>확인할 것 <span class="sub">${CK.length}건 · 나머지 영수증은 이상 없음</span><span class="r"><button class="b sm p" type="button">ZIP·PDF 올리기</button><button class="b sm" type="button">접수 목록 PDF 올리기</button></span></h2>
+  <div class="cards">${fix.map(card).join('')}${chk.map(card).join('')}</div>
 </div>
-<div class="det"><h3>${esc(u.dept)} · 영수증 ${R.length}장 <span class="muted" style="font-weight:normal;font-size:13px">정산서 합계 ${won(u.listed || u.used || 0)} · 항목 합 ${won(R.reduce((s, r) => s + r[3], 0))}</span></h3>
-  <div class="scroll"><table><thead><tr><th>#</th><th>승인일</th><th>사용처</th><th>내역</th><th class="n">금액</th><th>식별번호</th><th>지출증빙</th><th>승인번호</th></tr></thead>
-  <tbody>${R.map((r, i) => `<tr><td>${i + 1}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="n">${won(r[3])}</td><td${r[7] ? ' class="hl"' : ''}>${r[4]}</td><td${r[7] ? ' class="hl"' : ''}>${r[5]}</td><td${r[7] ? ' class="hw"' : ''}>${r[6]}</td></tr>`).join('')}</tbody></table></div>
-  ${u.is.length ? u.is.map(i => `<div class="row">${tag(i[0] === '보완' ? 'bad' : 'warn', i[0])}<span>${esc(i[1])}</span>${i[0] === '보완' ? '<label class="row" style="gap:6px"><input type="checkbox"> 연락함</label><input type="text" placeholder="메모" aria-label="메모" style="flex:1 1 200px;min-width:0">' : '<div class="chips"><button type="button" aria-pressed="false">정상</button><button type="button" aria-pressed="false">보완으로</button></div>'}</div>`).join('') : '<span class="tag t-ok">이상 없음</span>'}
+<div class="card"><h2>부서별 금액 요약</h2>
+  <div class="scroll"><table><thead><tr><th>순번</th><th>부서</th><th>제출일</th><th class="n">지급액</th><th class="n">사용액</th><th class="n">차액</th><th>결과</th></tr></thead>
+  <tbody>${rows}<tr class="sum"><td colspan="3">합계</td><td class="n">${won(sumF)}</td><td class="n">${won(sumU)}</td><td colspan="2"></td></tr></tbody></table></div>
 </div>
 ${settleResol()}`;
 };
@@ -290,7 +303,7 @@ function settleResol() {
   const title = `[총무팀] ${P.year}년 ${P.m1}-${P.m2}월 부서운영비 정산`;
   const body = `1. ${P.m1}월 지급 내역(${won(x1)}원)\n  가. 전일제: ${a1}명*30,000원= ${won(a1 * P.gen)}원\n  나. 반일제 근무 직원: ${b1}명*15,000원= ${won(b1 * P.short)}원\n2. ${P.m2}월 지급 내역(${won(x2)}원)\n  가. 전일제: ${a2}명*30,000원= ${won(a2 * P.gen)}원\n  나. 반일제 근무 직원: ${b2}명*15,000원= ${won(b2 * P.short)}원`;
   return `<details class="sec" open><summary><h2>정산 결의서 (대체결의서)</h2><span class="st">${tag('bad', `미제출 ${subNo.length} · 보완 ${cntK('보완')} 남음`)}</span></summary><div class="in">
-  <div class="memo"><b class="t">시안 메모 · 정산 결의서</b><ul><li>보내 주신 9-10월 대체결의서 형식 그대로입니다. 금액은 사용액이 아니라 그 회차에 실제 지급한 금액(가지급금 → 복리후생비로 바꿈)입니다.</li><li>달별 인원은 환수·추가 지급을 반영한 최종 인원으로 가정했습니다. 확인이 필요합니다.</li><li>지급 결의서와 달리 결의명은 "학년도"가 아니라 "${P.year}년"으로 씁니다(예시 기준).</li></ul></div>
+  <div class="memo"><b class="t">시안 메모 · 정산 결의서</b><ul><li>보내 주신 9-10월 대체결의서 형식 그대로입니다. 금액은 사용액이 아니라 그 회차에 실제 지급한 금액(가지급금 → 복리후생비로 바꿈)입니다.</li><li>달별 인원은 환수·추가 지급을 반영한 최종 인원입니다(명단 변동에서 자동 계산).</li><li>지급 결의서와 달리 결의명은 "학년도"가 아니라 "${P.year}년"으로 씁니다(예시 기준).</li></ul></div>
   <div class="kv">
     <span>결의명·제목</span><span><span id="c-stitle">${esc(title)}</span> ${copyBtn('c-stitle')}</span>
     <span>금액</span><span>${won(x1 + x2)}원 ${x1 + x2 === sumF ? tag('ok', '확정 지급액 합과 같음') : tag('bad', '확정 지급액 합과 다름')}</span>
