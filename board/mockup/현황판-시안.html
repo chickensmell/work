@@ -94,7 +94,26 @@ button{cursor:pointer}
 .grid2{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
 .mockbar{background:var(--amber-soft);color:var(--amber);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600}
 .stack{display:flex;flex-direction:column;gap:16px;min-width:0}
-.kan{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px}
+.kan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:12px}
+.hdr-r{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.seg.style button[aria-pressed="true"]{background:var(--fg);border-color:var(--fg);color:var(--bg)}
+.wkp{display:grid;gap:8px;padding:12px}
+.wkp .col.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.wkp .col.past{background:var(--red-soft)}
+.wkp .colh small{font-weight:500;color:var(--muted);font-family:var(--font-num);margin-left:4px}
+.wkp .col.today .colh{color:var(--accent)}
+.agl{display:flex;flex-direction:column}
+.agl .sec{padding:8px 16px}
+.agl .sec.warn{color:var(--red)}
+.arow{display:grid;grid-template-columns:auto minmax(0,1fr) 140px;gap:12px;padding:12px 16px;border-top:1px solid var(--line);cursor:pointer;align-items:start}
+.arow:hover{background:var(--sunk)}
+.arow .t{display:flex;flex-direction:column;gap:5px;min-width:0}
+.arow .title{font-weight:600;overflow-wrap:anywhere}
+.arow .clist{border-top:0;padding-top:2px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:4px 18px}
+.arow .rt{display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-size:12px;color:var(--muted)}
+.holds.over{outline:2px dashed var(--accent);outline-offset:-4px}
+.grid2.solo{grid-template-columns:minmax(0,1fr)}
+.grid2.solo>.stack{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
 .col{background:var(--sunk);border-radius:9px;display:flex;flex-direction:column;min-width:0}
 .colh{display:flex;justify-content:space-between;align-items:center;padding:9px 11px 5px;font-size:13px;font-weight:600}
 .colh .cnt{font-family:var(--font-num);font-size:12px;color:var(--muted);font-weight:500}
@@ -260,7 +279,7 @@ button{cursor:pointer}
 </style>
 
 <div class="app">
-  <div class="mockbar">시안입니다. 11. 22. 업무 데이터로 미리 보여 주며, 체크하거나 고쳐도 실제 보드에는 저장되지 않습니다(새로고침하면 처음으로 돌아감).</div>
+  <div class="mockbar">시안 2입니다. 위 현황판의 [A 칸반 / B 주간 플래너 / C 마감일 목록]을 눌러 정리 방식을 비교해 보세요. 11. 22. 업무 데이터로 미리 보여 주며, 체크하거나 고쳐도 실제 보드에는 저장되지 않습니다(새로고침하면 처음으로 돌아감).</div>
   <header class="top">
     <div class="brand"><h1>나의 업무 보드</h1><span class="today" id="today"></span></div>
     <nav class="tabs" id="tabs" role="tablist" aria-label="화면"></nav>
@@ -276,19 +295,27 @@ button{cursor:pointer}
   <section id="tab-board" class="stack" aria-label="현황판">
     <div class="tiles" id="tiles"></div>
     <div class="panel">
-      <div class="ph"><div class="ttl"><h2 id="kan-title">3일 안에 할 일</h2><span class="sub" id="kan-sub"></span></div><div class="seg sm" id="scope" role="group" aria-label="범위"></div></div>
+      <div class="ph"><div class="ttl"><h2 id="kan-title">3일 안에 할 일</h2><span class="sub" id="kan-sub"></span></div><div class="hdr-r"><div class="seg sm style" id="bstyle" role="group" aria-label="정리 방식"></div><div class="seg sm" id="scope" role="group" aria-label="범위"></div></div></div>
       <div class="kan" id="kan"></div>
+      <div class="wkp" id="wkp" hidden></div>
+      <div class="agl" id="agl" hidden></div>
     </div>
     <div class="grid2">
-        <div class="panel">
+        <div class="panel" id="up-panel">
           <div class="ph"><h2>다가오는 마감</h2><span class="sub" id="up-sub">칸반 다음 ~ 2주</span></div>
           <div class="ups" id="ups"><div class="empty">업무를 불러오는 중입니다</div></div>
           <div class="upfoot" id="upfoot"></div>
+        </div>
+      <div class="stack">
+        <div class="panel holds" id="hold-panel">
+          <div class="ph"><h2>보류</h2><span class="sub" id="hold-sub"></span></div>
+          <div class="ups" id="holds"></div>
         </div>
         <div class="panel">
           <div class="ph"><h2>분류별 현황</h2><span class="sub">진행 업무 · 평균 진행률</span></div>
           <div id="catstats"></div>
         </div>
+      </div>
     </div>
   </section>
 
@@ -374,6 +401,8 @@ function nextDue(s,rep){const base=s||todayStr();switch(rep){case'weekly':return
 function nthDue(s,rep,k){return rep==='weekly'?addDays(s,7*k):REP_MONTHS[rep]?addMonths(s,REP_MONTHS[rep]*k):''}
 
 /* state */
+let bstyle='kanban';try{const v=localStorage.getItem('wb-style');if(['kanban','week','agenda'].includes(v))bstyle=v}catch(e){}
+const STYLES=[{id:'kanban',name:'A 칸반'},{id:'week',name:'B 주간 플래너'},{id:'agenda',name:'C 마감일 목록'}];
 let tasks=[],view='all',cat='',scope='d3',loaded=false,store=null,openId=null,dragId=null;
 let calM=todayStr().slice(0,7),selDate=todayStr();
 try{const v=localStorage.getItem('wb-view');if(v&&VIEWS.some(x=>x.id===v))view=v;const s=localStorage.getItem('wb-scope');if(s&&SCOPES.some(x=>x.id===s))scope=s}catch(e){}
@@ -491,11 +520,16 @@ function renderBoard(){
     tile('이번 주 마감',weekDue,'건','week'),
     tile((parse(td).getMonth()+1)+'월 완료',doneMonth,'건','done'));
   $('#scope').replaceChildren(...SCOPES.map(s=>el('button',{type:'button','aria-pressed':String(scope===s.id),onclick:()=>{scope=s.id;remember('wb-scope',scope);render()}},s.name)));
-  $('#kan-title').textContent=scope==='d3'?'3일 안에 할 일':scope==='week'?(isWeekend()?'다음 주 할 일':'이번 주 할 일'):'전체 업무';
+  $('#bstyle').replaceChildren(...STYLES.map(s=>el('button',{type:'button','aria-pressed':String(bstyle===s.id),onclick:()=>{bstyle=s.id;remember('wb-style',bstyle);render()}},s.name)));
+  $('#scope').hidden=bstyle!=='kanban';$('#kan').hidden=bstyle!=='kanban';$('#wkp').hidden=bstyle!=='week';$('#agl').hidden=bstyle!=='agenda';$('#up-panel').hidden=bstyle!=='kanban';
+  renderHolds();document.querySelector('.grid2').classList.toggle('solo',bstyle!=='kanban');
+  if(bstyle==='week'){renderWeekPlan();renderCatStats();return}
+  if(bstyle==='agenda'){renderAgendaList();renderCatStats();return}
+  $('#kan-title').textContent=scope==='d3'?'3일 안에 할 일':scope==='week'?'이번 주 할 일':'전체 업무';
   $('#kan-sub').textContent=scope==='d3'?fmtShort(td)+' ~ '+fmtShort(addDays(td,3))+' 마감 (지난 것 포함)':scope==='week'?fmtShort(weekStart())+' ~ '+fmtShort(weekEnd())+' 마감 (지난 것 포함)':'완료는 최근 7일';
-  const items=loaded?tasks.filter(t=>inScope(t,scope)):[];
-  const hint=id=>!loaded?'불러오는 중입니다':id==='todo'?(scope==='all'?'대기 중인 업무가 없습니다.':'이 기간에 마감인 대기 업무가 없습니다. 아래 ‘다가오는 마감’에서 [오늘]을 누르면 여기로 옵니다.'):id==='doing'?'이 기간에 마감인 진행 업무가 없습니다. 카드를 여기로 끌어 오면 진행중이 됩니다.':id==='hold'?'보류한 업무가 없습니다.':'완료한 업무가 여기에 쌓입니다.';
-  $('#kan').replaceChildren(...COLS.map(c=>{
+  const items=loaded?tasks.filter(t=>t.status!=='hold'&&inScope(t,scope)):[];
+  const hint=id=>!loaded?'불러오는 중입니다':id==='todo'?(scope==='all'?'대기 중인 업무가 없습니다.':'이 기간에 마감인 대기 업무가 없습니다. 아래 ‘다가오는 마감’에서 [오늘]을 누르면 여기로 옵니다.'):id==='doing'?'이 기간에 마감인 진행 업무가 없습니다. 카드를 여기로 끌어 오면 진행중이 됩니다.':'완료한 업무가 여기에 쌓입니다.';
+  $('#kan').replaceChildren(...COLS.filter(c=>c.id!=='hold').map(c=>{
     const list=items.filter(t=>t.status===c.id).sort(c.id==='done'?(a,b)=>(b.doneAt||'').localeCompare(a.doneAt||''):byDue);
     const zone=el('div',{class:'zone'},...(list.length?list.map(cardEl):[el('div',{class:'hint',text:hint(c.id)})]));
     dropZone(zone,id=>{const t=tasks.find(x=>x.id===id);if(t)setStatus(t,c.id)});
@@ -514,7 +548,9 @@ function renderBoard(){
       el('button',{type:'button',class:'mini','aria-pressed':String(on),title:on?'오늘 할 일에서 빼기':'오늘 할 일로 가져오기',onclick:()=>toggleFocus(t)},on?'오늘 ✓':'오늘'))}));
   const nodue=tasks.filter(t=>isOpen(t)&&!t.due&&t.status!=='hold').length;
   $('#upfoot').replaceChildren(el('span',{text:loaded?'마감일 미정 업무 '+nodue+'건':''}),loaded&&nodue?el('button',{type:'button',class:'linkbtn',onclick:()=>go('calendar')},'캘린더에서 날짜 정하기'):null);
-  // 분류별 현황
+  renderCatStats();
+}
+function renderCatStats(){
   $('#catstats').replaceChildren(...CATS.map(c=>{
     const open=tasks.filter(t=>t.cat===c.id&&isOpen(t));
     const avg=open.length?Math.round(open.reduce((s,t)=>s+(Number(t.progress)||0),0)/open.length):0;
@@ -533,16 +569,57 @@ function cardEl(t){
     el('div',{class:'meta'},catChip(t),t.focus===td&&!done&&t.status!=='doing'?el('span',{class:'chip doing',text:'오늘'}):null,t.pri==='high'?el('span',{class:'pri-high',text:'우선'}):null,t.repeat?el('span',{text:'↻ '+FREQ_LABEL[t.repeat]}):null),
     el('div',{class:'cf'},di?el('span',{class:'dday '+di.cls,text:di.txt}):el('span',{text:'마감 없음'}),
       el('span',{class:'cfr'},steps?el('span',{text:'절차 '+steps}):null,!done?el('span',{class:'bar',title:'진행률 '+(t.progress||0)+'%'},el('i',{style:'width:'+(t.progress||0)+'%'})):null)));
+  const ul=clistEl(t);if(ul)card.insertBefore(ul,card.lastChild);
+  dragSrc(card,t.id);return card;
+}
+function clistEl(t){
   const st=t.steps||[];
-  if(st.length&&!done){
+  if(st.length&&t.status!=='done'){
     const MAX=8;const ul=el('ul',{class:'clist'});
     const nDone=st.filter(s=>s.done).length,fold=nDone>2;
     if(fold)ul.append(el('li',{class:'more',text:'✓ 완료한 절차 '+nDone+'개 (카드를 눌러 보기)'}));
     st.map((s,i)=>[s,i]).filter(([s])=>!fold||!s.done).slice(0,MAX).forEach(([s,i])=>{const c=el('button',{type:'button',class:'check',role:'checkbox','aria-checked':String(!!s.done),'aria-label':(s.done?'체크 해제: ':'체크: ')+s.t,onclick:e=>{e.stopPropagation();toggleStep(t,i)}});c.innerHTML=CHECK_SVG;ul.append(el('li',{class:s.done?'on':''},c,el('span',{text:s.t})))});
-    const shownN=fold?st.length-nDone:st.length;if(shownN>MAX)ul.append(el('li',{class:'more',text:'외 '+(shownN-MAX)+'개 · 카드를 눌러 전체 보기'}));
-    card.insertBefore(ul,card.lastChild);
+    const shownN=fold?st.length-nDone:st.length;if(shownN>MAX)ul.append(el('li',{class:'more',text:'외 '+(shownN-MAX)+'개 · 눌러서 전체 보기'}));
+    return ul;
   }
-  dragSrc(card,t.id);return card;
+  return null;
+}
+/* B 주간 플래너: 이번 주 월~금 요일 칸(토·일에 보면 다음 주), 그 전 마감·주말은 있을 때만 칸 추가 */
+function renderWeekPlan(){
+  const ws=weekStart(),we=weekEnd(),td=todayStr();
+  $('#kan-title').textContent='이번 주 할 일';$('#kan-sub').textContent=fmtShort(ws)+' ~ '+fmtShort(we)+' · 카드를 다른 요일로 끌어 놓으면 마감일 변경';
+  const list=tasks.filter(t=>t.status!=='hold'&&(t.due||'')!=='');
+  const cols=[];
+  const before=list.filter(t=>isOpen(t)&&t.due<ws).sort(byDue);
+  if(before.length)cols.push({key:'before',name:'이전 마감',sub:'~'+fmtShort(addDays(ws,-1)),items:before,cls:'past'});
+  for(let i=0;i<5;i++){const d=addDays(ws,i);cols.push({key:d,name:WD[parse(d).getDay()],sub:fmtShort(d).replace(/\(.\)/,''),items:list.filter(t=>t.due===d).sort(byDue),cls:d===td?'today':'',drop:d})}
+  const wkd=list.filter(t=>t.due>addDays(ws,4)&&t.due<=we).sort(byDue);
+  if(wkd.length)cols.push({key:'wkd',name:'주말',sub:'',items:wkd,cls:''});
+  const g=$('#wkp');g.style.gridTemplateColumns='repeat('+cols.length+',minmax(0,1fr))';
+  g.replaceChildren(...cols.map(c=>{const zone=el('div',{class:'zone'},...(c.items.length?c.items.map(cardEl):[el('div',{class:'hint',text:loaded?'마감 업무 없음':'불러오는 중'})]));
+    if(c.drop)dropZone(zone,id=>moveDue(id,c.drop));
+    return el('div',{class:'col '+c.cls},el('div',{class:'colh'},el('span',{},c.name,el('small',{text:c.sub})),el('span',{class:'cnt',text:String(c.items.filter(isOpen).length)})),zone)}));
+}
+/* C 마감일 목록: 지난 마감 / 오늘 / 내일 / 이번 주 / 다음 주 / 그 뒤 2주 안, 한 줄에 체크리스트까지 펼침 */
+function renderAgendaList(){
+  const td=todayStr(),tm=addDays(td,1),we=weekEnd(),nwe=addDays(we,7),lim=addDays(td,14);
+  $('#kan-title').textContent='마감일별 할 일';$('#kan-sub').textContent='지난 마감 ~ '+fmtShort(lim);
+  const open=tasks.filter(t=>isOpen(t)&&t.status!=='hold'&&(t.due||t.focus===td));
+  const G=[['지난 마감',t=>t.due&&t.due<td,'warn'],['오늘 · '+fmtShort(td),t=>t.due===td||(!t.due&&t.focus===td)],['내일 · '+fmtShort(tm),t=>t.due===tm],['이번 주 · ~'+fmtShort(we),t=>t.due>tm&&t.due<=we],['다음 주 · ~'+fmtShort(nwe),t=>t.due>we&&t.due<=nwe],['그 뒤 · ~'+fmtShort(lim),t=>t.due>nwe&&t.due<=lim]];
+  const out=[];
+  for(const[n,f,c]of G){const items=open.filter(f).sort(byDue);if(!items.length)continue;out.push(el('div',{class:'sec'+(c?' '+c:'')},el('span',{text:n}),el('span',{class:'cnt',text:items.length+'건'})));items.forEach(t=>out.push(arowEl(t)))}
+  $('#agl').replaceChildren(...(out.length?out:[el('div',{class:'empty',text:loaded?'2주 안에 마감인 업무가 없습니다.':'불러오는 중입니다'})]));
+}
+function arowEl(t){
+  const di=dueInfo(t);const st=t.steps||[];
+  return el('div',{class:'arow',tabindex:'0',onclick:()=>openDrawer(t.id),onkeydown:e=>{if(e.key==='Enter')openDrawer(t.id)}},checkBtn(t,false),
+    el('div',{class:'t'},el('span',{class:'title',text:t.title}),el('div',{class:'meta'},catChip(t),t.status!=='todo'?el('span',{class:'chip '+t.status,text:STATUS[t.status]}):null,t.pri==='high'?el('span',{class:'pri-high',text:'우선'}):null,t.repeat?el('span',{text:'↻ '+FREQ_LABEL[t.repeat]}):null),clistEl(t)),
+    el('div',{class:'rt'},di?el('span',{class:'dday '+di.cls,text:di.txt+' · '+fmtShort(t.due)}):el('span',{text:'오늘 할 일'}),st.length?el('span',{text:'절차 '+st.filter(s=>s.done).length+'/'+st.length}):null,el('span',{class:'bar'},el('i',{style:'width:'+(t.progress||0)+'%'}))));
+}
+function renderHolds(){
+  const hs=tasks.filter(t=>t.status==='hold').sort(byDue);
+  $('#hold-sub').textContent=loaded?hs.length+'건 · 카드를 끌어 놓으면 보류':'';
+  $('#holds').replaceChildren(...(hs.length?hs.map(t=>el('div',{class:'up'},el('span',{class:'dday',text:t.due?fmtShort(t.due):'—'}),el('button',{type:'button',class:'nm',onclick:()=>openDrawer(t.id)},el('span',{text:t.title}),el('small',{text:(catOf(t.cat)||{name:''}).name})),el('button',{type:'button',class:'mini',onclick:()=>setStatus(t,'todo')},'대기로'))):[el('div',{class:'empty',text:loaded?'보류한 업무가 없습니다.':'불러오는 중입니다'})]));
 }
 
 /* 캘린더 */
@@ -606,6 +683,7 @@ function evEl(o,d,td){
   if(!o.ghost&&t.status!=='done')dragSrc(b,t.id);
   return b;
 }
+dropZone($('#hold-panel'),id=>{const t=tasks.find(x=>x.id===id);if(t)setStatus(t,'hold')});
 $('#cal-prev').addEventListener('click',()=>{calM=addMonths(calM+'-01',-1).slice(0,7);render()});
 $('#cal-next').addEventListener('click',()=>{calM=addMonths(calM+'-01',1).slice(0,7);render()});
 $('#cal-today').addEventListener('click',()=>{calM=todayStr().slice(0,7);selDate=todayStr();render()});
