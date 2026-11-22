@@ -19,7 +19,7 @@
 | --- | --- | --- | --- |
 | 나의 업무 보드 | `work-board` | `board/` | `docs/업무보드-요구사항.md` |
 | 자녀학비보조 관리 | `child-tuition` | `child-tuition/` | `docs/자녀학비보조-요구사항.md` |
-| 2027학년도 본예산 신청 | `budget` | `budget/` | (아직 없음, 첫 작업 때 `docs/본예산-요구사항.md` 생성) |
+| 2027학년도 본예산 신청 | `annual-budget` | `annual-budget/` | (아직 없음, 첫 작업 때 `docs/본예산-요구사항.md` 생성) |
 
 ## 나의 업무 보드 수정 순서
 1. `board/index.html`을 고친다.
