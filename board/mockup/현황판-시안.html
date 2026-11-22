@@ -1,0 +1,767 @@
+<title>업무 보드 시안</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: 상단 머리글(제목·화면 탭) + 빠른 추가, 아래에 세 화면. 현황판 = 요약 타일 + 오늘 할 일 칸반 + 다가오는 마감·분류별 현황, 캘린더 = 월간 달력 + 선택한 날·마감일 미정, 목록 = 보기·분류 사이드바 + 주기별 묶음 목록. 업무를 누르면 오른쪽 편집 패널. */
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --sunk:#e9edf2; --line:#d9dfe7;
+  --fg:#1b2533; --muted:#5d6b7d; --accent:#1f4f8f; --accent-soft:#e3ecf8; --on-accent:#ffffff;
+  --red:#b4372f; --red-soft:#fbe9e7; --amber:#9a6200; --amber-soft:#fdf1d8; --green:#2f7a4b; --green-soft:#e2f2e7; --grey-soft:#eceff3;
+  --sat:#2f5fb3; --shadow:rgba(20,32,50,.08);
+  --c-welfare:#2f7a6e; --c-edu:#6a4fb0; --c-doc:#a2562a; --c-routine:#4b6584; --c-bid:#a33a62;
+  --font-body:"IBM Plex Sans KR",system-ui,-apple-system,"Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --font-num:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11161d; --surface:#18202a; --sunk:#202a36; --line:#2c3846;
+  --fg:#e3e9f1; --muted:#97a5b6; --accent:#7fa9e3; --accent-soft:#1f3047; --on-accent:#0d1520;
+  --red:#ee8a80; --red-soft:#3a1f1d; --amber:#e6b45a; --amber-soft:#3a2d14; --green:#7cc796; --green-soft:#183323; --grey-soft:#242e3a;
+  --sat:#8fb0ec; --shadow:rgba(0,0,0,.35);
+  --c-welfare:#6cc2b4; --c-edu:#ab95e8; --c-doc:#e09a6c; --c-routine:#93abc9; --c-bid:#e58aae; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11161d; --surface:#18202a; --sunk:#202a36; --line:#2c3846;
+  --fg:#e3e9f1; --muted:#97a5b6; --accent:#7fa9e3; --accent-soft:#1f3047; --on-accent:#0d1520;
+  --red:#ee8a80; --red-soft:#3a1f1d; --amber:#e6b45a; --amber-soft:#3a2d14; --green:#7cc796; --green-soft:#183323; --grey-soft:#242e3a;
+  --sat:#8fb0ec; --shadow:rgba(0,0,0,.35);
+  --c-welfare:#6cc2b4; --c-edu:#ab95e8; --c-doc:#e09a6c; --c-routine:#93abc9; --c-bid:#e58aae; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5;word-break:keep-all}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{display:flex;flex-direction:column;gap:16px;max-width:1320px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brand h1{font-size:20px;margin:0;letter-spacing:-.01em}
+.brand .today{color:var(--muted);font-size:13.5px;font-variant-numeric:tabular-nums}
+.tabs{display:flex;gap:4px;background:var(--sunk);padding:4px;border-radius:10px}
+.tabs button{border:0;background:none;padding:6px 18px;border-radius:7px;font-weight:500;color:var(--muted)}
+.tabs button[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px var(--shadow)}
+/* common */
+.dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
+.lbl{display:flex;align-items:center;gap:8px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);min-width:0}
+.ph{display:flex;justify-content:space-between;align-items:center;gap:8px 12px;padding:11px 14px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.ph h2{font-size:15.5px;margin:0}
+.ph .sub{color:var(--muted);font-size:12.5px;font-variant-numeric:tabular-nums}
+.ph .ttl{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 14px;font-weight:500}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.btn.danger{color:var(--red)}
+.btn:disabled{opacity:.5;cursor:default}
+.mini{border:1px solid var(--line);background:var(--surface);border-radius:6px;padding:2px 9px;font-size:12px;white-space:nowrap}
+.mini[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent;font-weight:600}
+.seg{display:flex;flex-wrap:wrap;gap:6px}
+.seg button{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:5px 11px;font-size:13.5px}
+.seg button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+.seg.sm button{padding:3px 10px;font-size:12.5px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:1px 8px;border-radius:999px;background:var(--grey-soft);font-size:12px;white-space:nowrap}
+.chip.doing{background:var(--accent-soft);color:var(--accent)}
+.chip.hold{background:var(--amber-soft);color:var(--amber)}
+.chip.done{background:var(--green-soft);color:var(--green)}
+.chip.sample{border:1px dashed var(--muted);background:none}
+.chip .dot{width:7px;height:7px}
+.meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted)}
+.pri-high{color:var(--red);font-weight:600}
+.dday{font-size:12.5px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.dday.over{color:var(--red)} .dday.near{color:var(--amber)}
+.bar{width:72px;height:5px;border-radius:3px;background:var(--sunk);overflow:hidden;display:inline-block}
+.bar i{display:block;height:100%;background:var(--accent)}
+.check{width:22px;height:22px;border:2px solid var(--muted);border-radius:6px;background:none;display:grid;place-items:center;padding:0;flex:none}
+.check[aria-checked="true"]{background:var(--green);border-color:var(--green)}
+.check svg{width:14px;height:14px;fill:none;stroke:var(--surface);stroke-width:3}
+.check.sm{width:18px;height:18px;border-radius:5px;margin-top:2px}
+.check.sm svg{width:11px;height:11px}
+.notice{font-size:13px;color:var(--muted);background:var(--sunk);border-radius:8px;padding:8px 12px}
+.empty{padding:28px 18px;text-align:center;color:var(--muted);font-size:14px}
+.empty b{display:block;color:var(--fg);margin-bottom:4px}
+/* quick add */
+.quick{display:flex;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:8px 10px}
+.quick input[type=text]{flex:1 1 260px;min-width:0;border:0;background:none;padding:6px 8px;font-size:15px}
+.quick input[type=text]:focus{outline:none}
+.quick select,.quick input[type=date]{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:6px 8px;font-size:14px;min-width:0}
+/* board */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.tile:hover{border-color:var(--accent)}
+.tile .k{font-size:12.5px;color:var(--muted)}
+.tile .v{font-family:var(--font-num);font-size:26px;line-height:1.2}
+.tile .v small{font-family:var(--font-body);font-size:13px;color:var(--muted);margin-left:3px}
+.tile.warn .v{color:var(--red)}
+.grid2{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:16px;align-items:start}
+.mockbar{background:var(--amber-soft);color:var(--amber);border-radius:8px;padding:8px 12px;font-size:13px;font-weight:600}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.kan{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:12px}
+.col{background:var(--sunk);border-radius:9px;display:flex;flex-direction:column;min-width:0}
+.colh{display:flex;justify-content:space-between;align-items:center;padding:9px 11px 5px;font-size:13px;font-weight:600}
+.colh .cnt{font-family:var(--font-num);font-size:12px;color:var(--muted);font-weight:500}
+.zone{display:flex;flex-direction:column;gap:8px;padding:4px 7px 9px;min-height:150px;flex:1;border-radius:9px;border:1.5px dashed transparent}
+.zone.over{border-color:var(--accent);background:var(--accent-soft)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;display:flex;flex-direction:column;gap:7px;cursor:pointer;box-shadow:0 1px 1px var(--shadow)}
+.card:hover{border-color:var(--accent)}
+.card.dragging{opacity:.4}
+.card .ct{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start}
+.card .title{font-weight:500;font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.card.done .title{text-decoration:line-through;color:var(--muted)}
+.card .cf{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--muted)}
+.card .cfr{display:flex;align-items:center;gap:8px}
+.card .bar{width:48px}
+.clist{list-style:none;margin:0;padding:6px 0 0;display:flex;flex-direction:column;gap:4px;border-top:1px dashed var(--line)}
+.clist li{display:grid;grid-template-columns:auto minmax(0,1fr);gap:7px;align-items:start;font-size:12.5px;line-height:1.45}
+.clist li.on span{color:var(--muted);text-decoration:line-through}
+.clist .check{width:16px;height:16px;border-width:1.5px;border-radius:4px;margin-top:1px}
+.clist .check svg{width:10px;height:10px}
+.clist .more{font-size:12px;color:var(--accent);padding-left:23px}
+.zone .hint{font-size:12.5px;color:var(--muted);text-align:center;padding:18px 6px;line-height:1.55}
+.ups{display:flex;flex-direction:column}
+.up{display:grid;grid-template-columns:50px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 14px;border-top:1px solid var(--line);font-size:13.5px}
+.up:first-child{border-top:0}
+.up .nm{min-width:0;cursor:pointer;display:flex;flex-direction:column;gap:1px;border:0;background:none;padding:0;text-align:left}
+.up .nm span:first-child{overflow-wrap:anywhere}
+.up .nm small{color:var(--muted);font-size:12px}
+.upfoot{padding:9px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.linkbtn{border:0;background:none;color:var(--accent);padding:0;font-size:12.5px;font-weight:600}
+.catrow{display:grid;grid-template-columns:86px minmax(0,1fr) auto;gap:10px;align-items:center;padding:9px 14px;font-size:13.5px;border:0;border-top:1px solid var(--line);background:none;width:100%;text-align:left}
+.catrow:first-child{border-top:0}
+.catrow:hover{background:var(--sunk)}
+.cbar{height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}
+.cbar i{display:block;height:100%}
+.catrow .cn{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+/* calendar */
+.calwrap{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:16px;align-items:start}
+.calwrap>.panel{overflow:hidden}
+.calh{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--line)}
+.calh h2{font-size:17px;margin:0 4px;font-variant-numeric:tabular-nums;min-width:112px}
+.icon-btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;width:32px;height:32px;display:grid;place-items:center;padding:0}
+.icon-btn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2}
+.legend{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+.legend button{border:0;background:none;border-radius:6px;padding:3px 8px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.legend button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.wk{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid var(--line);font-size:12px;color:var(--muted);text-align:center}
+.wk span{padding:6px 0}
+.wk span:nth-child(6){color:var(--sat)} .wk span:nth-child(7){color:var(--red)}
+.mgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}
+.day{min-height:112px;border-right:1px solid var(--line);border-bottom:1px solid var(--line);padding:4px 4px 6px;display:flex;flex-direction:column;gap:3px;min-width:0;cursor:pointer;background:var(--surface)}
+.day:nth-child(7n){border-right:0}
+.mgrid .day:nth-last-child(-n+7){border-bottom:0}
+.day.out{background:var(--bg)}
+.day.out .dn{opacity:.5}
+.day:hover{background:var(--sunk)}
+.day.sel{box-shadow:inset 0 0 0 2px var(--accent)}
+.day.over{background:var(--accent-soft)}
+.dn{font-size:12.5px;font-family:var(--font-num);min-width:24px;height:24px;display:grid;place-items:center;border-radius:12px;align-self:flex-start;padding:0 4px}
+.day.sun .dn{color:var(--red)} .day.sat .dn{color:var(--sat)}
+.day.today .dn{background:var(--accent);color:var(--on-accent)}
+.ev{display:flex;align-items:center;gap:5px;font-size:12px;line-height:1.35;padding:2px 6px;border-radius:5px;background:var(--grey-soft);white-space:nowrap;overflow:hidden;min-width:0;border:0;text-align:left;width:100%;color:var(--fg)}
+.ev .dot{width:7px;height:7px}
+.ev .tx{overflow:hidden;text-overflow:ellipsis}
+.ev.overdue{background:var(--red-soft);color:var(--red)}
+.ev.done{color:var(--muted);background:none}
+.ev.done .tx{text-decoration:line-through}
+.ev.hold{background:var(--amber-soft)}
+.ev.ghost{background:none;border:1px dashed var(--line);color:var(--muted)}
+.ev[draggable="true"]{cursor:grab}
+.more{font-size:11.5px;color:var(--muted);padding-left:6px}
+.dots{display:none;gap:3px;flex-wrap:wrap;padding-left:3px}
+.dots .dot{width:6px;height:6px}
+.ag-item{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;padding:9px 14px;border-top:1px solid var(--line);cursor:pointer}
+.ag-item:first-child{border-top:0}
+.ag-item:hover{background:var(--sunk)}
+.ag-item .title{font-size:14px;font-weight:500;overflow-wrap:anywhere}
+.ag-item.done .title{text-decoration:line-through;color:var(--muted)}
+.ag-item.ghost{color:var(--muted)}
+.ag-item .gh{width:18px;height:18px;border:1.5px dashed var(--line);border-radius:5px;margin-top:2px}
+.ag-item[draggable="true"]{cursor:grab}
+.agadd{display:flex;gap:6px;padding:10px 14px;border-top:1px solid var(--line)}
+.agadd input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 10px;font-size:14px}
+.scroll{max-height:420px;overflow:auto}
+/* list */
+.listwrap{display:grid;grid-template-columns:210px minmax(0,1fr);gap:24px;align-items:start}
+.lside{display:flex;flex-direction:column;gap:20px;position:sticky;top:max(16px,env(safe-area-inset-top,0px))}
+.nav-label{font-size:11.5px;font-weight:600;color:var(--muted);letter-spacing:.08em;margin:0 0 6px 10px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{display:flex;align-items:center;gap:10px;justify-content:space-between;border:0;background:none;padding:7px 10px;border-radius:8px;text-align:left;color:var(--fg)}
+.nav button:hover{background:var(--sunk)}
+.nav button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.nav .cnt{font-family:var(--font-num);font-size:12px;color:var(--muted)}
+.lmain{min-width:0;display:flex;flex-direction:column;gap:12px}
+.listhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.listhead h2{font-size:17px;margin:0}
+.listhead .sub{color:var(--muted);font-size:13px}
+.list{display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:11px 14px;border-top:1px solid var(--line);cursor:pointer}
+.row:first-child{border-top:0}
+.row:hover{background:var(--sunk)}
+.sec{display:flex;justify-content:space-between;align-items:center;padding:7px 14px;background:var(--sunk);border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--muted);letter-spacing:.02em}
+.sec:first-child{border-top:0}
+.sec .cnt{font-weight:400}
+.row.sub{padding-left:48px;position:relative;border-top-style:dashed}
+.row.sub::before{content:"";position:absolute;left:24px;top:0;bottom:50%;width:12px;border-left:1.5px solid var(--line);border-bottom:1.5px solid var(--line);border-bottom-left-radius:6px}
+.row .t{display:flex;flex-direction:column;gap:4px;min-width:0}
+.row .title{font-weight:500;overflow-wrap:anywhere}
+.row.done .title{text-decoration:line-through;color:var(--muted)}
+.right{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(10,15,22,.35);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(440px,100%);background:var(--surface);border-left:1px solid var(--line);z-index:21;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+.dhead{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--line)}
+.dhead h3{margin:0;font-size:15px}
+.dbody{flex:1;overflow:auto;padding:16px 18px;display:flex;flex-direction:column;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field>label,.field>.fl,.fl{font-size:12.5px;font-weight:600;color:var(--muted)}
+.field input[type=text],.field input[type=date],.field select,.field textarea{border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+.field textarea{min-height:80px;resize:vertical}
+.field textarea#f-memo{min-height:140px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.prog{display:flex;align-items:center;gap:10px}
+.prog input{flex:1;accent-color:var(--accent)}
+.prog output{font-family:var(--font-num);width:44px;text-align:right}
+.logs,.steps{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.logs li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;font-size:13.5px;background:var(--bg);border-radius:8px;padding:6px 10px;align-items:start}
+.logs time{font-family:var(--font-num);font-size:12px;color:var(--muted);padding-top:2px}
+.logs .x,.steps .x{border:0;background:none;color:var(--muted);padding:0 2px}
+.steps li{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:start;font-size:13.5px;background:var(--bg);border-radius:8px;padding:7px 10px}
+.steps li.on span{color:var(--muted);text-decoration:line-through}
+.steps .check{width:18px;height:18px;border-width:2px;border-radius:5px}
+.steps .check svg{width:11px;height:11px}
+.logadd{display:flex;gap:6px}
+.logadd input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg);border-radius:8px;padding:7px 10px}
+.dfoot{display:flex;gap:8px;justify-content:space-between;align-items:center;padding:12px 18px;border-top:1px solid var(--line);flex-wrap:wrap}
+.dfoot .grp{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.confirm{font-size:13px;color:var(--red)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--fg);color:var(--bg);padding:8px 16px;border-radius:8px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+@media (max-width:1100px){
+  .grid2,.calwrap{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:820px){
+  .app{padding-block:14px 40px;gap:14px}
+  .tabs{width:100%}
+  .tabs button{flex:1;padding:7px 8px}
+  .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kan{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:82%;overflow-x:auto;scroll-snap-type:x mandatory;padding:10px}
+  .col{scroll-snap-align:start}
+  .listwrap{grid-template-columns:minmax(0,1fr);gap:12px}
+  .lside{position:static;gap:10px}
+  .navwrap{overflow-x:auto;margin:0 -4px}
+  .nav{flex-direction:row;gap:6px;padding:0 4px}
+  .nav button{white-space:nowrap;border:1px solid var(--line);background:var(--surface)}
+  .nav-label{display:none}
+  .bar{width:56px}
+  .day{min-height:60px;padding:3px 2px 5px}
+  .day .ev,.day .more{display:none}
+  .dots{display:flex}
+  .legend{margin-left:0;width:100%}
+  .calh h2{min-width:0}
+}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:slide .18s ease-out}@keyframes slide{from{transform:translateX(24px);opacity:.6}}}
+</style>
+
+<div class="app">
+  <div class="mockbar">시안입니다. 11. 22. 업무 데이터로 미리 보여 주며, 체크하거나 고쳐도 실제 보드에는 저장되지 않습니다(새로고침하면 처음으로 돌아감).</div>
+  <header class="top">
+    <div class="brand"><h1>나의 업무 보드</h1><span class="today" id="today"></span></div>
+    <nav class="tabs" id="tabs" role="tablist" aria-label="화면"></nav>
+  </header>
+  <form class="quick" id="quick" autocomplete="off">
+    <input type="text" id="q-title" placeholder="새 업무를 입력하고 Enter (예: 12월 직원 건강검진 안내문 기안)" aria-label="업무명">
+    <select id="q-cat" aria-label="분류"></select>
+    <input type="date" id="q-due" aria-label="마감일">
+    <button class="btn primary" type="submit">추가</button>
+  </form>
+  <div id="notice" class="notice" hidden></div>
+
+  <section id="tab-board" class="stack" aria-label="현황판">
+    <div class="tiles" id="tiles"></div>
+    <div class="panel">
+      <div class="ph"><div class="ttl"><h2 id="kan-title">3일 안에 할 일</h2><span class="sub" id="kan-sub"></span></div><div class="seg sm" id="scope" role="group" aria-label="범위"></div></div>
+      <div class="kan" id="kan"></div>
+    </div>
+    <div class="grid2">
+        <div class="panel">
+          <div class="ph"><h2>다가오는 마감</h2><span class="sub" id="up-sub">칸반 다음 ~ 2주</span></div>
+          <div class="ups" id="ups"><div class="empty">업무를 불러오는 중입니다</div></div>
+          <div class="upfoot" id="upfoot"></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><h2>분류별 현황</h2><span class="sub">진행 업무 · 평균 진행률</span></div>
+          <div id="catstats"></div>
+        </div>
+    </div>
+  </section>
+
+  <section id="tab-calendar" class="calwrap" aria-label="캘린더" hidden>
+    <div class="panel">
+      <div class="calh">
+        <button type="button" class="icon-btn" id="cal-prev" aria-label="이전 달"><svg viewBox="0 0 16 16"><path d="M10 3L5 8l5 5"/></svg></button>
+        <h2 id="cal-title"></h2>
+        <button type="button" class="icon-btn" id="cal-next" aria-label="다음 달"><svg viewBox="0 0 16 16"><path d="M6 3l5 5-5 5"/></svg></button>
+        <button type="button" class="btn" id="cal-today" style="padding:4px 12px">오늘</button>
+        <div class="legend" id="legend" role="group" aria-label="분류 필터"></div>
+      </div>
+      <div class="wk"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span></div>
+      <div class="mgrid" id="mgrid"></div>
+    </div>
+    <div class="stack">
+      <div class="panel">
+        <div class="ph"><h2 id="ag-title"></h2><span class="sub" id="ag-sub"></span></div>
+        <div id="agenda"></div>
+        <form class="agadd" id="ag-form" autocomplete="off">
+          <input type="text" id="ag-input" placeholder="이 날 마감으로 업무 추가" aria-label="이 날 마감으로 업무 추가">
+          <button class="btn" type="submit">추가</button>
+        </form>
+      </div>
+      <div class="panel">
+        <div class="ph"><h2>마감일 미정</h2><span class="sub" id="nodue-sub"></span></div>
+        <div class="scroll" id="nodue"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-list" class="listwrap" aria-label="목록" hidden>
+    <aside class="lside">
+      <div><p class="nav-label">보기</p><div class="navwrap"><nav class="nav" id="views"></nav></div></div>
+      <div><p class="nav-label">분류</p><div class="navwrap"><nav class="nav" id="cats"></nav></div></div>
+    </aside>
+    <div class="lmain">
+      <div class="listhead"><h2 id="list-title">전체 업무</h2><span class="sub" id="list-sub"></span></div>
+      <div class="list" id="list"><div class="empty"><b>업무 목록을 불러오는 중입니다</b>위 입력칸에 업무명을 적고 Enter를 누르면 첫 업무가 추가됩니다.</div></div>
+    </div>
+  </section>
+</div>
+<div id="drawer-root"></div>
+
+<script>
+(function(){
+const CATS=[{id:'welfare',name:'복지',color:'var(--c-welfare)'},{id:'edu',name:'교육',color:'var(--c-edu)'},{id:'doc',name:'정산·청구',color:'var(--c-doc)'},{id:'bid',name:'입찰',color:'var(--c-bid)'},{id:'routine',name:'상시업무',color:'var(--c-routine)'}];
+const STATUS={todo:'대기',doing:'진행중',hold:'보류',done:'완료'};
+const PRI={high:'높음',mid:'보통',low:'낮음'};
+const REPEAT={'':'반복 안 함',weekly:'매주',monthly:'매월',bimonthly:'2개월마다',quarterly:'분기별',semester:'매학기(6개월)',yearly:'매년'};
+const REP_MONTHS={monthly:1,bimonthly:2,quarterly:3,semester:6,yearly:12};
+const FREQ_ORDER=['weekly','monthly','bimonthly','','quarterly','semester','yearly'];
+const FREQ_LABEL={weekly:'매주',monthly:'매월',bimonthly:'2개월마다','':'수시',quarterly:'분기별',semester:'학기별',yearly:'연 단위'};
+const freqRank=r=>{const i=FREQ_ORDER.indexOf(r||'');return i<0?3:i};
+const VIEWS=[{id:'all',name:'진행 업무 전체'},{id:'today',name:'오늘 할 일'},{id:'week',name:'이번 주'},{id:'soon',name:'마감 임박(3일)'},{id:'hold',name:'보류'},{id:'done',name:'완료'}];
+const TABS=[{id:'board',name:'현황판'},{id:'calendar',name:'캘린더'},{id:'list',name:'목록'}];
+const COLS=[{id:'todo',name:'대기',color:'var(--muted)'},{id:'doing',name:'진행중',color:'var(--accent)'},{id:'hold',name:'보류',color:'var(--amber)'},{id:'done',name:'완료',color:'var(--green)'}];
+const SCOPES=[{id:'d3',name:'3일 이내'},{id:'week',name:'이번 주'},{id:'all',name:'전체'}];
+const CHECK_SVG='<svg viewBox="0 0 16 16"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+const $=s=>document.querySelector(s);
+const el=(tag,attrs={},...kids)=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==='class')e.className=v;else if(k==='text')e.textContent=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else if(v!==false&&v!=null)e.setAttribute(k,v===true?'':v)}for(const c of kids.flat()){if(c!=null)e.append(c)}return e};
+const catOf=id=>CATS.find(c=>c.id===id);
+const catColor=id=>(catOf(id)||{color:'var(--muted)'}).color;
+const catIdx=id=>{const i=CATS.findIndex(c=>c.id===id);return i<0?99:i};
+
+/* dates */
+const pad=n=>String(n).padStart(2,'0');
+const ymd=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parse=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const todayStr=()=>ymd(new Date());
+const addDays=(s,n)=>{const d=parse(s);d.setDate(d.getDate()+n);return ymd(d)};
+const addMonths=(s,n)=>{const d=parse(s);const day=d.getDate();d.setDate(1);d.setMonth(d.getMonth()+n);const last=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();d.setDate(Math.min(day,last));return ymd(d)};
+const diffDays=(a,b)=>Math.round((parse(a)-parse(b))/864e5);
+const WD='일월화수목금토';
+const fmtK=s=>{const d=parse(s);return d.getFullYear()+'. '+(d.getMonth()+1)+'. '+d.getDate()+'.('+WD[d.getDay()]+')'};
+const fmtShort=s=>{const d=parse(s);return (d.getMonth()+1)+'/'+d.getDate()+'('+WD[d.getDay()]+')'};
+/* 이번 주 = 월~일. 토·일에 보면 다음 주 월~일 */
+const isWeekend=()=>{const wd=new Date().getDay();return wd===0||wd===6};
+const weekStart=()=>{const d=new Date();const wd=d.getDay();d.setDate(d.getDate()+(wd===6?2:wd===0?1:1-wd));return ymd(d)};
+const weekEnd=()=>addDays(weekStart(),6);
+const isoDay=iso=>{if(!iso)return'';const d=new Date(iso);return isNaN(d)?'':ymd(d)};
+function nextDue(s,rep){const base=s||todayStr();switch(rep){case'weekly':return addDays(base,7);case'monthly':return addMonths(base,1);case'bimonthly':return addMonths(base,2);case'quarterly':return addMonths(base,3);case'semester':return addMonths(base,6);case'yearly':return addMonths(base,12);default:return''}}
+function nthDue(s,rep,k){return rep==='weekly'?addDays(s,7*k):REP_MONTHS[rep]?addMonths(s,REP_MONTHS[rep]*k):''}
+
+/* state */
+let tasks=[],view='all',cat='',scope='d3',loaded=false,store=null,openId=null,dragId=null;
+let calM=todayStr().slice(0,7),selDate=todayStr();
+try{const v=localStorage.getItem('wb-view');if(v&&VIEWS.some(x=>x.id===v))view=v;const s=localStorage.getItem('wb-scope');if(s&&SCOPES.some(x=>x.id===s))scope=s}catch(e){}
+const readHash=()=>{const h=(location.hash||'').slice(1);return TABS.some(t=>t.id===h)?h:null};
+let tab=readHash()||'board';
+window.addEventListener('hashchange',()=>{const h=readHash();if(h&&h!==tab){tab=h;render()}});
+function go(t){tab=t;try{if(location.hash.slice(1)!==t)location.hash=t}catch(e){}render();window.scrollTo({top:0})}
+const remember=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
+
+/* store: db when available, else this browser only */
+function localStore(){
+  const KEY='wb-local-tasks';let data={};let cb=null;
+  try{data=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}
+  const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){};emit()};
+  const emit=()=>cb&&cb(Object.entries(data).map(([id,d])=>({id,...d})));
+  return{kind:'local',subscribe(f){cb=f;setTimeout(emit,0)},async set(id,d){data[id]=d;save()},async add(d){const id='t'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);data[id]=d;save();return id},async del(id){delete data[id];save()}};
+}
+function dbStore(db){
+  const col=db.collection('tasks');
+  return{kind:'db',subscribe(f,err){return col.onSnapshot(s=>f(s.docs.map(d=>({id:d.id,...d.data()})),s.metadata),err)},
+    async set(id,d){await col.doc(id).set(d)},async add(d){const r=await col.add(d);return r.id},async del(id){await col.doc(id).delete()}};
+}
+function showNotice(t){const n=$('#notice');n.textContent=t||'';n.hidden=!t}
+function toast(t){const e=el('div',{class:'toast',role:'status',text:t});document.body.append(e);setTimeout(()=>e.remove(),1900)}
+
+const MOCK_DATA={"w01": {"cat": "welfare", "createdAt": "2026-11-12T09:00:01Z", "doneAt": "", "due": "2026-12-04", "group": "직장어린이집", "logs": [{"d": "2026-11-13", "t": "처리 시기 확인: 매월 초 월별 지급신청서와 함께 지출결의"}, {"d": "2026-08-27", "t": "인수인계서 기준: 2026년 8월분까지 지급 완료, 다음 조치 9월 지급 기안"}], "memo": "[SOP-02] 매달 지급 · 처리 시기: 매월 초 (월별 지급신청서 + 지출결의서)\n· 규정: 직장어린이집 위탁보육비 지원 규정, 영유아보육법 제14조, 보육사업안내(보육료 기준)\n· 대상: 교직원(전임, 정규직) / 협조: 교무팀, 의전원행정팀, 계약 어린이집\n· 예산: 복리후생비-일반\n· 보관: 1. 직장어린이집 위탁보육 – 연도별 폴더\n· 주의: 지원자 변동·중도 포기 시 예비순위 확인 후 후속 조치", "pri": "mid", "progress": 0, "repeat": "monthly", "sample": false, "status": "todo", "steps": [{"done": false, "t": "위탁보육비 기준에 따라 지원금액의 50% 산정"}, {"done": false, "t": "월별 지급신청서와 함께 지출결의서 작성(어린이집 직접 지급)"}, {"done": false, "t": "지원자 변동·포기 확인 및 지급내역 엑셀 갱신"}], "title": "직장어린이집 위탁보육비 지원"}, "w02": {"cat": "welfare", "createdAt": "2026-11-12T09:00:02Z", "doneAt": "", "due": "2027-02-26", "group": "직장어린이집", "logs": [], "memo": "[SOP-02] 매년 2월 중\n· 지원 인원: 전체 영유아 수의 30% 범위, 자녀 연령·기존 지원이력·자녀 수 고려\n· 주의: 의전원 전임교원(대학 메일 미사용)은 의전원행정팀에서 이메일 명단을 받아 별도 안내\n· 주의: 연말 공시되는 보육사업안내문에서 차년도 보육료 단가 변경 확인 후 신청서에 반영\n· 보관: 1. 직장어린이집 위탁보육 – 연도별 폴더", "pri": "high", "progress": 0, "repeat": "yearly", "sample": false, "status": "todo", "steps": [{"done": false, "t": "교원·직원 대상 영유아 현황 및 지원 신청 조사 안내메일 발송"}, {"done": false, "t": "회신 내역 엑셀 취합·정리"}, {"done": false, "t": "지원 가능 인원 산정, 우선순위·예비순위 작성 후 팀장 검토"}, {"done": false, "t": "선발자 개별 안내 및 위탁보육계약서·신청서·증빙 제출 요청"}, {"done": false, "t": "서류 확인 후 계약서 직인 날인, 어린이집 회신"}, {"done": false, "t": "연간 예상 지원금액 기준 실행예산 집행기안 상신"}], "title": "직장어린이집 영유아 현황조사 및 지원대상 선정"}, "w03": {"cat": "welfare", "createdAt": "2026-11-12T09:00:03Z", "doneAt": "", "due": "", "group": "직장어린이집", "logs": [], "memo": "[SOP-02 주의사항] 매년 초 실태조사 공문 접수 후 진행\n· 증빙자료 준비 및 내부기안 후 조사 응답", "pri": "mid", "progress": 0, "repeat": "yearly", "sample": false, "status": "todo", "steps": [{"done": false, "t": "실태조사 공문 접수"}, {"done": false, "t": "증빙자료 준비 및 내부기안"}, {"done": false, "t": "조사 응답"}], "title": "직장어린이집 설치 의무이행 실태조사 응답"}, "w04": {"cat": "welfare", "createdAt": "2026-11-12T09:00:04Z", "doneAt": "", "due": "2026-12-04", "logs": [{"d": "2026-11-13", "t": "4분기 신청서 접수 시작(~12.4.), 고등학생 자녀만 해당"}, {"d": "2026-08-27", "t": "인수인계서 기준: 3분기 신청 중(9.11.까지), 이메일·전자결재 제출분 추가 확인 중"}], "memo": "[2026년 4분기] 고등학생 자녀만 해당 / 접수기간 11.13.~12.4. / 제출: 각 병원 인사담당자, 교직원 개인\n\n[SOP-03] 분기별, 지급 예정일 최소 1개월 전 신청 안내\n· 규정: 교직원 자녀 학비보조에 관한 규정\n· 시스템: Meta-총무관리-학비보조수당승인 / 예산: 복리후생비-일반\n· 협조: 각 병원 인사담당자, 교무팀, 의전원행정팀, 재무팀 교원 급여 담당자\n· 보관: 2. 자녀학비보조 - 연도별 폴더\n· 주의: 국외 학교는 학기 개시일이 달라 외화송금증·재학증명서·등록금 영수증으로 재학시기 확인\n· 주의: 신청금액은 입학금·등록금(수업료)만 인정, 기성회비·동문회비 제외\n· 주의: 계좌번호 오류 시 재무팀 급여 담당자에게 확인\n· 주의: 지급기한 초과자는 의전원 교원은 병원 인사담당자 통해, 대학 교원·직원은 직접 개별 안내\n· 주의: 신청기한 이후 등록금 납부 예정자는 기간 내 사전 문의, 납부시기 안내문 증빙 제출", "pri": "high", "progress": 22, "repeat": "quarterly", "sample": false, "status": "doing", "steps": [{"done": true, "t": "신청기간·제출방법 정해 신청 안내 내부기안 상신(총무처장 결재)"}, {"done": true, "t": "교직원 및 각 병원 인사담당자에게 안내메일 발송"}, {"done": false, "t": "신청서·증빙서류 접수(등기 또는 직접 제출) — 4분기 11.13.~12.4."}, {"done": false, "t": "신청자·소속·자녀정보·신청금액 엑셀 정리"}, {"done": false, "t": "지급대상 여부, 대학생 자녀 누적 지급횟수 확인(2011년~ 엑셀, Meta 이관자료)"}, {"done": false, "t": "교원 입사일·재직상태 확인(의전원행정팀/교무팀), 직원은 총무팀 인사 담당"}, {"done": false, "t": "계좌번호·최종 재직상태 확인 후 지급대상·금액 확정"}, {"done": false, "t": "실행예산 집행기안 상신 및 지출 처리, 재무팀 교원 급여 담당자에게 공유"}, {"done": false, "t": "구미차병원 소속 교원 회입금 확인 후 반납 처리"}], "title": "자녀학비보조금 지원"}, "w05": {"cat": "welfare", "createdAt": "2026-11-12T09:00:05Z", "doneAt": "", "due": "", "group": "", "logs": [], "memo": "연 3회 지급: 설, 노동절, 추석\n※ 인수인계서에 없는 업무입니다. 절차·시기는 추후 보완.", "pri": "mid", "progress": 0, "repeat": "yearly", "sample": false, "status": "todo", "steps": [{"done": false, "t": "설 선물 지급"}, {"done": false, "t": "노동절 선물 지급"}, {"done": false, "t": "추석 선물 지급"}], "title": "교직원 선물 지급 (설·노동절·추석)"}, "w08": {"cat": "welfare", "createdAt": "2026-11-12T09:00:08Z", "doneAt": "", "due": "", "logs": [], "memo": "※ 인수인계서에 없는 업무입니다. 절차·시기는 추후 보완.", "pri": "mid", "progress": 0, "repeat": "yearly", "sample": false, "status": "todo", "steps": [], "title": "독감 예방접종"}, "w09": {"cat": "welfare", "createdAt": "2026-11-12T09:00:09Z", "doneAt": "", "due": "", "group": "경조사", "logs": [], "memo": "[SOP-04] 수시 발생, 건마다 아래 순서로 처리\n· 규정: 경조금 및 경조휴가 규정 제3조~5조\n· 시스템: Meta-총무관리-경조금 신청관리 / 예산: 복리후생비-일반\n· 협조: 미래전략실, 효성프라콘(장례용품), 교무팀\n· 보관: 7. 경조사 - 결혼 / 장례용품\n\n[부고] 빈소·발인 확인 → 그룹 경조사 게시판 게시 + 직원 SMS → 교무팀 경조사 담당자 공유 → 효성프라콘에 빈소·수신자 정보 문자로 장례용품 배송 요청 → 미래전략실에 조화 발송 요청\n[결혼] 예식 2주 전 게시판 게시 → 미래전략실에 화환 발송 요청\n[공통] Meta 경조사비 신청내역 확인 → 결재 상신 → 지출결의", "pri": "mid", "progress": 0, "repeat": "", "sample": false, "status": "todo", "steps": [], "title": "직원 경조사 관리 (결혼·장례)"}, "w10": {"cat": "welfare", "createdAt": "2026-11-12T09:00:10Z", "doneAt": "", "due": "", "group": "경조사", "logs": [], "memo": "[SOP-04] 차년도 예산 확정 후 진행\n· 주의: 장례용품 재고가 일정 수량 이하이고 협력업체가 추가 제작을 요청하면 재고·예산 확인 후 별도 제작기안 상신", "pri": "mid", "progress": 0, "repeat": "yearly", "sample": false, "status": "todo", "steps": [{"done": false, "t": "차년도 예산 확정 확인"}, {"done": false, "t": "장례용품 보관·배송 연간 비용 확인"}, {"done": false, "t": "지출 관련 기안 상신"}], "title": "장례용품 보관·배송 연간 지출 기안"}, "w11": {"cat": "welfare", "createdAt": "2026-11-12T09:00:11Z", "doneAt": "", "due": "", "logs": [{"d": "2026-11-13", "t": "병원별 결재 경로 정리, 차움 청담분원 담당자는 확인 필요"}], "memo": "[처리 방식] 수시. 신청자가 나에게 결재 상신 → 내가 병원별 담당자에게 다시 결재 상신\n\n[병원별 결재 경로]\n· 강남차병원: 이한얼 사무원 수신자 지정\n· 일산차병원: 문서열람으로 병원 총무팀 전체 인원 + 인사공통\n· 차움 삼성건진: 김현주 사원, 유재경 팀장까지 결재\n· 차움 청담분원: 담당자 확인 필요 (미확인)\n· 분당차병원: 내 처리 없음. 신청자가 포털에서 '진료비감면정보제공동의' 체크 후 인사담당자에게 가족관계증명서 제출해 등록 요청\n\n※ 인수인계서에는 없는 업무로, 위 내용은 2026.11.13. 담당자 설명 기준", "pri": "mid", "progress": 0, "repeat": "", "sample": false, "status": "todo", "steps": [], "title": "진료비 감면 신청서 접수"}, "w12": {"cat": "edu", "createdAt": "2026-11-12T09:00:12Z", "doneAt": "", "due": "", "group": "독서통신교육", "logs": [{"d": "2026-08-27", "t": "인수인계서 기준: 하반기 멀티캠퍼스 계약 체결, 운영 기안 상신 완료 / 다음: 계약서 직인 날인 1부 전달, 총장 결재 후 전 직원 수강신청 안내"}], "memo": "[SOP-01-02] 매달\n· 업체: 멀티캠퍼스 / 근거: 대학-멀티캠퍼스 독서통신 운영 계약서\n· 시스템: 총무관리-교육훈련관리-개인교육 이수자관리 / 예산: 직원교육훈련비-직원\n· 보관: 4. 독서통신교육 – 2026 – 월별\n· 주의: 기간 내 미신청자는 1회에 한해 업체 통해 강제입과(도서·배송지 정보 전달)\n· 주의: 미수료자 반환금은 담당자 계좌로 개별 납부 후 대학 계좌로 일괄 회입\n· 주의: 산학협력단 소속은 명단에 별도 표기해 산단·업체 담당자에게 전달, 비용은 산단 직접 처리", "pri": "mid", "progress": 0, "repeat": "monthly", "sample": false, "status": "todo", "steps": [{"done": false, "t": "교육 전월 초 도서신청 기간(10~20일) 안내, 지원가능 권수 확인"}, {"done": false, "t": "업체 수강신청 명단 확인 후 수강명단 확정"}, {"done": false, "t": "세금계산서 확인 후 해당 월 교육비 처리"}, {"done": false, "t": "업체 월별 수료결과 받아 수료현황·누적 지원권수 갱신"}, {"done": false, "t": "미수료자(70점 미만) 회입금액(도서비 절반) 안내 및 반납 처리"}, {"done": false, "t": "월별 결과보고 상신, 인사 담당자에게 수료결과 전달"}], "title": "독서통신교육 관리 및 정산"}, "w13": {"cat": "edu", "createdAt": "2026-11-12T09:00:13Z", "doneAt": "", "due": "", "group": "독서통신교육", "logs": [], "memo": "[SOP-01-02] 당해연도 운영 기준 확정\n· 검토 항목: 운영기간, 지원 권수, 수료기준·운영방법, 고과반영\n· 필독서 지정 시 교육업체와 사전 협의", "pri": "mid", "progress": 0, "repeat": "yearly", "sample": false, "status": "todo", "steps": [{"done": false, "t": "운영기간·지원 권수·수료기준·고과반영 검토해 교육계획 확정"}, {"done": false, "t": "교육업체 선정 및 계약 체결"}, {"done": false, "t": "업체 전담 매니저와 월별 운영사항 협의"}], "title": "독서통신교육 연간 운영계획 수립 및 업체 계약"}, "w14": {"cat": "edu", "createdAt": "2026-11-12T09:00:14Z", "doneAt": "", "due": "2026-11-27", "logs": [{"d": "2026-11-22", "t": "이번 주 중(~11.27.) 하반기 교육업체 선정 및 계획 수립 처리하기로 함. 마감 11.30. → 11.27."}, {"d": "2026-11-13", "t": "방학 12.22.부터, 1월 중 2~3일 교육 예정. D-6주 결재 목표 11.30.(1.11. 주 시작 가정)"}, {"d": "2026-11-13", "t": "하반기 운영 계획(안) 문서 연결, 겨울방학 중 실시 가정"}, {"d": "2026-08-27", "t": "인수인계서 기준: 하반기 행정혁신 프로그램 운영 기안 상신 완료 / 다음: 독서 CoP 조원 모집·안내, 행정혁신 리더 CoP 준비(강의자 섭외, 직원 안내)"}], "memo": "[2026.11.22. 사용자] 하반기 교육업체 선정 및 계획 수립을 이번 주 중(~11.27.) 처리 → 마감일 11.27.로 변경 (이전 11.30.)\n\n[일정 가정] 방학 12.22.~, 교육은 1월 중 1인당 2일(최대 3일). 분반 운영이 2주 걸려 1월 안에 끝내려면 늦어도 1.18. 주에 시작 → 계획(안) 결재(D-6주)는 늦어도 12.7.\n· 마감일 11.30.은 1.11. 주 시작을 가정한 D-6주(추정)\n\n[2026년 하반기 운영 계획(안)] 문서: https://claude.ai/artifact/2twrcNfyX8FYfXXrn6dUPr\n· 시기: 겨울방학 중(가정), 교육일(D) 기준 최소 6주 전 결재·업체 선정 시작\n· 과정1 기획력 강화 실습(외부업체): 30명×4개 분반, 조별 업무개선 기획서 1건\n· 과정2 AI 활용교육(사내강사 3명 릴레이: 정보화실, 사서 출신 대리, 법무감사실 대리): 60명×2회, 개인별 AI 활용사례 1건\n· 기본안 1인당 2일, 전체 6일(사내강사 2일, 외부업체 4일) / 확장안 3일\n· 확인 필요: 전산실 60명 수용, 교육일수(2일/3일), 교육 시기·예산, 사내강사 의향, 학내 AI 보안 기준, 독서통신 산출물 활용, SOP 제출 현황, 「기획의 정석」 핵심 프레임\n\n[SOP-01-01] 학기별(방학 중)\n· 협조: 전 부서, 위탁교육업체\n· 시스템: 총무관리-교육훈련관리-개인교육 이수자관리 / 예산: 직원교육훈련비-직원\n· 보관: ★ 직원 교육\n· 주의: 필요 시 산학협력단(앵커사업단) 운영·재정 지원 가능, 1~3단계 중 사전 협의·보고\n· 주의: 미참석자는 부서장과 협의 후 고과 반영 및 별도 과제 부여", "pri": "high", "progress": 0, "repeat": "semester", "sample": false, "status": "todo", "steps": [{"done": false, "t": "D-6주: 교육 계획(안) 내부 결재, 사내강사 후보 면담"}, {"done": false, "t": "D-5주: 외부업체 견적·커리큘럼 제안 요청(2~3개사)"}, {"done": false, "t": "D-4주: 업체 선정·계약, 사내강사 확정"}, {"done": false, "t": "D-3주: 교육 안내 공문 발송, 사전 설문"}, {"done": false, "t": "D-2주: 사전과제 배포(업무 문제 1가지, 도서 발췌)"}, {"done": false, "t": "D-1주: 사전과제 취합·조 편성, 사내강사 리허설, 실습실 점검"}, {"done": false, "t": "D: 교육 실시(2주간 6일, 1인당 2일)"}, {"done": false, "t": "D+2주: 기획서·AI 활용사례 제출, 만족도 결과 보고"}], "title": "직원역량강화교육 (방학 중, 상·하반기)"}, "w15": {"cat": "doc", "createdAt": "2026-11-12T09:00:15Z", "doneAt": "", "due": "", "logs": [], "memo": "※ 인수인계서에 없는 업무입니다. 절차·시기는 추후 보완.", "pri": "mid", "progress": 0, "repeat": "bimonthly", "sample": false, "status": "todo", "steps": [], "title": "부서운영비 지급 및 정산"}, "w16": {"cat": "doc", "createdAt": "2026-11-12T09:00:16Z", "doneAt": "", "due": "2026-11-25", "group": "수도광열비", "logs": [{"d": "2026-11-22", "t": "처리 방식 보완: 중순 시설관리팀 내역서 → 중순 재무팀 수신 발행신청 기안 → 발행 후 업체에 메일로 월말까지 납부 요청"}, {"d": "2026-11-22", "t": "씨앤코컴퍼니 10월분 처리 완료. 아라마크 10월분 입금 대기(정산 예정), 상태 대기로"}, {"d": "2026-11-22", "t": "10월분: 세금계산서 발행 완료, 씨앤코컴퍼니 납부 완료, 아라마크 미납(11.25.까지 납부 요청)"}, {"d": "2026-11-22", "t": "처리 방식 정리: 전월 내역 받아 재무팀에 세금계산서 5장 발행 청구, 입점 업체 2곳(아라마크·씨앤코컴퍼니)에 납부 요청"}], "memo": "[갱신 2026.11.22.] 씨앤코컴퍼니 10월분 처리 완료(비예산수입 결의서 포함) / 아라마크 9월분은 지난주 말 입금 → 11.23. 결의서(별도 업무) / 아라마크 10월분은 입금 대기, 정산 예정\n\n[현재 상황 2026.11.22.] 10월분 진행 중\n· 10월분 세금계산서: 발행 완료\n· 씨앤코컴퍼니 10월분: 납부 완료\n· 아라마크 10월분: 미납, 11.25.까지 납부 요청(날짜 확인 필요) → 마감일을 11.25.로 둠\n· 아라마크 9월분: 입금 완료 → 11.23. 비예산수입 결의서 (별도 업무로 등록)\n\n[처리 방식] 매달 (2026.11.22. 사용자 설명)\n· 매월 중순: 시설관리팀에서 지난달 수도광열비 사용내역서를 보내 줌\n· 중순: 세금계산서 발행신청(청구) 기안 상신 — 수신: 재무팀, 총 5장 (매장 5곳과 수가 같아 매장별 1장으로 보임 — 확인 필요)\n· 세금계산서 발행 후: 업체 담당자에게 메일로 월말까지 납부 요청\n· 입금되면 비예산수입으로 결의서 작성\n· 청구 대상(학교 입점 업체 2곳): 아라마크(수강헌, CU편의점) / 씨앤코컴퍼니(학생쉼터, 카페ing, 블루포트)\n\n※ 인수인계서에 없는 업무. 위 내용은 2026.11.22. 사용자 설명 기준", "pri": "mid", "progress": 75, "repeat": "monthly", "sample": false, "status": "todo", "steps": [{"done": true, "t": "시설관리팀 사용내역서 받기 (매월 중순, 지난달분)"}, {"done": true, "t": "세금계산서 발행신청 기안 상신 (수신: 재무팀, 총 5장)"}, {"done": true, "t": "세금계산서 발행 확인"}, {"done": true, "t": "업체 담당자에게 메일로 월말까지 납부 요청 (아라마크: 수강헌·CU편의점 / 씨앤코컴퍼니: 학생쉼터·카페ing·블루포트)"}, {"done": true, "t": "씨앤코컴퍼니 입금 확인"}, {"done": true, "t": "씨앤코컴퍼니 입금분 비예산수입 결의서"}, {"done": false, "t": "아라마크 입금 확인"}, {"done": false, "t": "아라마크 입금분 비예산수입 결의서"}], "title": "수도광열비 청구 (입점업체)"}, "w17": {"cat": "routine", "createdAt": "2026-11-12T09:00:17Z", "doneAt": "", "due": "", "logs": [], "memo": "※ 인수인계서에 없는 업무입니다. 절차·시기는 추후 보완.", "pri": "mid", "progress": 0, "repeat": "", "sample": false, "status": "todo", "steps": [], "title": "근로장학생 관리"}, "w18": {"cat": "routine", "createdAt": "2026-11-12T09:00:18Z", "doneAt": "", "due": "", "logs": [{"d": "2026-11-22", "t": "11.20.(금) 연하장·다이어리 수령. 연하장은 배부 완료, 다이어리 배부 남음"}], "memo": "[2026년 배부] 연하장·다이어리 11.20.(금) 수령\n· 연하장: 배부 완료\n· 다이어리 직원분: 판교·포천 근무자 수로 나눠 배부명단 작성 후 배부\n· 다이어리 교원분: 사전 신청자만 해당. 학과별 명단 정리 후 각 학과 조교에게 수령 안내\n· 확인 필요: 배부 마감일\n\n※ 인수인계서에 없는 업무입니다. 절차·시기는 추후 보완.", "pri": "mid", "progress": 33, "repeat": "yearly", "sample": false, "status": "doing", "steps": [{"done": true, "t": "연하장·다이어리 수령 (11.20.)"}, {"done": true, "t": "연하장 배부"}, {"done": false, "t": "판교·포천 근무자 수 확인 후 캠퍼스별 다이어리 수량 나누기"}, {"done": false, "t": "직원 다이어리 배부명단 작성 및 배부"}, {"done": false, "t": "교원 사전 신청자 명단 학과별 정리"}, {"done": false, "t": "각 학과 조교에게 다이어리 수령 안내"}], "title": "연하장·다이어리 주문 및 배부"}, "w19": {"cat": "welfare", "createdAt": "2026-11-13T07:15:00Z", "doneAt": "", "due": "2026-11-27", "group": "수강헌", "logs": [{"d": "2026-11-22", "t": "동계 운영 내용 확정: 최소 50명, 7일 운영, 12.16.까지 6,000원 선납부·대장 서명, 미신청 8,000원, 1.4. 시무식 시 학교 부담"}, {"d": "2026-11-22", "t": "공지 내용 정리해 직원 공지(11.23.) 후 이번 주 중 수요조사 진행하기로 함"}, {"d": "2026-11-22", "t": "동계 수요조사는 지난 하계 네이버폼을 일자만 수정해 공지하기로 함. 공지 초안 작성"}, {"d": "2026-11-22", "t": "동계방학 수강헌 이용 건 이번 주 중(~11.27.) 처리하기로 함. 마감 12.22. → 11.27."}, {"d": "2026-11-13", "t": "동계 수강헌 이용 확정: 12.22.~1.6. 중 8일 운영, 식비 기준 정리"}], "memo": "[동계 운영 2026.11.22. 사용자 설명]\n· 최소 50명 이상일 때 운영. 의전원 강의(특강)가 있어 겸사겸사 수강헌 운영\n· 운영일 7일: 12.22.(화), 12.24.(목), 12.28.(월), 12.29.(화) / 1.4.(월), 1.5.(화), 1.6.(수)\n· 신청자: 12.16.(수)까지 신청 일수 × 6,000원 결제 / 신청 인원에 맞춰 날짜별 대장 준비 → 식사 때마다 서명\n· 미신청자: 현장결제 8,000원\n· 1.4.(월): 시무식이 있을 수 있음 → 시무식 시 식비 학교 전액 부담\n· 확인 필요: 12.30.(수) 제외 맞는지(11.13. 설명은 8일), 6,000원 결제 방법, 1.4.을 선납부에 포함할지, 중식만 운영 동일 여부\n\n[동계 수요조사 공지 초안] 지난 하계 네이버폼 문구 기준\n안녕하십니까, ooo대학교 총무처 총무팀입니다.\n교직원의 복리후생 및 편의제공을 위해 동계방학기간 식당 운영에 대한 수요조사를 아래와 같이 진행합니다.\n(신청인원 50명 이상일 경우 운영 예정)\n\n** 교내 식당운영(안)\n1. 운영일(총 7일): 2026.12.22.(화), 12.24.(목), 12.28.(월), 12.29.(화) / 2027.01.04.(월), 01.05.(화), 01.06.(수)\n2. 장소: 수강헌(중식<점심>만 운영)\n\n** 식비 및 이용 방법\n1. 신청자: 1식 6,000원, 신청한 일수만큼 2026.12.16.(수)까지 결제\n2. 식사 시 식당에 비치된 대장에 서명\n3. 미신청자: 현장결제 1식 8,000원\n4. 01.04.(월)은 시무식이 열릴 경우 식비를 학교에서 부담(시무식 여부는 추후 안내)\n\n[2026 동계방학] 수강헌 이용 확정\n· 기간: 12.22.~1.6. (의전원 학생 특강 기간)\n· 제외일: 주말, 12.23., 12.25., 12.31., 1.1.\n· 운영일 8일: 12.22.(화), 12.24.(목), 12.28.(월), 12.29.(화), 12.30.(수), 1.4.(월), 1.5.(화), 1.6.(수)\n  ※ 11.22. 사용자 설명 기준 12.30. 빠지고 7일로 변경(위 [동계 운영] 참고)\n\n[식비] 1끼 8,000원 기준\n· 의전원 학생: 학생 선납부 6,000원 + 의전원 지원 2,000원, 식권 배부\n· 직원 선납부 신청자: 사전 6,000원 결제, 장부 작성\n· 현장 구매: 8,000원 카드결제\n· 신청자: 신청 일자별 대장에 서명 후 식사. 신청하지 않은 날은 8,000원 카드결제(날짜 변경 불가 원칙)\n· 직원 선납부 차액 2,000원은 총무팀 부담\n· 직원 수요조사 방식 검토 중: ① 8일 전체 일괄 납부 ② 먹을 날 체크 후 대장 작성\n\n※ 인수인계서에 없는 업무. 위 내용은 2026.11.13. 담당자 설명 기준", "pri": "high", "progress": 9, "repeat": "yearly", "sample": false, "status": "doing", "steps": [{"done": true, "t": "동계: 직원 수요조사 방식 결정 → 날짜별 신청 + 12.16.(수)까지 선납부로 정함"}, {"done": false, "t": "동계: 지난 하계 네이버폼 복사해 일자 수정"}, {"done": false, "t": "동계: 직원 수요조사 안내 및 회신 취합"}, {"done": false, "t": "동계: 의전원 학생 선납부(끼당 6,000원) 접수"}, {"done": false, "t": "동계: 의전원 학생 식권 배부"}, {"done": false, "t": "동계: 직원 선납부 결제 확인 (12.16.(수)까지, 신청 일수 × 6,000원)"}, {"done": false, "t": "동계: 신청 인원에 맞춰 날짜별 서명 대장 만들기"}, {"done": false, "t": "동계: 1.4. 시무식 여부 확인 (시무식 시 식비 학교 부담)"}, {"done": false, "t": "동계: 현장 구매(8,000원) 안내"}, {"done": false, "t": "동계: 의전원 지원금·총무팀 부담분(끼당 2,000원) 정산"}, {"done": false, "t": "하계방학 이용 관리"}], "title": "수강헌 방학 이용 관리 (동계·하계)"}, "w20": {"cat": "doc", "createdAt": "2026-11-22T00:00:00.000Z", "doneAt": "", "due": "2026-11-23", "focus": "", "group": "수도광열비", "logs": [{"d": "2026-11-22", "t": "아라마크 9월분 지난주 말 입금 확인됨(담당자 전달)"}, {"d": "2026-11-22", "t": "아라마크 9월분 입금 확인, 11.23.(월) 비예산수입 결의서 작성 예정"}], "memo": "'수도광열비 청구 (입점업체)'의 9월분 후속 처리\n· 아라마크 9월분 세금계산서 발행분 입금 완료\n· 비예산수입으로 결의서 작성", "pri": "high", "progress": 50, "repeat": "", "sample": false, "status": "todo", "steps": [{"done": true, "t": "아라마크 9월분 입금 확인"}, {"done": false, "t": "비예산수입으로 결의서 작성"}], "title": "아라마크 9월분 수도광열비 비예산수입 결의서"}, "w21": {"cat": "bid", "createdAt": "2026-11-22T00:10:00.000Z", "doneAt": "", "due": "", "focus": "", "group": "입찰", "logs": [{"d": "2026-11-22", "t": "입찰 업무 새로 담당. 인수인계 아직 많이 못 받음"}], "memo": "※ 새로 맡게 된 업무. 인수인계를 아직 많이 받지 못함.\n· 확인 필요: 입찰 대상, 처리 절차, 시기·주기, 관련 규정·시스템, 협조 부서\n· 인수인계 받은 내용을 여기에 차례로 추가", "pri": "mid", "progress": 0, "repeat": "", "sample": false, "status": "todo", "steps": [{"done": false, "t": "입찰 업무 인수인계 받기"}], "title": "입찰 업무"}, "w22": {"cat": "doc", "createdAt": "2026-11-22T00:20:00.000Z", "doneAt": "", "due": "2026-11-27", "focus": "", "group": "", "logs": [{"d": "2026-11-22", "t": "가이드라인 변경으로 별도 작업방(annual-budget 브랜치)에서 작성하기로 함"}, {"d": "2026-11-22", "t": "이번 주 중(~11.27.) 2027학년도 본예산 신청 처리 필요"}], "memo": "[2026.11.22. 사용자] 본예산 가이드라인이 바뀌어 별도 작업방(GitHub work 저장소 `annual-budget` 브랜치, 새 Claude Code 채팅방)에서 작성하기로 함\n\n[2026.11.22. 사용자] 이번 주 중(~11.27.) 처리\n· 확인 필요: 정확한 제출기한, 제출처·양식, 신청 대상 예산 항목\n· 참고 자료(앱): 총무팀 예산관리 https://claude.ai/artifact/MaiE4J8W6hS21Zi4dkR9i7 / 2026학년도 총무팀 예산 추경 신청(안) 보고 https://claude.ai/artifact/DijZvWKB168i9smT5Hw5M6\n· 관련 업무: 장례용품 보관·배송 연간 지출 기안은 차년도 예산 확정 후 진행", "pri": "high", "progress": 0, "repeat": "yearly", "sample": false, "status": "todo", "steps": [{"done": false, "t": "바뀐 본예산 가이드라인 확인"}, {"done": false, "t": "별도 작업방(annual-budget 브랜치)에서 신청 자료 작성"}, {"done": false, "t": "본예산 신청 제출"}], "title": "2027학년도 본예산 신청"}, "w23": {"cat": "bid", "createdAt": "2026-11-22T00:30:00.000Z", "doneAt": "", "due": "2026-11-23", "focus": "", "group": "입찰", "logs": [{"d": "2026-11-22", "t": "업체 문의 2건 접수(단위 미기재 품목, 단종 품목 대체품). 11.23. 확인 후 회신 예정"}], "memo": "[업체 문의 2건] 분할해서 올린 입찰 공고 건\n1) 품목명세서에 단위가 안 적힌 품목: 단위가 따로 정해져 있는지, 견적 받았던 내용 기준으로 해야 하는지\n2) 단종으로 더 이상 구할 수 없는 물품: 대체품으로 해도 되는지\n\n[회신 방법 후보] (사용자 1차 확인, 아직 시간 여유 있음)\n· A: 품목명세서의 대체품·단위 기재란에 업체가 일단 적어 내고, 담당자 확인 후 알려 주겠다고 안내\n· B: 내가 담당자에게 먼저 물어보고 업체에 알려 주기\n\n[검토 메모] 한 업체 문의에 대한 답이 규격(단위·대체품) 기준이 되면 다른 응찰 업체에도 같은 내용을 알려야 비교·형평성 문제가 없음. 학교 계약 규정·관례(질의답변 게시, 정정공고 여부)는 인수인계자에게 확인 필요\n\n· 확인 필요: 공고명·번호, 입찰 마감일, 품목 담당자(요청 부서), 문의 업체명", "pri": "high", "progress": 0, "repeat": "", "sample": false, "status": "todo", "steps": [{"done": false, "t": "담당자 확인: 단위 미기재 품목의 단위 기준(정해진 단위 / 견적 내용 기준)"}, {"done": false, "t": "담당자 확인: 단종 품목 대체품 허용 여부"}, {"done": false, "t": "회신 방법 정하기 (A: 기재란에 일단 적게 하기 / B: 확인 후 답변)"}, {"done": false, "t": "문의 업체에 회신"}, {"done": false, "t": "다른 응찰 업체에도 같은 내용 알릴지 확인 (질의답변 게시·정정공고)"}], "title": "분할 입찰 공고 업체 문의 회신 (단위 미기재·단종 대체품)"}, "w24": {"cat": "welfare", "createdAt": "2026-11-22T00:40:00.000Z", "doneAt": "", "due": "2026-11-23", "focus": "", "group": "수강헌", "logs": [{"d": "2026-11-22", "t": "공지 초안에 동계 운영 내용 반영"}, {"d": "2026-11-22", "t": "11.23. 직원 공지, 이번 주 중 조사 진행 예정"}], "memo": "직원 공지 후 이번 주 중(~11.27.) 수요조사 진행 → '수강헌 방학 이용 관리'에서 이어서 관리\n· 공지 초안: '수강헌 방학 이용 관리' 메모 (11.22. 내용 반영: 50명 기준, 7일, 6,000원 선납부 12.16.까지, 미신청 8,000원, 1.4. 시무식 시 학교 부담)\n· 공지 전 확인 필요: 12.30. 제외 맞는지, 6,000원 결제 방법, 1.4.을 선납부에 포함할지, 중식만 운영 동일 여부", "pri": "high", "progress": 0, "repeat": "", "sample": false, "status": "todo", "steps": [{"done": false, "t": "공지 내용 정리(초안 확인)"}, {"done": false, "t": "지난 하계 네이버폼 복사해 일자 수정"}, {"done": false, "t": "직원 공지"}], "title": "수강헌 동계 이용 수요조사 직원 공지"}};
+function mockStore(){let data=JSON.parse(JSON.stringify(MOCK_DATA));let cb=null;const emit=()=>cb&&cb(Object.entries(data).map(([id,d])=>({id,...d})));
+  return{kind:'mock',subscribe(f){cb=f;setTimeout(emit,0)},async set(id,d){data[id]=d;emit()},async add(d){const id='m'+Date.now().toString(36);data[id]=d;emit();return id},async del(id){delete data[id];emit()}}}
+async function start(){store=mockStore();store.subscribe(list=>{tasks=list;loaded=true;render()});}
+async function startReal(){
+  let db=null;
+  try{db=window.claude&&window.claude.use?await window.claude.use('db'):null}catch(e){db=null}
+  if(db){
+    store=dbStore(db);
+    const timer=setTimeout(()=>{if(!loaded)showNotice('저장소에 아직 연결되지 않았습니다. 잠시 후 자동으로 다시 시도합니다.')},10000);
+    store.subscribe((list,meta)=>{tasks=list;if(!meta||!meta.fromCache){loaded=true;clearTimeout(timer);showNotice('')}render()},
+      e=>{clearTimeout(timer);loaded=true;showNotice('저장소 연결이 끊겼습니다. 페이지를 새로 열어 주세요. ('+e.code+')');render()});
+  }else{
+    store=localStore();
+    showNotice('지금은 이 브라우저에만 저장되는 모드입니다. claude.ai에서 열면 PC와 휴대폰이 같은 목록을 봅니다.');
+    store.subscribe(list=>{tasks=list;loaded=true;render()});
+  }
+}
+
+/* derived */
+const isOpen=t=>t.status!=='done';
+function dueInfo(t){
+  if(!t.due)return null;const n=diffDays(t.due,todayStr());
+  if(t.status==='done')return{txt:fmtShort(t.due),cls:''};
+  if(n<0)return{txt:(-n)+'일 지남',cls:'over'};
+  if(n===0)return{txt:'D-day',cls:'over'};
+  return{txt:'D-'+n,cls:n<=3?'near':''};
+}
+function inView(t,v){
+  const td=todayStr();
+  switch(v){
+    case'all':return t.status!=='done'&&t.status!=='hold';
+    case'today':return isOpen(t)&&t.status!=='hold'&&(t.due&&t.due<=td||t.status==='doing'&&!t.due);
+    case'week':return isOpen(t)&&t.status!=='hold'&&t.due&&t.due<=weekEnd();
+    case'soon':return isOpen(t)&&t.status!=='hold'&&t.due&&t.due<=addDays(td,3);
+    case'hold':return t.status==='hold';
+    case'done':return t.status==='done';
+  }return true;
+}
+/* 칸반 범위: 마감일 기준(지난 것 포함) + '오늘 할 일' 지정 건. 마감이 먼 상시·연 단위 업무는 진행중이어도 칸반에 넣지 않음. 완료는 완료일 기준 */
+function inScope(t,sc){
+  const td=todayStr();
+  if(t.status==='done'){const d=isoDay(t.doneAt);if(!d)return false;return sc==='d3'?d===td:sc==='week'?d>=addDays(weekStart(),-7):d>=addDays(td,-7)}
+  if(sc==='all')return true;
+  if(t.focus===td)return true;
+  return !!t.due&&t.due<=(sc==='d3'?addDays(td,3):weekEnd());
+}
+const priRank={high:0,mid:1,low:2};
+const byDue=(a,b)=>{const da=a.due||'9999',db=b.due||'9999';if(da!==db)return da<db?-1:1;if(priRank[a.pri]!==priRank[b.pri])return (priRank[a.pri]??1)-(priRank[b.pri]??1);return (a.createdAt||'').localeCompare(b.createdAt||'')};
+function sortTasks(a,b){if(view==='done')return (b.doneAt||'').localeCompare(a.doneAt||'');return byDue(a,b)}
+
+/* shared bits */
+function checkBtn(t,small){
+  const done=t.status==='done';
+  const b=el('button',{type:'button',class:'check'+(small?' sm':''),role:'checkbox','aria-checked':String(done),'aria-label':done?'완료 취소':'완료로 표시',onclick:e=>{e.stopPropagation();toggleDone(t)}});
+  b.innerHTML=CHECK_SVG;return b;
+}
+function catChip(t){const c=catOf(t.cat);return c?el('span',{class:'chip'},el('span',{class:'dot',style:'background:'+c.color}),c.name):null}
+function dragSrc(node,id){
+  node.setAttribute('draggable','true');
+  node.addEventListener('dragstart',e=>{dragId=id;try{e.dataTransfer.setData('text/plain',id);e.dataTransfer.effectAllowed='move'}catch(x){}node.classList.add('dragging')});
+  node.addEventListener('dragend',()=>{dragId=null;node.classList.remove('dragging')});
+}
+function dropZone(node,fn){
+  node.addEventListener('dragover',e=>{if(!dragId)return;e.preventDefault();node.classList.add('over')});
+  node.addEventListener('dragleave',e=>{if(!node.contains(e.relatedTarget))node.classList.remove('over')});
+  node.addEventListener('drop',e=>{e.preventDefault();node.classList.remove('over');const id=dragId||e.dataTransfer.getData('text/plain');dragId=null;if(id)fn(id)});
+}
+
+/* render */
+function render(){
+  $('#today').textContent=fmtK(todayStr());
+  $('#tabs').replaceChildren(...TABS.map(t=>el('button',{type:'button',role:'tab','aria-selected':String(tab===t.id),onclick:()=>go(t.id)},t.name)));
+  for(const t of TABS)$('#tab-'+t.id).hidden=tab!==t.id;
+  if(tab==='board')renderBoard();else if(tab==='calendar')renderCal();else renderList();
+}
+
+/* 현황판 */
+function renderBoard(){
+  const td=todayStr(),month=td.slice(0,7);
+  const doing=tasks.filter(t=>t.status==='doing').length;
+  const overdue=tasks.filter(t=>isOpen(t)&&t.status!=='hold'&&t.due&&t.due<td).length;
+  const todayDue=tasks.filter(t=>inView(t,'today')).length;
+  const weekDue=tasks.filter(t=>inView(t,'week')).length;
+  const doneMonth=tasks.filter(t=>t.status==='done'&&isoDay(t.doneAt).slice(0,7)===month).length;
+  const tile=(k,v,unit,goView,warn)=>el('button',{type:'button',class:'tile'+(warn?' warn':''),onclick:()=>{view=goView;cat='';remember('wb-view',view);go('list')}},el('span',{class:'k',text:k}),el('span',{class:'v'},loaded?String(v):'–',el('small',{text:unit})));
+  $('#tiles').replaceChildren(
+    tile('진행 중',doing,'건','all'),
+    tile(overdue?'오늘까지 · 지연 '+overdue+'건':'오늘까지 마감',todayDue,'건','today',overdue>0),
+    tile('이번 주 마감',weekDue,'건','week'),
+    tile((parse(td).getMonth()+1)+'월 완료',doneMonth,'건','done'));
+  $('#scope').replaceChildren(...SCOPES.map(s=>el('button',{type:'button','aria-pressed':String(scope===s.id),onclick:()=>{scope=s.id;remember('wb-scope',scope);render()}},s.name)));
+  $('#kan-title').textContent=scope==='d3'?'3일 안에 할 일':scope==='week'?(isWeekend()?'다음 주 할 일':'이번 주 할 일'):'전체 업무';
+  $('#kan-sub').textContent=scope==='d3'?fmtShort(td)+' ~ '+fmtShort(addDays(td,3))+' 마감 (지난 것 포함)':scope==='week'?fmtShort(weekStart())+' ~ '+fmtShort(weekEnd())+' 마감 (지난 것 포함)':'완료는 최근 7일';
+  const items=loaded?tasks.filter(t=>inScope(t,scope)):[];
+  const hint=id=>!loaded?'불러오는 중입니다':id==='todo'?(scope==='all'?'대기 중인 업무가 없습니다.':'이 기간에 마감인 대기 업무가 없습니다. 아래 ‘다가오는 마감’에서 [오늘]을 누르면 여기로 옵니다.'):id==='doing'?'이 기간에 마감인 진행 업무가 없습니다. 카드를 여기로 끌어 오면 진행중이 됩니다.':id==='hold'?'보류한 업무가 없습니다.':'완료한 업무가 여기에 쌓입니다.';
+  $('#kan').replaceChildren(...COLS.map(c=>{
+    const list=items.filter(t=>t.status===c.id).sort(c.id==='done'?(a,b)=>(b.doneAt||'').localeCompare(a.doneAt||''):byDue);
+    const zone=el('div',{class:'zone'},...(list.length?list.map(cardEl):[el('div',{class:'hint',text:hint(c.id)})]));
+    dropZone(zone,id=>{const t=tasks.find(x=>x.id===id);if(t)setStatus(t,c.id)});
+    return el('div',{class:'col'},el('div',{class:'colh'},el('span',{class:'lbl'},el('span',{class:'dot',style:'background:'+c.color}),c.name),el('span',{class:'cnt',text:String(list.length)})),zone);
+  }));
+  // 다가오는 마감
+  const lim=addDays(td,14),from=scope==='week'?weekEnd():addDays(td,3);
+  $('#up-sub').textContent=scope==='all'?'앞으로 2주':fmtShort(addDays(from,1))+' ~ '+fmtShort(lim);
+  const ups=tasks.filter(t=>isOpen(t)&&t.status!=='hold'&&t.due&&t.due>(scope==='all'?td:from)&&t.due<=lim).sort(byDue);
+  const ul=$('#ups');
+  if(!loaded){ul.replaceChildren(el('div',{class:'empty',text:'업무를 불러오는 중입니다'}))}
+  else if(!ups.length){ul.replaceChildren(el('div',{class:'empty',text:'칸반 다음 2주 안에 마감인 업무가 없습니다.'}))}
+  else ul.replaceChildren(...ups.map(t=>{const di=dueInfo(t);const on=t.focus===td;
+    return el('div',{class:'up'},el('span',{class:'dday '+di.cls,text:di.txt}),
+      el('button',{type:'button',class:'nm',onclick:()=>openDrawer(t.id)},el('span',{text:t.title}),el('small',{text:fmtShort(t.due)+' · '+(catOf(t.cat)||{name:''}).name+(t.status==='doing'?' · 진행중':'')})),
+      el('button',{type:'button',class:'mini','aria-pressed':String(on),title:on?'오늘 할 일에서 빼기':'오늘 할 일로 가져오기',onclick:()=>toggleFocus(t)},on?'오늘 ✓':'오늘'))}));
+  const nodue=tasks.filter(t=>isOpen(t)&&!t.due&&t.status!=='hold').length;
+  $('#upfoot').replaceChildren(el('span',{text:loaded?'마감일 미정 업무 '+nodue+'건':''}),loaded&&nodue?el('button',{type:'button',class:'linkbtn',onclick:()=>go('calendar')},'캘린더에서 날짜 정하기'):null);
+  // 분류별 현황
+  $('#catstats').replaceChildren(...CATS.map(c=>{
+    const open=tasks.filter(t=>t.cat===c.id&&isOpen(t));
+    const avg=open.length?Math.round(open.reduce((s,t)=>s+(Number(t.progress)||0),0)/open.length):0;
+    const dg=open.filter(t=>t.status==='doing').length;
+    return el('button',{type:'button',class:'catrow',title:c.name+' 목록 보기',onclick:()=>{cat=c.id;view='all';remember('wb-view',view);go('list')}},
+      el('span',{class:'lbl'},el('span',{class:'dot',style:'background:'+c.color}),c.name),
+      el('span',{class:'cbar',title:'평균 진행률 '+avg+'%'},el('i',{style:'width:'+avg+'%;background:'+c.color})),
+      el('span',{class:'cn',text:loaded?open.length+'건'+(dg?' · 진행 '+dg:'')+' · '+avg+'%':''}));
+  }));
+}
+function cardEl(t){
+  const di=dueInfo(t),done=t.status==='done',td=todayStr();
+  const steps=t.steps&&t.steps.length?t.steps.filter(x=>x.done).length+'/'+t.steps.length:'';
+  const card=el('div',{class:'card'+(done?' done':''),tabindex:'0',onclick:()=>openDrawer(t.id),onkeydown:e=>{if(e.key==='Enter')openDrawer(t.id)}},
+    el('div',{class:'ct'},checkBtn(t,true),el('span',{class:'title',text:t.title})),
+    el('div',{class:'meta'},catChip(t),t.focus===td&&!done&&t.status!=='doing'?el('span',{class:'chip doing',text:'오늘'}):null,t.pri==='high'?el('span',{class:'pri-high',text:'우선'}):null,t.repeat?el('span',{text:'↻ '+FREQ_LABEL[t.repeat]}):null),
+    el('div',{class:'cf'},di?el('span',{class:'dday '+di.cls,text:di.txt}):el('span',{text:'마감 없음'}),
+      el('span',{class:'cfr'},steps?el('span',{text:'절차 '+steps}):null,!done?el('span',{class:'bar',title:'진행률 '+(t.progress||0)+'%'},el('i',{style:'width:'+(t.progress||0)+'%'})):null)));
+  const st=t.steps||[];
+  if(st.length&&!done){
+    const MAX=8;const ul=el('ul',{class:'clist'});
+    const nDone=st.filter(s=>s.done).length,fold=nDone>2;
+    if(fold)ul.append(el('li',{class:'more',text:'✓ 완료한 절차 '+nDone+'개 (카드를 눌러 보기)'}));
+    st.map((s,i)=>[s,i]).filter(([s])=>!fold||!s.done).slice(0,MAX).forEach(([s,i])=>{const c=el('button',{type:'button',class:'check',role:'checkbox','aria-checked':String(!!s.done),'aria-label':(s.done?'체크 해제: ':'체크: ')+s.t,onclick:e=>{e.stopPropagation();toggleStep(t,i)}});c.innerHTML=CHECK_SVG;ul.append(el('li',{class:s.done?'on':''},c,el('span',{text:s.t})))});
+    const shownN=fold?st.length-nDone:st.length;if(shownN>MAX)ul.append(el('li',{class:'more',text:'외 '+(shownN-MAX)+'개 · 카드를 눌러 전체 보기'}));
+    card.insertBefore(ul,card.lastChild);
+  }
+  dragSrc(card,t.id);return card;
+}
+
+/* 캘린더 */
+function renderCal(){
+  const[y,m]=calM.split('-').map(Number);
+  $('#cal-title').textContent=y+'년 '+m+'월';
+  $('#legend').replaceChildren(el('button',{type:'button','aria-pressed':String(cat===''),onclick:()=>{cat='';render()}},'모든 분류'),
+    ...CATS.map(c=>el('button',{type:'button','aria-pressed':String(cat===c.id),onclick:()=>{cat=cat===c.id?'':c.id;render()}},el('span',{class:'dot',style:'background:'+c.color}),c.name)));
+  const first=ymd(new Date(y,m-1,1));const off=(parse(first).getDay()+6)%7;const start=addDays(first,-off);
+  const days=new Date(y,m,0).getDate();const weeks=Math.ceil((off+days)/7);const end=addDays(start,weeks*7-1);
+  const td=todayStr();
+  const ev=buildEvents(start,end);
+  const cells=[];
+  for(let i=0;i<weeks*7;i++){
+    const d=addDays(start,i),wd=parse(d).getDay();
+    const list=ev.get(d)||[];const real=list.filter(o=>!o.ghost).length;
+    const cls='day'+(d.slice(0,7)!==calM?' out':'')+(d===td?' today':'')+(d===selDate?' sel':'')+(wd===0?' sun':wd===6?' sat':'');
+    const cell=el('div',{class:cls,role:'button',tabindex:'0','aria-label':fmtK(d)+' 마감 '+real+'건',onclick:()=>{selDate=d;render()},onkeydown:e=>{if(e.key==='Enter'&&e.target===cell){selDate=d;render()}}},
+      el('span',{class:'dn',text:String(parse(d).getDate())}),
+      ...list.slice(0,3).map(o=>evEl(o,d,td)),
+      list.length>3?el('span',{class:'more',text:'+'+(list.length-3)+'건 더'}):null,
+      list.length?el('span',{class:'dots'},...list.slice(0,4).map(o=>el('span',{class:'dot',style:'background:'+(o.ghost?'var(--line)':catColor(o.t.cat))}))):null);
+    dropZone(cell,id=>moveDue(id,d));
+    cells.push(cell);
+  }
+  $('#mgrid').replaceChildren(...cells);
+  // 선택한 날
+  const sel=ev.has(selDate)||(selDate>=start&&selDate<=end)?(ev.get(selDate)||[]):tasks.filter(t=>t.due===selDate&&(!cat||t.cat===cat)).map(t=>({t}));
+  $('#ag-title').textContent=fmtK(selDate);
+  $('#ag-sub').textContent=selDate===td?'오늘':(n=>n>0?n+'일 뒤':(-n)+'일 전')(diffDays(selDate,td));
+  const ag=$('#agenda');
+  if(!loaded)ag.replaceChildren(el('div',{class:'empty',text:'업무를 불러오는 중입니다'}));
+  else if(!sel.length)ag.replaceChildren(el('div',{class:'empty',text:'이 날 마감인 업무가 없습니다. 아래에서 바로 추가할 수 있습니다.'}));
+  else ag.replaceChildren(...sel.map(o=>{const t=o.t;
+    if(o.ghost)return el('div',{class:'ag-item ghost',onclick:()=>openDrawer(t.id)},el('span',{class:'gh'}),el('div',{class:'t'},el('span',{class:'title',text:t.title}),el('div',{class:'meta'},catChip(t),el('span',{text:'↻ '+FREQ_LABEL[t.repeat]+' 반복 예정 · 현재 건 마감 '+fmtShort(t.due)}))));
+    const di=dueInfo(t);
+    const it=el('div',{class:'ag-item'+(t.status==='done'?' done':''),onclick:()=>openDrawer(t.id)},checkBtn(t,true),
+      el('div',{class:'t'},el('span',{class:'title',text:t.title}),el('div',{class:'meta'},catChip(t),t.status!=='todo'?el('span',{class:'chip '+t.status,text:STATUS[t.status]}):null,di&&di.cls?el('span',{class:'dday '+di.cls,text:di.txt}):null)));
+    if(t.status!=='done')dragSrc(it,t.id);return it}));
+  // 마감일 미정
+  const nd=tasks.filter(t=>isOpen(t)&&!t.due&&(!cat||t.cat===cat)).sort((a,b)=>catIdx(a.cat)-catIdx(b.cat)||a.title.localeCompare(b.title,'ko'));
+  $('#nodue-sub').textContent=loaded?nd.length+'건 · 날짜 칸으로 끌어 놓기':'';
+  $('#nodue').replaceChildren(...(nd.length?nd.map(t=>{const it=el('div',{class:'ag-item',title:'달력 날짜로 끌어 놓으면 마감일이 정해집니다',onclick:()=>openDrawer(t.id)},el('span',{class:'dot',style:'margin-top:7px;background:'+catColor(t.cat)}),el('div',{class:'t'},el('span',{class:'title',text:t.title}),el('div',{class:'meta'},t.status!=='todo'?el('span',{class:'chip '+t.status,text:STATUS[t.status]}):null,t.repeat?el('span',{text:'↻ '+FREQ_LABEL[t.repeat]}):null)));dragSrc(it,t.id);return it})
+    :[el('div',{class:'empty',text:loaded?'마감일이 비어 있는 업무가 없습니다.':'업무를 불러오는 중입니다'})]));
+}
+function buildEvents(start,end){
+  const ev=new Map();const push=(d,o)=>{if(d<start||d>end)return;if(!ev.has(d))ev.set(d,[]);ev.get(d).push(o)};
+  for(const t of tasks){
+    if(cat&&t.cat!==cat)continue;
+    if(t.due)push(t.due,{t});
+    if(t.repeat&&t.due&&t.status!=='done'){for(let k=1;k<=60;k++){const n=nthDue(t.due,t.repeat,k);if(!n||n>end)break;push(n,{t,ghost:true})}}
+  }
+  const rank=o=>o.ghost?3:o.t.status==='done'?2:o.t.status==='hold'?1:0;
+  for(const l of ev.values())l.sort((a,b)=>rank(a)-rank(b)||catIdx(a.t.cat)-catIdx(b.t.cat)||a.t.title.localeCompare(b.t.title,'ko'));
+  return ev;
+}
+function evEl(o,d,td){
+  const t=o.t;const overdue=!o.ghost&&t.status!=='done'&&t.status!=='hold'&&d<td;
+  const cls='ev'+(o.ghost?' ghost':t.status==='done'?' done':t.status==='hold'?' hold':overdue?' overdue':'');
+  const b=el('button',{type:'button',class:cls,title:(o.ghost?'[반복 예정] ':'')+t.title,onclick:e=>{e.stopPropagation();if(o.ghost){selDate=d;render()}else openDrawer(t.id)}},el('span',{class:'dot',style:'background:'+catColor(t.cat)}),el('span',{class:'tx',text:t.title}));
+  if(!o.ghost&&t.status!=='done')dragSrc(b,t.id);
+  return b;
+}
+$('#cal-prev').addEventListener('click',()=>{calM=addMonths(calM+'-01',-1).slice(0,7);render()});
+$('#cal-next').addEventListener('click',()=>{calM=addMonths(calM+'-01',1).slice(0,7);render()});
+$('#cal-today').addEventListener('click',()=>{calM=todayStr().slice(0,7);selDate=todayStr();render()});
+$('#ag-form').addEventListener('submit',async e=>{
+  e.preventDefault();const v=$('#ag-input').value.trim();if(!v){$('#ag-input').focus();return}
+  $('#ag-input').value='';
+  await safe(store.add(newTask(v,cat||$('#q-cat').value,selDate)),fmtShort(selDate)+' 마감으로 추가했습니다');
+});
+
+/* 목록 */
+function renderList(){
+  $('#views').replaceChildren(...VIEWS.map(v=>el('button',{type:'button','aria-pressed':String(view===v.id),onclick:()=>{view=v.id;remember('wb-view',view);render()}},el('span',{class:'lbl',text:v.name}),el('span',{class:'cnt',text:loaded?String(tasks.filter(t=>inView(t,v.id)&&(!cat||t.cat===cat)).length):''}))));
+  $('#cats').replaceChildren(el('button',{type:'button','aria-pressed':String(cat===''),onclick:()=>{cat='';render()}},el('span',{class:'lbl'},el('span',{class:'dot',style:'background:var(--muted)'}),'모든 분류')),
+    ...CATS.map(c=>el('button',{type:'button','aria-pressed':String(cat===c.id),onclick:()=>{cat=cat===c.id?'':c.id;render()}},el('span',{class:'lbl'},el('span',{class:'dot',style:'background:'+c.color}),c.name),el('span',{class:'cnt',text:loaded?String(tasks.filter(t=>t.cat===c.id&&isOpen(t)).length):''}))));
+  const vName=VIEWS.find(v=>v.id===view).name;const cName=cat?catOf(cat).name:'';
+  $('#list-title').textContent=cName?vName+' · '+cName:vName;
+  const rows=tasks.filter(t=>inView(t,view)&&(!cat||t.cat===cat)).sort(sortTasks);
+  $('#list-sub').textContent=loaded?rows.length+'건':'';
+  const list=$('#list');
+  if(!loaded)return;
+  if(!rows.length){
+    const msg=tasks.length===0?['아직 등록된 업무가 없습니다','위 입력칸에 업무명을 적고 Enter를 누르면 첫 업무가 추가됩니다.']:['이 보기에 해당하는 업무가 없습니다','다른 보기나 분류를 눌러 확인해 보세요.'];
+    list.replaceChildren(el('div',{class:'empty'},el('b',{text:msg[0]}),msg[1]));return;
+  }
+  if(view==='all'||view==='hold'){
+    const blocks=new Map();
+    for(const t of rows){const k=t.group?'g:'+t.group:'i:'+t.id;if(!blocks.has(k))blocks.set(k,[]);blocks.get(k).push(t)}
+    const bl=[...blocks.values()].map(b=>b.sort((a,c)=>freqRank(a.repeat)-freqRank(c.repeat)||(a.due||'9999').localeCompare(c.due||'9999')||a.title.localeCompare(c.title,'ko')));
+    bl.sort((a,c)=>freqRank(a[0].repeat)-freqRank(c[0].repeat)||catIdx(a[0].cat)-catIdx(c[0].cat)||a[0].title.localeCompare(c[0].title,'ko'));
+    const out=[];let cur=null;
+    for(const b of bl){const f=b[0].repeat||'';if(f!==cur){cur=f;const n=bl.filter(x=>(x[0].repeat||'')===f).reduce((s,x)=>s+x.length,0);out.push(el('div',{class:'sec'},el('span',{text:FREQ_LABEL[f]||f}),el('span',{class:'cnt',text:n+'건'})))}
+      b.forEach((t,i)=>out.push(rowEl(t,i>0)))}
+    list.replaceChildren(...out);
+  }else list.replaceChildren(...rows.map(t=>rowEl(t,false)));
+  if(tasks.some(t=>t.sample))list.append(el('div',{class:'row',style:'cursor:default;grid-template-columns:1fr auto'},el('span',{class:'meta',text:'점선 표시가 있는 항목은 예시입니다. 내 업무를 넣은 뒤 지워 주세요.'}),el('button',{type:'button',class:'btn',onclick:clearSamples},'예시 모두 지우기')));
+}
+function rowEl(t,sub){
+  const di=dueInfo(t);const done=t.status==='done';
+  const meta=el('div',{class:'meta'},catChip(t),
+    t.status!=='todo'?el('span',{class:'chip '+t.status,text:STATUS[t.status]}):null,
+    t.focus===todayStr()&&!done?el('span',{class:'chip doing',text:'오늘'}):null,
+    t.pri==='high'?el('span',{class:'pri-high',text:'우선'}):null,
+    t.repeat?el('span',{text:'↻ '+REPEAT[t.repeat].replace(/\(.*\)/,'')}):null,
+    t.steps&&t.steps.length?el('span',{text:'절차 '+t.steps.filter(x=>x.done).length+'/'+t.steps.length}):null,
+    t.logs&&t.logs.length?el('span',{text:'기록 '+t.logs.length}):null,
+    t.sample?el('span',{class:'chip sample',text:'예시'}):null);
+  const right=el('div',{class:'right'},
+    di?el('span',{class:'dday '+di.cls,text:di.txt}):el('span',{class:'dday',text:'마감 없음',style:'color:var(--muted)'}),
+    !done?el('span',{class:'bar',title:'진행률 '+(t.progress||0)+'%'},el('i',{style:'width:'+(t.progress||0)+'%'})):null);
+  return el('div',{class:'row'+(done?' done':'')+(sub?' sub':''),tabindex:'0',onclick:()=>openDrawer(t.id),onkeydown:e=>{if(e.key==='Enter')openDrawer(t.id)}},checkBtn(t,false),el('div',{class:'t'},el('span',{class:'title',text:t.title}),meta),right);
+}
+
+/* actions */
+function clean(t){const{id,...d}=t;return d}
+function newTask(title,c,due,focus){return{title,cat:c||'welfare',group:'',pri:'mid',status:'todo',progress:0,due:due||'',focus:focus||'',memo:'',logs:[],steps:[],repeat:'',sample:false,createdAt:new Date().toISOString(),doneAt:''}}
+async function safe(p,okMsg){try{await p;if(okMsg)toast(okMsg)}catch(e){const c=e&&e.code;toast(c==='quota_exceeded'?'저장 공간이 가득 찼습니다. 완료된 업무를 정리해 주세요.':'저장하지 못했습니다. 잠시 후 다시 시도해 주세요.')}}
+function nextCopy(d){const nd=nextDue(d.due,d.repeat);return{nd,data:{title:d.title,cat:d.cat,group:d.group||'',pri:d.pri,status:'todo',progress:0,due:nd,focus:'',memo:d.memo||'',logs:[],steps:(d.steps||[]).map(x=>({t:x.t,done:false})),repeat:d.repeat,sample:!!d.sample,createdAt:new Date().toISOString(),doneAt:''}}}
+async function toggleDone(t){
+  const d=clean(t);
+  if(t.status==='done'){d.status=d.progress>=100?'doing':'todo';d.doneAt='';if(d.progress>=100)d.progress=90;await safe(store.set(t.id,d));return}
+  d.status='done';d.progress=100;d.doneAt=new Date().toISOString();
+  await safe(store.set(t.id,d));
+  if(t.repeat){const{nd,data}=nextCopy(t);await safe(store.add(data),'다음 반복 업무를 '+fmtShort(nd)+' 마감으로 만들었습니다')}
+}
+async function setStatus(t,s){
+  if(t.status===s)return;
+  if(s==='done'){await toggleDone(t);return}
+  const d=clean(t);
+  if(t.status==='done'){d.doneAt='';if(d.progress>=100)d.progress=90}
+  d.status=s;
+  await safe(store.set(t.id,d),STATUS[s]+'(으)로 옮겼습니다');
+}
+async function toggleStep(t,i){
+  const d=clean(t);d.steps=(d.steps||[]).map((s,j)=>j===i?{...s,done:!s.done}:s);
+  if(d.status!=='done')d.progress=Math.round(d.steps.filter(s=>s.done).length/d.steps.length*100);
+  const moved=d.status==='todo'&&d.steps.some(s=>s.done);if(moved)d.status='doing';
+  await safe(store.set(t.id,d),moved?'진행중으로 옮겼습니다':'');
+}
+async function toggleFocus(t){const td=todayStr();const d=clean(t);const on=t.focus===td;d.focus=on?'':td;await safe(store.set(t.id,d),on?'오늘 할 일에서 뺐습니다':'오늘 할 일로 가져왔습니다')}
+async function moveDue(id,d){const t=tasks.find(x=>x.id===id);if(!t||t.due===d)return;const x=clean(t);x.due=d;await safe(store.set(id,x),'마감일을 '+fmtShort(d)+'(으)로 바꿨습니다')}
+async function clearSamples(){for(const t of tasks.filter(x=>x.sample)){await safe(store.del(t.id))}toast('예시를 지웠습니다')}
+
+$('#q-cat').replaceChildren(...CATS.map(c=>el('option',{value:c.id,text:c.name})));
+$('#quick').addEventListener('submit',async e=>{
+  e.preventDefault();const title=$('#q-title').value.trim();if(!title){$('#q-title').focus();return}
+  const due=$('#q-due').value||'';
+  const focus=tab==='board'&&!due?todayStr():'';
+  $('#q-title').value='';$('#q-due').value='';
+  await safe(store.add(newTask(title,$('#q-cat').value,due,focus)),focus?'오늘 할 일로 추가했습니다':'업무를 추가했습니다');
+});
+
+/* drawer */
+function openDrawer(id){
+  const t=tasks.find(x=>x.id===id);if(!t)return;openId=id;
+  const td=todayStr();
+  const d=JSON.parse(JSON.stringify(clean(t)));d.logs=d.logs||[];d.steps=d.steps||[];
+  const root=$('#drawer-root');
+  const seg=(key,map)=>{const w=el('div',{class:'seg',role:'group'});const draw=()=>w.replaceChildren(...Object.entries(map).map(([k,v])=>el('button',{type:'button','aria-pressed':String(d[key]===k),onclick:()=>{d[key]=k;if(key==='status'&&k==='done')d.progress=100;draw();syncProg()}},v)));draw();return w};
+  const title=el('input',{type:'text',id:'f-title',value:d.title});
+  const catSel=el('select',{id:'f-cat'},...CATS.map(c=>el('option',{value:c.id,text:c.name,selected:c.id===d.cat})));
+  const due=el('input',{type:'date',id:'f-due',value:d.due||''});
+  const focusBtn=el('button',{type:'button',class:'mini',id:'f-focus'});
+  const drawFocus=()=>{const on=d.focus===td;focusBtn.setAttribute('aria-pressed',String(on));focusBtn.textContent=on?'오늘 할 일로 지정됨 (누르면 해제)':'오늘 할 일로 지정'};
+  focusBtn.addEventListener('click',()=>{d.focus=d.focus===td?'':td;drawFocus()});drawFocus();
+  const grp=el('input',{type:'text',id:'f-grp',value:d.group||'',list:'grp-list',placeholder:'예: 직장어린이집 (비우면 단독 업무)'});
+  const dl=el('datalist',{id:'grp-list'},...[...new Set(tasks.map(x=>x.group).filter(Boolean))].map(g=>el('option',{value:g})));
+  const rep=el('select',{id:'f-rep'},...Object.entries(REPEAT).map(([k,v])=>el('option',{value:k,text:v,selected:k===(d.repeat||'')})));
+  const range=el('input',{type:'range',id:'f-prog',min:'0',max:'100',step:'10',value:String(d.progress||0)});
+  const out=el('output',{text:(d.progress||0)+'%'});
+  const progNote=el('span',{class:'fl',style:'font-weight:400',text:'처리 절차 체크 기준으로 자동 계산됩니다'});
+  const syncProg=()=>{if(d.steps.length&&d.status!=='done')d.progress=Math.round(d.steps.filter(x=>x.done).length/d.steps.length*100);range.value=String(d.progress||0);out.textContent=(d.progress||0)+'%';range.disabled=!!d.steps.length;progNote.hidden=!d.steps.length};
+  const stepList=el('ol',{class:'steps'});
+  const drawSteps=()=>{stepList.replaceChildren(...d.steps.map((st,i)=>{const c=el('button',{type:'button',class:'check',role:'checkbox','aria-checked':String(!!st.done),'aria-label':'절차 완료',onclick:()=>{st.done=!st.done;drawSteps();syncProg()}});c.innerHTML=CHECK_SVG;return el('li',{class:st.done?'on':''},c,el('span',{text:(i+1)+'. '+st.t}),el('button',{type:'button',class:'x','aria-label':'절차 삭제',onclick:()=>{d.steps.splice(i,1);drawSteps();syncProg()}},'×'))}));if(!d.steps.length)stepList.append(el('li',{style:'grid-template-columns:1fr;color:var(--muted)'},'등록된 절차가 없습니다. 단계별로 추가하면 진행률이 자동 계산됩니다.'))};
+  const stepIn=el('input',{type:'text',id:'f-step',placeholder:'예: 실행예산 집행기안 상신'});
+  const addStep=()=>{const v=stepIn.value.trim();if(!v)return;d.steps.push({t:v,done:false});stepIn.value='';drawSteps();syncProg()};
+  stepIn.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addStep()}});
+  range.addEventListener('input',()=>{d.progress=Number(range.value);out.textContent=d.progress+'%'});
+  const memo=el('textarea',{id:'f-memo',placeholder:'관련 공문 번호, 담당자, 참고사항 등'});memo.value=d.memo||'';
+  const logList=el('ul',{class:'logs'});
+  const drawLogs=()=>logList.replaceChildren(...(d.logs.length?d.logs.map((l,i)=>el('li',{},el('time',{text:fmtShort(l.d)}),el('span',{text:l.t}),el('button',{type:'button',class:'x','aria-label':'기록 삭제',onclick:()=>{d.logs.splice(i,1);drawLogs()}},'×'))):[el('li',{style:'grid-template-columns:1fr;color:var(--muted)'},'아직 기록이 없습니다. 진행한 일을 짧게 남겨 두세요.')]));
+  drawLogs();drawSteps();
+  const logIn=el('input',{type:'text',id:'f-log',placeholder:'예: 수요조사 공문 발송, 회신 12건'});
+  const addLog=()=>{const v=logIn.value.trim();if(!v)return;d.logs.unshift({d:todayStr(),t:v});logIn.value='';drawLogs()};
+  logIn.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addLog()}});
+  const confirmBox=el('span',{class:'grp'});
+  const close=()=>{root.replaceChildren();openId=null;document.removeEventListener('keydown',esc)};
+  const esc=e=>{if(e.key==='Escape')close()};document.addEventListener('keydown',esc);
+  const save=async()=>{
+    d.title=title.value.trim()||d.title;d.cat=catSel.value;d.group=grp.value.trim();d.due=due.value||'';d.repeat=rep.value;d.memo=memo.value;
+    if(logIn.value.trim())addLog();if(stepIn.value.trim())addStep();
+    const wasDone=t.status==='done';
+    if(d.status==='done'&&!wasDone){d.doneAt=new Date().toISOString();d.progress=100}
+    if(d.status!=='done')d.doneAt='';
+    close();await safe(store.set(id,d),'저장했습니다');
+    if(d.status==='done'&&!wasDone&&d.repeat){const{nd,data}=nextCopy(d);await safe(store.add(data),'다음 반복 업무를 '+fmtShort(nd)+' 마감으로 만들었습니다')}
+  };
+  const askDel=()=>{confirmBox.replaceChildren(el('span',{class:'confirm',text:'삭제할까요?'}),el('button',{type:'button',class:'btn danger',onclick:async()=>{close();await safe(store.del(id),'삭제했습니다')}},'삭제'),el('button',{type:'button',class:'btn',onclick:()=>confirmBox.replaceChildren(delBtn)},'취소'))};
+  const delBtn=el('button',{type:'button',class:'btn danger',onclick:askDel},'업무 삭제');confirmBox.append(delBtn);
+  root.replaceChildren(el('div',{class:'scrim',onclick:close}),
+    el('aside',{class:'drawer',role:'dialog','aria-label':'업무 편집'},
+      el('div',{class:'dhead'},el('h3',{text:'업무 편집'}),el('button',{type:'button',class:'btn',onclick:close},'닫기')),
+      el('div',{class:'dbody'},
+        el('div',{class:'field'},el('label',{for:'f-title',text:'업무명'}),title),
+        el('div',{class:'two'},el('div',{class:'field'},el('label',{for:'f-cat',text:'분류'}),catSel),el('div',{class:'field'},el('label',{for:'f-due',text:'마감일'}),due)),
+        el('div',{class:'field'},el('span',{class:'fl',text:'오늘 할 일'}),el('div',{},focusBtn)),
+        el('div',{class:'field'},el('label',{for:'f-grp',text:'업무 묶음 (같은 이름끼리 목록에서 함께 표시)'}),grp,dl),
+        el('div',{class:'field'},el('span',{class:'fl',text:'상태'}),seg('status',STATUS)),
+        el('div',{class:'field'},el('label',{for:'f-prog',text:'진행률'}),el('div',{class:'prog'},range,out),progNote),
+        el('div',{class:'field'},el('label',{for:'f-step',text:'처리 절차'}),stepList,el('div',{class:'logadd'},stepIn,el('button',{type:'button',class:'btn',onclick:addStep},'절차 추가'))),
+        el('div',{class:'two'},el('div',{class:'field'},el('span',{class:'fl',text:'우선순위'}),seg('pri',PRI)),el('div',{class:'field'},el('label',{for:'f-rep',text:'반복'}),rep)),
+        el('div',{class:'field'},el('label',{for:'f-memo',text:'메모'}),memo),
+        el('div',{class:'field'},el('label',{for:'f-log',text:'진행 기록'}),el('div',{class:'logadd'},logIn,el('button',{type:'button',class:'btn',onclick:addLog},'기록 추가')),logList)),
+      el('div',{class:'dfoot'},confirmBox,el('div',{class:'grp'},el('button',{type:'button',class:'btn',onclick:close},'취소'),el('button',{type:'button',class:'btn primary',onclick:save},'저장')))));
+  syncProg();title.focus();
+}
+
+render();start();
+})();
+</script>
