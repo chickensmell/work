@@ -112,6 +112,34 @@ button{cursor:pointer}
 .arow .clist{border-top:0;padding-top:2px;display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:4px 18px}
 .arow .rt{display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-size:12px;color:var(--muted)}
 .holds.over{outline:2px dashed var(--accent);outline-offset:-4px}
+[hidden]{display:none!important}
+.foc{display:flex;flex-direction:column}
+.fhead{display:flex;gap:10px;align-items:center;padding:4px 16px 12px;flex-wrap:wrap}
+.fnum{display:flex;align-items:baseline;gap:6px;border:1px solid var(--line);border-radius:8px;padding:6px 12px;background:var(--surface)}
+.fnum b{font-size:20px} .fnum span{font-size:12.5px;color:var(--muted)}
+.fnum.warn{border-color:var(--red);background:var(--red-soft)} .fnum.warn b,.fnum.warn span{color:var(--red)}
+.fnote{font-size:12px;color:var(--muted);margin-left:auto}
+.foc .sec.warn{color:var(--red);background:var(--red-soft)}
+.fempty{padding:10px 16px 12px 52px;font-size:12.5px;color:var(--muted);border-top:1px solid var(--line)}
+.frow{display:grid;grid-template-columns:auto minmax(0,1fr) 170px;gap:12px;padding:11px 16px;border-top:1px solid var(--line);cursor:pointer;align-items:start}
+.frow:hover,.lrow:hover{background:var(--sunk)}
+.frow .t{display:flex;flex-direction:column;gap:6px;min-width:0}
+.frow .l1{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:12px;color:var(--muted)}
+.frow .title{font-weight:600;font-size:14px;color:var(--fg);overflow-wrap:anywhere}
+.ctag{border:1px solid;border-radius:999px;padding:0 7px;font-size:11.5px;line-height:18px}
+.nstep{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:8px;align-items:start;font-size:13px;line-height:1.45}
+.nstep .lb{font-size:11px;font-weight:700;color:var(--accent);background:var(--grey-soft);border-radius:4px;padding:1px 6px;margin-top:1px}
+.nstep .check{width:16px;height:16px;border-width:1.5px;border-radius:4px;margin-top:1px}
+.nstep .check svg{width:10px;height:10px}
+.nstep.all{display:block;color:var(--green);font-size:12.5px}
+.frow .clist{border-top:0;padding-top:0}
+.lastlog{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.frow .rt{display:flex;flex-direction:column;align-items:flex-end;gap:6px;font-size:12px;color:var(--muted)}
+.frow .dday{font-weight:600}
+.fold{display:flex;justify-content:space-between;align-items:center;width:100%;padding:9px 16px;border:0;border-top:1px solid var(--line);background:var(--sunk);font-size:13px;font-weight:600;color:var(--fg);text-align:left;cursor:pointer}
+.fold .cnt{font-weight:400;color:var(--muted);font-size:12.5px}
+.lrow{display:grid;grid-template-columns:130px minmax(0,1fr) auto;gap:12px;padding:8px 16px 8px 28px;border-top:1px solid var(--line);align-items:center;cursor:pointer;font-size:13px}
+.lrow .nm{display:flex;flex-direction:column;min-width:0} .lrow .nm small{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .grid2.solo{grid-template-columns:minmax(0,1fr)}
 .grid2.solo>.stack{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:start}
 .col{background:var(--sunk);border-radius:9px;display:flex;flex-direction:column;min-width:0}
@@ -279,7 +307,7 @@ button{cursor:pointer}
 </style>
 
 <div class="app">
-  <div class="mockbar">시안 2입니다. 위 현황판의 [A 칸반 / B 주간 플래너 / C 마감일 목록]을 눌러 정리 방식을 비교해 보세요. 11. 22. 업무 데이터로 미리 보여 주며, 체크하거나 고쳐도 실제 보드에는 저장되지 않습니다(새로고침하면 처음으로 돌아감).</div>
+  <div class="mockbar">시안 3입니다. 조사 보고서 권장안을 [D 권장안]으로 추가했습니다(처음 화면). 마감 순서 목록 + 한 줄에 다음 절차 하나 + 나머지는 접기. 요약 칸·칸반·분류별 현황은 D에서 뺐습니다(분류별 보기는 목록 탭). [A·B·C]로 이전 시안과 비교할 수 있습니다. 11. 22. 업무 데이터로 미리 보여 주며, 체크하거나 고쳐도 실제 보드에는 저장되지 않습니다(새로고침하면 처음으로 돌아감).</div>
   <header class="top">
     <div class="brand"><h1>나의 업무 보드</h1><span class="today" id="today"></span></div>
     <nav class="tabs" id="tabs" role="tablist" aria-label="화면"></nav>
@@ -299,6 +327,7 @@ button{cursor:pointer}
       <div class="kan" id="kan"></div>
       <div class="wkp" id="wkp" hidden></div>
       <div class="agl" id="agl" hidden></div>
+      <div class="foc" id="foc" hidden></div>
     </div>
     <div class="grid2">
         <div class="panel" id="up-panel">
@@ -401,8 +430,9 @@ function nextDue(s,rep){const base=s||todayStr();switch(rep){case'weekly':return
 function nthDue(s,rep,k){return rep==='weekly'?addDays(s,7*k):REP_MONTHS[rep]?addMonths(s,REP_MONTHS[rep]*k):''}
 
 /* state */
-let bstyle='kanban';try{const v=localStorage.getItem('wb-style');if(['kanban','week','agenda'].includes(v))bstyle=v}catch(e){}
-const STYLES=[{id:'kanban',name:'A 칸반'},{id:'week',name:'B 주간 플래너'},{id:'agenda',name:'C 마감일 목록'}];
+let bstyle='focus';try{const v=localStorage.getItem('wb-style3');if(['focus','kanban','week','agenda'].includes(v))bstyle=v}catch(e){}
+const STYLES=[{id:'focus',name:'D 권장안'},{id:'kanban',name:'A 칸반'},{id:'week',name:'B 주간 플래너'},{id:'agenda',name:'C 마감일 목록'}];
+const openSteps=new Set();const foldOpen={later:false,hold:false,nodue:false,done:false};
 let tasks=[],view='all',cat='',scope='d3',loaded=false,store=null,openId=null,dragId=null;
 let calM=todayStr().slice(0,7),selDate=todayStr();
 try{const v=localStorage.getItem('wb-view');if(v&&VIEWS.some(x=>x.id===v))view=v;const s=localStorage.getItem('wb-scope');if(s&&SCOPES.some(x=>x.id===s))scope=s}catch(e){}
@@ -520,7 +550,9 @@ function renderBoard(){
     tile('이번 주 마감',weekDue,'건','week'),
     tile((parse(td).getMonth()+1)+'월 완료',doneMonth,'건','done'));
   $('#scope').replaceChildren(...SCOPES.map(s=>el('button',{type:'button','aria-pressed':String(scope===s.id),onclick:()=>{scope=s.id;remember('wb-scope',scope);render()}},s.name)));
-  $('#bstyle').replaceChildren(...STYLES.map(s=>el('button',{type:'button','aria-pressed':String(bstyle===s.id),onclick:()=>{bstyle=s.id;remember('wb-style',bstyle);render()}},s.name)));
+  $('#bstyle').replaceChildren(...STYLES.map(s=>el('button',{type:'button','aria-pressed':String(bstyle===s.id),onclick:()=>{bstyle=s.id;remember('wb-style3',bstyle);render()}},s.name)));
+  $('#tiles').hidden=bstyle==='focus';$('#foc').hidden=bstyle!=='focus';document.querySelector('.grid2').hidden=bstyle==='focus';
+  if(bstyle==='focus'){$('#scope').hidden=true;$('#kan').hidden=true;$('#wkp').hidden=true;$('#agl').hidden=true;renderFocus();return}
   $('#scope').hidden=bstyle!=='kanban';$('#kan').hidden=bstyle!=='kanban';$('#wkp').hidden=bstyle!=='week';$('#agl').hidden=bstyle!=='agenda';$('#up-panel').hidden=bstyle!=='kanban';
   renderHolds();document.querySelector('.grid2').classList.toggle('solo',bstyle!=='kanban');
   if(bstyle==='week'){renderWeekPlan();renderCatStats();return}
@@ -615,6 +647,83 @@ function arowEl(t){
   return el('div',{class:'arow',tabindex:'0',onclick:()=>openDrawer(t.id),onkeydown:e=>{if(e.key==='Enter')openDrawer(t.id)}},checkBtn(t,false),
     el('div',{class:'t'},el('span',{class:'title',text:t.title}),el('div',{class:'meta'},catChip(t),t.status!=='todo'?el('span',{class:'chip '+t.status,text:STATUS[t.status]}):null,t.pri==='high'?el('span',{class:'pri-high',text:'우선'}):null,t.repeat?el('span',{text:'↻ '+FREQ_LABEL[t.repeat]}):null),clistEl(t)),
     el('div',{class:'rt'},di?el('span',{class:'dday '+di.cls,text:di.txt+' · '+fmtShort(t.due)}):el('span',{text:'오늘 할 일'}),st.length?el('span',{text:'절차 '+st.filter(s=>s.done).length+'/'+st.length}):null,el('span',{class:'bar'},el('i',{style:'width:'+(t.progress||0)+'%'}))));
+}
+
+/* D 권장안: 오늘 할 일(지정) → 지난 마감 → 오늘 → 3일 이내, 그 뒤·보류·마감 미정·완료는 접기 */
+function renderFocus(){
+  const td=todayStr(),d3=addDays(td,3),lim=addDays(td,14);
+  $('#kan-title').textContent='지금 할 일';$('#kan-sub').textContent=fmtShort(td)+' ~ '+fmtShort(d3)+' 마감 (지난 것 포함)';
+  const open=tasks.filter(t=>isOpen(t)&&t.status!=='hold');
+  const pick=open.filter(t=>t.focus===td);
+  const rest=open.filter(t=>t.focus!==td);
+  const over=rest.filter(t=>t.due&&t.due<td).sort(byDue);
+  const tday=rest.filter(t=>t.due===td).sort(byDue);
+  const soon=rest.filter(t=>t.due>td&&t.due<=d3).sort(byDue);
+  const later=rest.filter(t=>t.due>d3).sort(byDue);
+  const later2=later.filter(t=>t.due<=lim),far=later.filter(t=>t.due>lim);
+  const nodue=rest.filter(t=>!t.due);
+  const holds=tasks.filter(t=>t.status==='hold').sort(byDue);
+  const wk=addDays(td,-7);const dn=tasks.filter(t=>t.status==='done'&&isoDay(t.doneAt)>=wk).sort((a,b)=>(b.doneAt||'').localeCompare(a.doneAt||''));
+  const out=[];
+  // 머리줄 숫자 3개: 누르면 해당 구간으로 이동
+  const jump=(id,k,n,cls)=>el('button',{type:'button',class:'fnum'+(cls&&n?' '+cls:''),onclick:()=>{const x=document.getElementById(id);if(x)x.scrollIntoView({behavior:'smooth',block:'start'})}},el('b',{text:loaded?String(n):'–'}),el('span',{text:k}));
+  out.push(el('div',{class:'fhead'},jump('fs-over',over.length?'⚠ 지난 마감':'지난 마감',over.length,'warn'),jump('fs-today','오늘 마감',tday.length),jump('fs-soon','3일 이내',soon.length),el('span',{class:'fnote',text:'숫자를 누르면 그 구간으로 이동'})));
+  if(!loaded){out.push(el('div',{class:'empty',text:'불러오는 중입니다'}));$('#foc').replaceChildren(...out);return}
+  const sec=(id,name,items,opt={})=>{
+    out.push(el('div',{class:'sec'+(opt.warn?' warn':''),id},el('span',{text:(opt.warn?'⚠ ':'')+name}),el('span',{class:'cnt',text:items.length+'건'})));
+    if(!items.length)out.push(el('div',{class:'fempty',text:opt.empty||'없음'}));
+    items.forEach(t=>out.push(frowEl(t)));
+  };
+  sec('fs-pick','오늘 할 일 (직접 지정)',pick,{empty:'아래 업무의 [오늘]을 누르면 여기로 옵니다. 마감일과 상관없이 오늘 하기로 고른 일입니다.'});
+  sec('fs-over','지난 마감',over,{warn:over.length>0,empty:'지난 마감 업무가 없습니다.'});
+  sec('fs-today','오늘 마감 · '+fmtShort(td),tday,{empty:'오늘 마감인 업무가 없습니다.'});
+  sec('fs-soon','3일 이내 · ~'+fmtShort(d3),soon,{empty:'3일 안에 마감인 업무가 없습니다.'});
+  const fold=(key,name,items,rowFn,note)=>{
+    const on=foldOpen[key];
+    out.push(el('button',{type:'button',class:'fold','aria-expanded':String(on),onclick:()=>{foldOpen[key]=!on;render()}},el('span',{text:(on?'▾ ':'▸ ')+name}),el('span',{class:'cnt',text:items.length+'건'+(note?' · '+note:'')})));
+    if(on)(items.length?items.map(rowFn):[el('div',{class:'fempty',text:'없음'})]).forEach(x=>out.push(x));
+  };
+  fold('later','그 뒤 마감 (~'+fmtShort(lim)+')',later2,lrowEl,far.length?'2주 넘는 업무 '+far.length+'건은 숨김':'');
+  fold('hold','보류 · 회신 대기',holds,hrowEl);
+  fold('nodue','마감일 미정',nodue,lrowEl);
+  fold('done','최근 7일 완료',dn,lrowEl);
+  $('#foc').replaceChildren(...out);
+}
+function nextStepEl(t){
+  const st=t.steps||[];if(!st.length||t.status==='done')return null;
+  const i=st.findIndex(s=>!s.done);
+  if(openSteps.has(t.id)){const ul=clistEl(t);return ul}
+  if(i<0)return el('div',{class:'nstep all',text:'✓ 절차 모두 체크함 · 완료 체크만 남음'});
+  const c=el('button',{type:'button',class:'check',role:'checkbox','aria-checked':'false','aria-label':'체크: '+st[i].t,onclick:e=>{e.stopPropagation();toggleStep(t,i)}});c.innerHTML=CHECK_SVG;
+  return el('div',{class:'nstep'},el('span',{class:'lb',text:'다음'}),c,el('span',{class:'tx',text:st[i].t}));
+}
+function frowEl(t){
+  const di=dueInfo(t),st=t.steps||[],td=todayStr(),on=t.focus===td;
+  const nd=st.filter(s=>s.done).length;const lg=(t.logs||[])[0];const c=catOf(t.cat);
+  return el('div',{class:'frow',tabindex:'0',onclick:()=>openDrawer(t.id),onkeydown:e=>{if(e.key==='Enter')openDrawer(t.id)}},
+    checkBtn(t,false),
+    el('div',{class:'t'},
+      el('div',{class:'l1'},el('span',{class:'title',text:t.title}),c?el('span',{class:'ctag',style:'border-color:'+c.color+';color:'+c.color,text:c.name}):null,t.status==='doing'?el('span',{class:'chip doing',text:'진행중'}):null,t.pri==='high'?el('span',{class:'pri-high',text:'우선'}):null,t.repeat?el('span',{class:'rep',text:'↻ '+FREQ_LABEL[t.repeat]}):null),
+      nextStepEl(t),
+      lg?el('div',{class:'lastlog',text:'최근 기록 '+fmtShort(lg.d)+' · '+lg.t}):null),
+    el('div',{class:'rt'},
+      di?el('span',{class:'dday '+di.cls,text:(di.cls==='over'&&di.txt!=='D-day'?'⚠ ':'')+di.txt+' · '+fmtShort(t.due)}):el('span',{class:'dday',text:'마감 없음'}),
+      st.length?el('button',{type:'button',class:'linkbtn',title:'절차 전체 펼치기/접기',onclick:e=>{e.stopPropagation();openSteps.has(t.id)?openSteps.delete(t.id):openSteps.add(t.id);render()}},'절차 '+nd+'/'+st.length+(openSteps.has(t.id)?' ▴':' ▾')):null,
+      el('button',{type:'button',class:'mini','aria-pressed':String(on),title:on?'오늘 할 일에서 빼기':'오늘 할 일로 가져오기',onclick:e=>{e.stopPropagation();toggleFocus(t)}},on?'오늘 ✓':'오늘')));
+}
+function lrowEl(t){
+  const di=dueInfo(t),td=todayStr(),on=t.focus===td,c=catOf(t.cat),done=t.status==='done';
+  return el('div',{class:'lrow',tabindex:'0',onclick:()=>openDrawer(t.id),onkeydown:e=>{if(e.key==='Enter')openDrawer(t.id)}},
+    el('span',{class:'dday '+(di?di.cls:''),text:done?'완료 '+fmtShort(isoDay(t.doneAt)):di?di.txt+' · '+fmtShort(t.due):'—'}),
+    el('span',{class:'nm'},el('span',{text:t.title}),c?el('small',{text:c.name+(t.repeat?' · ↻ '+FREQ_LABEL[t.repeat]:'')}):null),
+    done?el('span'):el('button',{type:'button',class:'mini','aria-pressed':String(on),onclick:e=>{e.stopPropagation();toggleFocus(t)}},on?'오늘 ✓':'오늘'));
+}
+function hrowEl(t){
+  const c=catOf(t.cat),lg=(t.logs||[])[0];
+  return el('div',{class:'lrow',tabindex:'0',onclick:()=>openDrawer(t.id),onkeydown:e=>{if(e.key==='Enter')openDrawer(t.id)}},
+    el('span',{class:'dday',text:t.due?fmtShort(t.due):'—'}),
+    el('span',{class:'nm'},el('span',{text:t.title}),el('small',{text:(c?c.name:'')+(lg?' · 최근 기록 '+fmtShort(lg.d)+' '+lg.t:'')})),
+    el('button',{type:'button',class:'mini',onclick:e=>{e.stopPropagation();setStatus(t,'todo')}},'대기로'));
 }
 function renderHolds(){
   const hs=tasks.filter(t=>t.status==='hold').sort(byDue);
